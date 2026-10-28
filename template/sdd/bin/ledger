@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# SDD-Fabrik token ledger: what agents spent on each module, by month, and the quizzes passed there, with no link to a
-# commit or a person. See sdd/WORKFLOW.md.
+# SDD-Fabrik token ledger: what agents spent on each module, by month, with no link to a commit or a person.
+# See sdd/WORKFLOW.md.
 #
 # The tokens come from `bash sdd/bin/cockpit usage <repo> <since> <until>` (epoch seconds), which reads the agents'
 # logs on this machine: one tab-separated line per role and model family, with calls, input, output (reasoning
@@ -19,10 +19,9 @@ neutral() {
     GIT_COMMITTER_NAME=sdd-fabrik GIT_COMMITTER_EMAIL=sdd-fabrik@localhost GIT_COMMITTER_DATE=$date git "$@"
 }
 
-# Notes the tokens spent since the last commit, split over the modules HEAD changes by their changed lines, and the
-# quiz HEAD passed, one line per question and module.
+# Notes the tokens spent since the last commit, split over the modules HEAD changes by their changed lines.
 record() {
-  local state since until usage month fp quiz touched note key
+  local state since until usage touched month note key
   [ "$(git config --bool sdd.ledger)" != false ] || return 0
   state=$(git rev-parse --git-path sdd/ledger-until)
   until=$(git log -1 --format=%ct)
@@ -32,22 +31,9 @@ record() {
   echo "$since" > "$state"
   usage=$(bash "$(dirname "$0")/cockpit" usage "$(git rev-parse --show-toplevel)" "$since" "$until")
   echo "$until" > "$state"
-  month=$(TZ=UTC git log -1 --date=format-local:%Y-%m --format=%cd)
-  # The fingerprint the hook gave HEAD's batch: the journal is shared by worktrees. The window keeps an amend that
-  # changes no file from noting the quiz twice; a quiz passed twice counts its last pass.
-  fp=$(printf '%s %s' "$(git rev-parse 'HEAD^{tree}')" "$(git rev-parse -q --verify HEAD^ || echo none)" |
-    git hash-object --stdin)
-  quiz=$(cat "$(git rev-parse --git-common-dir)/sdd/quiz-journal" 2> /dev/null |
-    awk -F '\t' -v OFS='\t' -v fp="$fp" -v since="$since" -v month="$month" '
-      $1 == "v1" && $3 == "pass" && $4 == fp && $2 > since { modules[$6] = $5; line[$6] = $7 OFS $8 OFS $9 OFS $10 }
-      END {
-        for (q = 1; q in line; q++) {
-          n = split(modules[q], m, ",")
-          for (i = 1; i <= n; i++) print "q1", month, m[i], line[q]
-        }
-      }')
-  [ -n "$usage$quiz" ] || return 0
+  [ -n "$usage" ] || return 0
   touched=$(bash "$(dirname "$0")/sdd" touched)
+  month=$(TZ=UTC git log -1 --date=format-local:%Y-%m --format=%cd)
   # Through the environment: BSD awk refuses a newline in a -v value.
   note=$(TOUCHED=$touched awk -F '\t' -v month="$month" '
     BEGIN {
@@ -56,14 +42,13 @@ record() {
       # A batch that changes no module still costs: it goes to "-".
       if (!total) { n = 1; module[1] = "-"; share[1] = total = 1 }
     }
-    NF {
+    {
       for (i = 1; i <= n; i++) {
         printf "v1\t%s\t%s\t%s\t%s", month, module[i], $1, $2
         for (j = 3; j <= 7; j++) printf "\t%.0f", int($j * share[i] / total)
         print ""
       }
     }' <<< "$usage")
-  note=$(printf '%s\n' "$note" "$quiz" | sed '/^$/d')
   # A random key: the note hangs on no commit.
   key=$({ echo "$note"; od -An -N16 -tx1 /dev/urandom; } | git hash-object --stdin)
   neutral "$month" notes --ref sdd-ledger add -m "$note" "$key"
@@ -83,9 +68,9 @@ sync() {
 }
 
 # The ledger summed by month, module, role and model; then, per month, the batches noted against the agent commits,
-# to show what it misses; then the quizzes by month and module, and how many devs passed one in each module.
+# to show what it misses.
 report() {
-  local emails agent authors
+  local emails agent
   git rev-parse -q --verify "$REF" > /dev/null || {
     echo "No token ledger here. Fetch it: git fetch origin $REF:$REF" >&2
     exit 1
@@ -94,21 +79,8 @@ report() {
   emails=$(sed -n "s/^AGENT_EMAILS='\(.*\)'$/\1/p" "$(dirname "$0")/sdd")
   agent=$(TZ=UTC git log --no-merges -i -E --grep='^Agent-Assisted:[[:space:]]*yes[[:space:]]*$' \
     --grep="^Co-Authored-By:.*<($emails)>" --date=format-local:%Y-%m --format=%cd)
-  # A number per module, never a name.
-  authors=$(git log --no-merges -E --grep='^Quiz: [0-9]+/[0-9]+$' --format='%H %aE' | while read -r commit email; do
-    bash "$(dirname "$0")/sdd" touched "$commit" | EMAIL=$email awk '{ print $1 "\t" tolower(ENVIRON["EMAIL"]) }'
-  done | sort -u | awk -F '\t' -v OFS='\t' '{ n[$1]++ } END { for (m in n) print m, n[m] }')
-  git ls-tree -r "$REF" | awk '{ print $3 }' | git cat-file --batch |
-    AGENT=$agent AUTHORS=$authors awk -F '\t' -v OFS='\t' '
-    /^[0-9a-f]+ blob [0-9]+$/ { note++; next }
-    $1 == "q1" {
-      key = $2 OFS $3
-      asked[key]++
-      quizzes++
-      first[key] += $4 == 1
-      unclear[key] += $5 ~ /unclear/
-      unwanted[key] += $5 ~ /not-wanted/
-    }
+  git ls-tree -r "$REF" | awk '{ print $3 }' | git cat-file --batch | AGENT=$agent awk -F '\t' -v OFS='\t' '
+    / blob [0-9]+$/ { note++; next }
     $1 == "v1" {
       key = $2 OFS $3 OFS $4 OFS $5
       keys[key] = 1
@@ -131,41 +103,14 @@ report() {
       print "month", "batches", "agent_commits"
       for (m in commits) print m, batches[m] + 0, commits[m] | "sort"
       close("sort")
-      if (quizzes) {
-        print ""
-        print "month", "module", "questions", "first_try", "unclear", "not_wanted"
-        for (key in asked) print key, asked[key], first[key], unclear[key], unwanted[key] | "sort"
-        close("sort")
-      }
-      if (ENVIRON["AUTHORS"] != "") {
-        print ""
-        print "module", "quiz_authors"
-        print ENVIRON["AUTHORS"] | "sort"
-        close("sort")
-      }
     }'
-}
-
-# Module $1's questions flagged unclear or commented by the dev, over the last three months, one per line: month,
-# causes, title, words. The reviewer reads them before writing a quiz.
-quiz() {
-  local module=$1
-  git rev-parse -q --verify "$REF" > /dev/null || return 0
-  git ls-tree -r "$REF" | awk '{ print $3 }' | git cat-file --batch |
-    awk -F '\t' -v OFS='\t' -v module="$module" -v now="$(date -u +%Y-%m)" '
-      BEGIN { split(now, d, "-"); since = d[1] * 12 + d[2] - 2 }
-      $1 == "q1" && $3 == module && ($5 ~ /unclear/ || $7 != "-") {
-        split($2, d, "-")
-        if (d[1] * 12 + d[2] >= since) print $2, $5, $6, $7
-      }' | sort
 }
 
 case ${1:-} in
   record) record ;;
   sync) sync "${2:-origin}" ;;
   report) report ;;
-  quiz) quiz "${2:?usage: bash sdd/bin/ledger quiz <module>}" ;;
   *)
-    echo 'usage: bash sdd/bin/ledger record | sync [<remote>] | report | quiz <module>' >&2
+    echo 'usage: bash sdd/bin/ledger record | sync [<remote>] | report' >&2
     exit 2 ;;
 esac

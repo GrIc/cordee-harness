@@ -39,8 +39,9 @@ production breaks. A team that merges faster than it understands builds comprehe
   push). Agent commits are blocked on drift, size or a failed quiz; on a human's own commits, drift and size only warn,
   and only structural errors (an empty `governs`, or a trailer naming a missing module) stop everyone. Even at high
   risk, a second human's reading is recommended, never enforced, so a solo developer can use the entire harness.
-- Measure the product, never the people. Token spend and quiz outcomes are summed by module and month in anonymous
-  git notes (`refs/notes/sdd-ledger`), under random keys dated the first of the month: no commit, no author, no day.
+- Measure the product, never the people. Token spend is summed by module and month in anonymous git notes
+  (`refs/notes/sdd-ledger`), under random keys dated the first of the month: no commit, no author, no day. Nothing the
+  quiz learns about a developer leaves their machine.
   Names appear only to coordinate action right now (whose branch waits for review, or whom to ask on an unfamiliar
   module), never to score individuals.
 - Adapt to humans and learn from them, locally. Seniority is never guessed and quizzes never grade people: a
@@ -61,7 +62,7 @@ production breaks. A team that merges faster than it understands builds comprehe
 | Fresh review & risk-scaled quiz | A fresh agent context reviews the staged diff against the contract and coding style, then writes `QUIZ.md` and a hidden key in `.git/sdd/`: 3 predictive questions by default, 5 when `risk: high` (recommending a second human's reading), 0 for Markdown-only changes outside `sdd/modules/`. Passing stamps `Quiz: 3/3` (or `5/5`) on the commit. |
 | Quiz feedback loop | Every graded try is logged locally in `quiz-journal`. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
 | Pace & module onboarding (`sdd brief`) | Before a batch, surfaces unanswered `QUIZ.md` files in sibling worktrees and remote branches waiting for review past `REVIEW_WAIT_HOURS` (4h by default), and spots a developer's first batch in a module to offer discovery mode and name the three teammates who delivered there most. |
-| Anonymous team ledger | Hooks record token spend (writer vs. reviewer, by model) and passed quizzes (tries, flags and the developer's own words, never a name) per module and month in `refs/notes/sdd-ledger` and sync them on push (`git config sdd.ledger false` opts out). `ledger report` maps feature cost, first-try comprehension, unclear/intent flags, and bus factor (distinct quiz passers per module, as a count without names). |
+| Anonymous team ledger | Hooks record token spend (writer vs. reviewer, by model) per module and month in `refs/notes/sdd-ledger` and sync it on push (`git config sdd.ledger false` opts out). `ledger report` shows what each feature cost. The quiz never goes there. |
 | Private cockpit & self-tuning | On the developer's machine over their last 10 agent batches (with Python 3), `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
 | Quiet runner (`sdd quiet`) | Runs verbose test or build commands and prints one line when green, or the last 30 lines when red, keeping agent context lean. |
 
@@ -138,8 +139,8 @@ flowchart LR
    stages the batch, writes `.git/sdd/message` with `Agent-Assisted: yes`, and runs
    `bash sdd/bin/sdd audit --message .git/sdd/message`.
 3. Fresh review & quiz. A fresh agent context (on a smaller model unless the batch is large or touches security or
-   data) checks the staged diff against the contract and coding style, reads past unclear questions via
-   `ledger quiz <module>`, writes `QUIZ.md` and its hidden key, and re-runs `sdd audit --message .git/sdd/message`.
+   data) checks the staged diff against the contract and coding style, writes `QUIZ.md` and its hidden key, and
+   re-runs `sdd audit --message .git/sdd/message`.
 4. Human check & commit. You read the diff and the agent's handoff (purpose, fact decisions taken alone, evidence,
    limits), tick your answers in `QUIZ.md` (kept out of git), and commit from your terminal or IDE
    (`git commit -F .git/sdd/message`). The agent never commits, pushes, or ticks `QUIZ.md`.
@@ -159,7 +160,7 @@ flowchart LR
 | `bash sdd/bin/sdd audit [--message <file>]` | Check staged changes (drift, contract links, size, `QUIZ.md` form if present, markdown-to-code ratio). |
 | `bash sdd/bin/sdd brief [<module>]` | Show pending quizzes, branches awaiting review, or whether a module is new to you. |
 | `bash sdd/bin/cockpit report "$PWD"` | Inspect your local Claude Code token breakdown: roles, models, cache, MCP, plugins, tool output (Python 3). |
-| `bash sdd/bin/ledger report` | View the team's anonymous feature costs, quiz comprehension map and module bus factor. |
+| `bash sdd/bin/ledger report` | View the team's anonymous feature costs. |
 | `git config sdd.ledger false` | Stop recording ledger notes in this clone (`--global` for every repository). |
 
 ## Deploy (for agents)

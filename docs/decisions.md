@@ -221,10 +221,9 @@ of what a dev knows (it measures the module and the question as much as the dev)
 
 The quiz journal keeps, on the dev's machine, every graded try with what the dev ticked and wrote: the tries, the
 causes, the question's title. It lives in the common git dir, so a dev working several batches in worktrees has one
-journal, and it is never pushed. The ledger takes the passed quizzes from it without a name, the dev's words included,
-so they reach the team through its git notes. The cockpit reads it for its hints, and the agent reads it when the dev
-types *quiz feedback*: a keyword in `AGENTS.md`, so any tool that reads the file answers it, and the agent spends
-nothing until the dev asks.
+journal, and it is never pushed, nor is anything taken from it (decision 36). The cockpit reads it for its hints, and
+the agent reads it when the dev types *quiz feedback*: a keyword in `AGENTS.md`, so any tool that reads the file
+answers it, and the agent spends nothing until the dev asks.
 _Rejected:_ the merge request as the channel for feedback (it names its author); sending the agent the feedback at each
 failure (tokens on every wrong answer, and the dev did not ask); a slash command (tied to one tool); a global switch for
 learning (the journal stays local, the ledger already has `sdd.ledger false`).
@@ -240,16 +239,7 @@ _Rejected:_ a required `Reviewed-by:` trailer at high risk (a dev alone could no
 themself (the risk belongs to the module, not to the person); a level guessed from the code (a rule the human cannot
 read in the contract); a quiz on every Markdown change (questions on prose ask little).
 
-## 32. A map of understanding by module, never by person (2026-10-27)
-
-`ledger report` shows, per month and module, how many quiz questions were right at the first try and how many were
-flagged unclear or not what the dev wanted, and per module how many devs passed a quiz there. A low first-try rate
-points to a module hard to read, or to quizzes badly asked: `ledger quiz <module>` gives the reviewer the questions
-devs found unclear before it writes the next one. A module only one dev understands is a risk the team can see without
-anyone being named.
-_Rejected:_ the rate per dev (it measures the module and the question as much as the dev, decision 29, and names
-them); the authors' names per module (the count tells who to train or pair, `git log` already tells who); a score per
-module (one number would hide whether the code or the quiz is at fault).
+## 32. Superseded by 36.
 
 ## 33. A dev new to a module is spotted from git, never from the quiz (2026-10-27)
 
@@ -277,6 +267,19 @@ a dev alone has no one to wait for).
 flagged unclear or not what they wanted twice or more, it says so, and the agent proposes the rule it would write (in
 the contract, the coding style or the quiz instructions). The dev decides, and the rule comes in a batch of its own.
 The harness learns from the people who use it without anyone's answers leaving their machine: only the rule does.
-_Rejected:_ writing the rule without asking (the human keeps the hand); reading the team's quiz lines in the ledger
-(the dev's own flags are what they can act on; the team sees its map with `ledger report`, decision 32); one flag
-(a single unclear question is noise, two point at something).
+_Rejected:_ writing the rule without asking (the human keeps the hand); the team's quiz lines (the dev's own flags are
+what they can act on, and the quiz never leaves a machine, decision 36); one flag (a single unclear question is noise,
+two point at something).
+
+## 36. The quiz stays home (2026-10-28)
+
+Nothing the quiz learns about a dev leaves their machine: the token ledger notes tokens only, `ledger report` loses
+its quiz tables and `ledger quiz` goes. Decision 32 pushed each question's title, tries and causes without a name, but a
+title names its batch, and `git log` names its author: the review after the rope team found who had not understood
+what, in the kit's own ledger. Even when anonymity holds, what counts is what the dev believes: one who thinks they are
+read from above stops ticking "not understood", and the quiz stops being an honest moment between the dev and the
+code. The `q1` lines already pushed stay: they are the owner's own quizzes on the kit, and removing them means
+rewriting shared notes. The team learns from a quiz badly asked through the rule its dev proposes (decision 35).
+_Rejected:_ lighter quiz lines (first try or not, unclear and not wanted only: still a measure of people that a title
+or a month can point back to); a count of devs per module who passed a quiz (it counts understanding, and `git log`
+already shows who worked where); rewriting the pushed notes (the kit's ledger holds only its owner's quizzes).

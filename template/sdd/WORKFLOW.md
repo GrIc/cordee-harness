@@ -49,11 +49,10 @@ A file is created when first needed.
 5. Stage the batch, write the proposed message with `Agent-Assisted: yes` to `.git/sdd/message`, and run
    `bash sdd/bin/sdd audit --message .git/sdd/message`.
 6. Review: spawn a fresh reviewer, a new context that did not write the batch. It reads the staged diff, the contract
-   and the coding style, and reports findings with their evidence. Once they are fixed, it runs
-   `bash sdd/bin/ledger quiz <module>`, which lists the module's questions devs found unclear, and writes the quiz. It
-   then runs the audit of step 5 again, which checks the quiz. Give it a smaller model than the writer's unless the
-   batch is large or touches security or data. After a fix, send the same reviewer the change: it checks that its
-   quiz still holds for a fraction of a fresh one.
+   and the coding style, and reports findings with their evidence. Once they are fixed, it writes the quiz, then runs
+   the audit of step 5 again, which checks the quiz. Give it a smaller model than the writer's unless the batch is
+   large or touches security or data. After a fix, send the same reviewer the change: it checks that its quiz still
+   holds for a fraction of a fresh one.
 7. Hand off: purpose, the decisions you took alone, evidence, limits and a short "understand this" for the human, and at
    high risk the advice to have a second human read the diff. The human reads the diff, answers `QUIZ.md` and commits
    with `git commit -F .git/sdd/message`. Start the next batch in a fresh session: a long one reads its whole history
@@ -111,7 +110,6 @@ only and shared by the clone's worktrees: tab-separated, `v1`, the time in epoch
 fingerprint, its modules (joined by `,`, or `-`), the question's number, the tries so far (this one included), the boxes
 ticked (`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words
 (or `-`).
-At each commit, the [token ledger](guide/tokens.md) notes the quiz passed, without the batch or the dev.
 
 ## Contracts
 

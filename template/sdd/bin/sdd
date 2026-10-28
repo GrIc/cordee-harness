@@ -213,7 +213,7 @@ feedback() {
       printf "> Wrong, %d %s.%s\n", tries, (tries == 1 ? "try" : "tries"), (hint[q] == "" ? "" : " Hint: " hint[q])
       if (tries > 1) printf "> %d tries on this question: type *quiz feedback* to your agent to clear it up.\n", tries
       print ">"
-      print "> Optional, why? (shared without your name)"
+      print "> Optional, why? (stays on this machine)"
       for (i = 1; i <= 3; i++) printf "> - [%s] %s\n", ticked[causes[i]] ? "x" : " ", causes[i]
       print "> - Other:" other
       if (!end) print ""
@@ -226,8 +226,8 @@ feedback() {
 }
 
 # Appends to the quiz journal one line per question of this try, of kind $1 (try or pass), $2 telling right from wrong
-# answers (R or W, one per question). The journal stays on this machine, shared by the clone's worktrees; the ledger
-# and the cockpit read it.
+# answers (R or W, one per question). The journal stays on this machine, shared by the clone's worktrees; the cockpit
+# reads it.
 journal() {
   local file
   file=$(git rev-parse --git-common-dir)/sdd/quiz-journal
