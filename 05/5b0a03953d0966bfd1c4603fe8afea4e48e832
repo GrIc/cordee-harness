@@ -1,0 +1,5 @@
+v1	2026-10	ledger	reviewer	sonnet	27	56	21937	1863094	91864
+v1	2026-10	ledger	writer	opus	33	66	27178	2940594	126828
+q1	2026-10	ledger	2	-	A dev passes the quiz and commits. They then run `git commit --amend -m 'reword'`, which changes no file. What does `record` note for the quiz on that amend?	-
+q1	2026-10	ledger	1	-	A batch passed its quiz, but the cockpit reports no usage. What does the batch's note hold?	-
+q1	2026-10	ledger	3	not-understood	If `fp` used `HEAD` where it now uses `HEAD^` (line 38), which quiz lines would `record` find in the journal?	-

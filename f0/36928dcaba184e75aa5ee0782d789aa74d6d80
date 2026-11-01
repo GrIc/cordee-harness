@@ -1,0 +1,6 @@
+v1	2026-10	checks	agent:general-purpose	sonnet	0	0	386	10568	2362
+v1	2026-10	ledger	agent:general-purpose	sonnet	7	15	15197	415709	92924
+v1	2026-10	checks	reviewer	sonnet	0	0	241	17548	1829
+v1	2026-10	ledger	reviewer	sonnet	12	25	9518	690248	71962
+v1	2026-10	checks	writer	opus	1	2	1376	220798	5679
+v1	2026-10	ledger	writer	opus	49	101	54141	8684726	223405

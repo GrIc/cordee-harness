@@ -1,0 +1,15 @@
+v1	2026-11	brief	writer	Gemini 3.8 Flash (High)	5	27659	3537	373038	0
+v1	2026-11	checks	writer	Gemini 3.8 Flash (High)	23	129897	16613	1751948	0
+v1	2026-11	cockpit	writer	Gemini 3.8 Flash (High)	16	95323	12192	1285650	0
+v1	2026-11	contracts	writer	Gemini 3.8 Flash (High)	1	4445	569	59953	0
+v1	2026-11	quiz	writer	Gemini 3.8 Flash (High)	16	89890	11497	1212375	0
+v1	2026-11	brief	writer	claude-fable-5-2	1	3	2030	115500	7961
+v1	2026-11	checks	writer	claude-fable-5-2	6	12	9534	542440	37390
+v1	2026-11	cockpit	writer	claude-fable-5-2	4	9	6997	398064	27438
+v1	2026-11	contracts	writer	claude-fable-5-2	0	0	326	18563	1280
+v1	2026-11	quiz	writer	claude-fable-5-2	4	8	6598	375376	25875
+v1	2026-11	brief	writer	claude-opus-5-5	1	1	190	19481	2589
+v1	2026-11	checks	writer	claude-opus-5-5	2	4	895	91491	12161
+v1	2026-11	cockpit	writer	claude-opus-5-5	1	3	657	67139	8924
+v1	2026-11	contracts	writer	claude-opus-5-5	0	0	31	3131	416
+v1	2026-11	quiz	writer	claude-opus-5-5	1	2	619	63313	8416

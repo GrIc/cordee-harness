@@ -1,0 +1,4 @@
+v1	2026-10	checks	writer	opus	3	6	1290	570361	2181
+q1	2026-10	checks	3	unclear	In the first brief test, Ann Lee and Dan each have one commit in search. Who is named third?	On parle de troisième nom, alors qu'on en donne 2
+q1	2026-10	checks	1	-	The dev's address is the author of the 3rd commit read by the awk. What does brief print?	-
+q1	2026-10	checks	2	-	What does `brief nothing` do in a repo with no sdd/modules/nothing.md in HEAD?	-

@@ -1,0 +1,5 @@
+v1	2026-10	checks	reviewer	sonnet	10	20	13340	484159	65742
+v1	2026-10	checks	writer	opus	22	44	23827	1788721	91053
+q1	2026-10	checks	2	not-understood	You run `sdd brief` from the worktree "other", which holds its own QUIZ.md. No other worktree of the clone has one. What does brief print?	-
+q1	2026-10	checks	2	not-understood	Two remote branches are not merged into origin/HEAD, both with a last commit by Eve (not you): "alpha" made 6 hours ago and "zeta" made 30 hours ago. Which line does brief print first?	-
+q1	2026-10	checks	2	-	It is your first batch in the module "search". Three other worktrees hold a QUIZ.md and one branch by another dev has waited 3 days. You run `sdd brief search`. How many lines does it print?	-

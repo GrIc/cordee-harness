@@ -1,0 +1,6 @@
+v1	2026-11	checks	agent:general-purpose	opus	36	75	45258	5101593	369377
+v1	2026-11	cockpit	agent:general-purpose	opus	13	27	16316	1839186	133165
+v1	2026-11	ledger	agent:general-purpose	opus	6	13	7898	890372	64466
+v1	2026-11	checks	writer	opus	122	248	186483	27373861	1380329
+v1	2026-11	cockpit	writer	opus	44	89	67229	9868609	497625
+v1	2026-11	ledger	writer	opus	21	43	32546	4777513	240906

@@ -1,0 +1,5 @@
+v1	2026-10	checks	reviewer	sonnet	29	60	26944	1517691	141491
+v1	2026-10	checks	writer	opus	32	64	23329	4938683	54150
+q1	2026-10	checks	2	-	The key line for question 1 is just "C", with no hint text. The dev answers it wrong for the first time. What is the first line of the block written under that question?	-
+q1	2026-10	checks	1	-	Someone removes the new parentheses from line 210 again and runs the quiz tests on Linux with gawk. What happens?	-
+q1	2026-10	checks	2	-	A dev answers question 1 wrong twice, so its block says "> Wrong, 2 tries.", then ticks the right box. What does the journal's "tries so far" field hold on the pass line?	-

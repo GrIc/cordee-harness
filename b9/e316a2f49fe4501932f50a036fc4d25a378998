@@ -1,0 +1,5 @@
+v1	2026-10	cockpit	reviewer	sonnet	14	28	12715	816318	75475
+v1	2026-10	cockpit	writer	opus	22	44	15003	2543093	42033
+q1	2026-10	cockpit	2	-	A question titled "Which rule?" touches the modules search and import. The dev flags it once, ticking both "unclear" and "the code does not do what I wanted". It is the only line in the journal. What does hints print?	-
+q1	2026-10	cockpit	2	-	A dev has made 4 agent batches in all. Their journal holds a flag "unclear" on the title "Which rule?" in the module search from 40 days ago, and the same title flagged "not-wanted" in search today. What does hints print for the quiz?	-
+q1	2026-10	cockpit	2	-	The dev's agent logs are gone from this machine, but they have at least one agent batch and their journal flags the module search on two different titles. What does hints print?	-
