@@ -1,0 +1,4 @@
+v1	2026-11	cockpit	reviewer	claude-sonnet-5-5	12	24	7182	654981	62907
+v1	2026-11	ledger	reviewer	claude-sonnet-5-5	1	2	567	51709	4966
+v1	2026-11	cockpit	writer	claude-opus-5-5	20	43	10579	1479802	61186
+v1	2026-11	ledger	writer	claude-opus-5-5	2	3	835	116826	4831

@@ -1,0 +1,6 @@
+v1	2026-11	checks	reviewer	claude-sonnet-5-5	4	9	2989	305422	18588
+v1	2026-11	cockpit	reviewer	claude-sonnet-5-5	8	16	5551	567211	34521
+v1	2026-11	quiz	reviewer	claude-sonnet-5-5	10	21	6917	706832	43019
+v1	2026-11	checks	writer	claude-opus-5-5	9	19	7985	2107905	15224
+v1	2026-11	cockpit	writer	claude-opus-5-5	18	36	14830	3914681	28274
+v1	2026-11	quiz	writer	claude-opus-5-5	22	45	18480	4878294	35234

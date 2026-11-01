@@ -1,0 +1,5 @@
+v1	2026-10	ledger	reviewer	sonnet	26	54	20999	1823977	88624
+v1	2026-10	ledger	writer	opus	24	48	20776	2756397	141934
+q1	2026-10	ledger	1	-	Ann authored three Quiz commits that touch only search, Bob one that touches search and import. What does the quiz_authors section of report print?	-
+q1	2026-10	ledger	1	-	A q1 line in the ledger has a free text ending in " blob 12". What does report do with that question?	-
+q1	2026-10	ledger	1	-	A question of the current month has the causes "-" and the dev's words "too long". Does `ledger quiz <module>` list it?	-

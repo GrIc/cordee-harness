@@ -1,0 +1,4 @@
+v1	2026-11	checks	reviewer	claude-sonnet-5-5	0	1	194	22163	1139
+v1	2026-11	cockpit	reviewer	claude-sonnet-5-5	26	55	15965	1828468	93943
+v1	2026-11	checks	writer	claude-opus-5-5	0	1	268	101108	417
+v1	2026-11	cockpit	writer	claude-opus-5-5	30	59	22126	8341450	34408

@@ -1,0 +1,6 @@
+v1	2026-11	checks	agent:web-fetch	haiku	1	3	1067	3808	4413
+v1	2026-11	contracts	agent:web-fetch	haiku	3	5	2133	7615	8825
+v1	2026-11	checks	reviewer	opus	5	10	3360	217701	20411
+v1	2026-11	contracts	reviewer	opus	9	20	6719	435402	40823
+v1	2026-11	checks	writer	opus	21	42	25266	2928448	113743
+v1	2026-11	contracts	writer	opus	41	84	50532	5856896	227487
