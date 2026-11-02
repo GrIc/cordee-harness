@@ -105,11 +105,11 @@ The commit fails until every answer is right. Under each wrong question, the hoo
 does not do what they wanted). The boxes never change the grade. If the batch changed since the quiz was written, the
 hook only warns: ask for a new quiz when the changes touch what it asks.
 
-Each graded try appends one line per question to `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine
-only and shared by the clone's worktrees: tab-separated, `v1`, the time in epoch seconds, `try` or `pass`, the batch
-fingerprint, its modules (joined by `,`, or `-`), the question's number, the tries so far (this one included), the boxes
-ticked (`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words
-(or `-`).
+When the quiz passes, each question the dev flagged or commented goes to
+`$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one
+tab-separated line, `v2`, the time in epoch seconds, the batch's modules (joined by `,`, or `-`), the boxes ticked
+(`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words (or
+`-`). The cockpit reads it.
 
 ## Contracts
 

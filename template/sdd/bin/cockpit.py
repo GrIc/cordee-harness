@@ -160,16 +160,16 @@ def cuts(seen, count):
 
 
 def flagged(journal, start):
-    """Per module, the quiz answers flagged unclear or not wanted since start, once per title and cause: a flag kept
-    from a try to the next is one flag."""
+    """Per module, the quiz answers flagged unclear or not wanted since start, once per title and cause: a commit that
+    fails after the quiz passed journals it again."""
     flags = set()
     if os.path.exists(journal):
         with open(journal) as file:
             for line in file:
                 fields = line.rstrip("\n").split("\t")
-                if fields[0] == "v1" and int(fields[1]) > start:
-                    flags.update((module, fields[8], cause) for module in fields[4].split(",") if module != "-"
-                                 for cause in fields[7].split(",") if cause in ("unclear", "not-wanted"))
+                if fields[0] == "v2" and int(fields[1]) > start:
+                    flags.update((module, fields[4], cause) for module in fields[2].split(",") if module != "-"
+                                 for cause in fields[3].split(",") if cause in ("unclear", "not-wanted"))
     return Counter(module for module, _, _ in flags)
 
 

@@ -8,26 +8,6 @@ that grew with the plan are made readable on the way. Each batch writes its deci
 `Rejected:` line (a decision it supersedes in part loses that part and points to the new one), updates the docs where
 its behavior shows, and moves its criteria into its module's contract.
 
-## Keep the quiz off the ledger (ledger)
-
-- `record` notes tokens only, even when the journal holds a pass for HEAD: `test_record_never_notes_the_quiz`.
-  `report` keeps the tokens and the batches against agent commits; the quiz table (first try, unclear, not wanted)
-  and the quiz authors per module go. `ledger quiz` goes. Their tests and helpers go with them.
-- The `q1` lines already pushed stay: they are the owner's own quizzes on the kit, and deleting them means rewriting
-  shared notes. Decision 36 says so, and supersedes 32 and the ledger part of 30.
-- The feedback block says "(stays on this machine)" and the comment on `journal` stops naming the ledger
-  (`Spec-Unchanged(checks)`: wording). WORKFLOW step 6 drops `ledger quiz`; the quiz section and `guide/tokens.md`
-  stop saying the ledger takes the quiz.
-
-## Journal the flagged questions at the pass (checks)
-
-- The journal gets a line when the quiz passes, for each question with a cause ticked or words after `Other:`, and for
-  no other: `v2`, epoch, modules, causes, title, words, tab-separated, `-` for none:
-  `test_a_passed_quiz_journals_its_flagged_questions`, `test_worktrees_share_the_quiz_journal`.
-- The cockpit reads `v2` lines only and keeps counting once per module, title and cause, since a commit that fails
-  after the pass journals its quiz again (`Spec-Unchanged(cockpit)`: same hint, new format).
-- *quiz feedback* in `template/AGENTS.md` reads `QUIZ.md` only. WORKFLOW quiz section follows. Decision 37.
-
 ## Read the quiz once, write its block once (checks)
 
 - One awk run joins `QUIZ.md` and the key, and prints per question: number, boxes, ticks, pick, see, right letter,

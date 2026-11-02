@@ -143,20 +143,20 @@ test_hints_name_a_module_whose_quiz_is_flagged_twice() {
   git config user.email dev@example.test && git config user.name Dev
   for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
   mkdir -p .git/sdd
-  # Quiz journal lines: v1, time, try or pass, fingerprint, modules, question, tries, causes, title, free text.
-  journal() { printf 'v1\t%s\t%s\tfp\t%s\t1\t1\t%s\t%s\t-\n' "$(($(date +%s) - $1))" "$2" "$3" "$4" "$5"; }
+  # Quiz journal lines: v2, time, modules, causes, title, free text.
+  journal() { printf 'v2\t%s\t%s\t%s\t%s\t-\n' "$(($(date +%s) - $1))" "$2" "$3" "$4"; }
   {
     # Before the last ten batches.
-    journal 172800 pass search unclear Old
-    # A flag kept from a try to the pass counts once.
-    journal 3600 try search unclear One
-    journal 3500 pass search unclear One
-    journal 3600 pass search,import not-wanted Two
-    journal 3600 pass search unclear,not-wanted Three
-    journal 3600 pass import not-understood Four
-    journal 3600 pass import unclear Five
+    journal 172800 search unclear Old
+    # A commit that failed after the pass journals its quiz twice: it counts once.
+    journal 3600 search unclear One
+    journal 3500 search unclear One
+    journal 3600 search,import not-wanted Two
+    journal 3600 search unclear,not-wanted Three
+    journal 3600 import not-understood Four
+    journal 3600 import unclear Five
     # A batch that touched no module.
-    journal 3600 pass - unclear,not-wanted Six
+    journal 3600 - unclear,not-wanted Six
   } > .git/sdd/quiz-journal
   hints() { bash "$kit/template/sdd/bin/cockpit" hints; }
   text='were flagged unclear or not what you wanted'

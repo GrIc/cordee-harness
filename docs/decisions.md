@@ -219,8 +219,8 @@ of what a dev knows (it measures the module and the question as much as the dev)
 
 ## 30. The quiz journal stays on the dev's machine (2026-10-27)
 
-The quiz journal keeps, on the dev's machine, every graded try with what the dev ticked and wrote: the tries, the
-causes, the question's title. It lives in the common git dir, so a dev working several batches in worktrees has one
+The quiz journal keeps, on the dev's machine, what the dev ticked and wrote about the questions (what it keeps:
+decision 37). It lives in the common git dir, so a dev working several batches in worktrees has one
 journal, and it is never pushed, nor is anything taken from it (decision 36). The cockpit reads it for its hints, and
 the agent reads it when the dev types *quiz feedback*: a keyword in `AGENTS.md`, so any tool that reads the file
 answers it, and the agent spends nothing until the dev asks.
@@ -283,3 +283,13 @@ rewriting shared notes. The team learns from a quiz badly asked through the rule
 _Rejected:_ lighter quiz lines (first try or not, unclear and not wanted only: still a measure of people that a title
 or a month can point back to); a count of devs per module who passed a quiz (it counts understanding, and `git log`
 already shows who worked where); rewriting the pushed notes (the kit's ledger holds only its owner's quizzes).
+
+## 37. The journal keeps the flags, at the pass (2026-10-28)
+
+The quiz journal gets a line only for a question the dev flagged or commented, and only when the quiz passes, when
+the boxes are their last word: the time, the batch's modules, the causes, the title and the words. Its one reader, the
+cockpit, needs no more. The tries, the batch fingerprint and the questions nobody flagged had a reader, the ledger,
+which decision 36 removed. A commit that fails after the pass journals the quiz again: the cockpit counts a flag once
+per module, title and cause. *quiz feedback* reads `QUIZ.md`, which holds the same, under each wrong question.
+_Rejected:_ a line at every try (counted twice, read by no one); the journal in the ledger's place for a report on
+the dev's own understanding (a score of themselves nobody asked for).

@@ -225,25 +225,22 @@ feedback() {
   mv QUIZ.tmp QUIZ.md
 }
 
-# Appends to the quiz journal one line per question of this try, of kind $1 (try or pass), $2 telling right from wrong
-# answers (R or W, one per question). The journal stays on this machine, shared by the clone's worktrees; the cockpit
-# reads it.
+# Appends to the quiz journal a line per question the dev flagged or commented: v2, the time, the batch's modules, the
+# causes, the title and the words. It runs when the quiz passes, when the boxes are the dev's last word. The journal
+# stays on this machine, shared by the clone's worktrees; the cockpit reads it.
 journal() {
   local file
   file=$(git rev-parse --git-common-dir)/sdd/quiz-journal
   mkdir -p "$(dirname "$file")"
-  tr -d '\r' < QUIZ.md | awk -v kind="$1" -v grades="$2" -v now="$(date +%s)" -v fp="$(fingerprint)" \
-    -v modules="${hit:--}" '
+  tr -d '\r' < QUIZ.md | awk -v now="$(date +%s)" -v modules="${hit:--}" '
     function cause(name) { causes = causes (causes == "" ? "" : ",") name }
     function out() {
-      if (!q) return
+      if (causes == "" && other == "") return
       gsub(/\t/, " ", title)
       gsub(/\t/, " ", other)
-      printf "v1\t%s\t%s\t%s\t%s\t%d\t%d\t%s\t%s\t%s\n", now, kind, fp, modules, q,
-        wrong + (substr(grades, q, 1) == "R"), (causes == "" ? "-" : causes), title, (other == "" ? "-" : other)
+      printf "v2\t%s\t%s\t%s\t%s\t%s\n", now, modules, (causes == "" ? "-" : causes), title, (other == "" ? "-" : other)
     }
-    /^## / { out(); q++; title = $0; sub(/^## ([0-9]+\. )?/, "", title); wrong = 0; causes = other = ""; next }
-    /^> Wrong, [0-9]+ tr/ { split($0, w, " "); wrong = w[3] }
+    /^## / { out(); title = $0; sub(/^## ([0-9]+\. )?/, "", title); causes = other = ""; next }
     /^> - \[[xX]\] I had not understood/ { cause("not-understood") }
     /^> - \[[xX]\] The question is unclear/ { cause("unclear") }
     /^> - \[[xX]\] The code does not do/ { cause("not-wanted") }
@@ -253,7 +250,7 @@ journal() {
 
 # Checks the boxes ticked in QUIZ.md against the reviewer's key. Needs changed and hit, set by check.
 quiz() {
-  local key wrong= grades= i boxes ticks pick see expected hint
+  local key wrong= i boxes ticks pick see expected hint
   key=$(quiz_key)
   [ -f QUIZ.md ] ||
     fail 'No quiz for this agent-assisted batch: ask the fresh reviewer for QUIZ.md (see sdd/WORKFLOW.md).'
@@ -261,10 +258,7 @@ quiz() {
   while read -r i boxes ticks pick see; do
     [ "$ticks" -eq 1 ] || fail "Tick exactly one box for question $i in QUIZ.md, save, then commit again."
     expected=$(sed -n "$((i + 1))p" "$key" | tr -d '\r')
-    if [ "$pick" = "${expected%% *}" ]; then
-      grades=${grades}R
-    else
-      grades=${grades}W
+    if [ "$pick" != "${expected%% *}" ]; then
       hint=${expected:1}
       wrong="$wrong$i	${hint# }
 "
@@ -272,11 +266,10 @@ quiz() {
     fi
   done <<< "$(questions)"
   if [ -z "$wrong" ]; then
-    journal pass "$grades"
+    journal
     return 0
   fi
   feedback "$wrong"
-  journal try "$grades"
   fail "$((count - $(grep -c . <<< "$wrong")))/$count. Fix your answers in QUIZ.md, save, then commit again."
 }
 

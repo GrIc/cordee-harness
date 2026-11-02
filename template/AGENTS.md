@@ -12,9 +12,9 @@ What the harness gives you, besides the checks the workflow runs:
 - `bash sdd/bin/sdd quiet <command>` prints one line when a command passes, its end when it fails.
 - `bash sdd/bin/cockpit report "$PWD"` shows where this dev's tokens went: [sdd/guide/tokens.md](sdd/guide/tokens.md).
 - A guide for each rarer case (first batch, plan, upgrade), listed at the top of the workflow.
-- When the dev types *quiz feedback*: read `QUIZ.md` and this batch's lines of the quiz journal (its path and format
-  are in the workflow's quiz section), and talk the questions through. Propose a fix to the batch and, when a question
-  or a guide is at fault, a change to the harness; make it only on a yes.
+- When the dev types *quiz feedback*: read `QUIZ.md`, with what the dev ticked and wrote under each wrong question,
+  and talk the questions through. Propose a fix to the batch and, when a question or a guide is at fault, a change to
+  the harness; make it only on a yes.
 
 ### How you work
 
