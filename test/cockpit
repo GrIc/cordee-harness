@@ -165,6 +165,18 @@ HINT Quiz answers in search $text 4 times: propose the rule you would write."
   fails "$(hints)" ''
 }
 
+# The dev's address as git writes it, through the mailmap, with a plus and in another case.
+test_hints_find_a_dev_with_a_plus_or_a_mailmap() {
+  git init -q "$repo" && cd "$repo"
+  git config user.email Dev+sdd@example.test && git config user.name Dev
+  echo '<dev+sdd@example.test> <old@example.test>' > .mailmap
+  git -c user.email=old@example.test commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'
+  mkdir -p .git/sdd
+  printf 'v2\t%s\tsearch\tunclear\t%s\t-\n' "$(date +%s)" One "$(date +%s)" Two > .git/sdd/quiz-journal
+  fails "$(bash "$kit/template/sdd/bin/cockpit" hints)" \
+    'HINT Quiz answers in search were flagged unclear or not what you wanted 2 times: propose the rule you would write.'
+}
+
 names=${*:-$(declare -F | awk '$3 ~ /^test_/ { print $3 }')}
 failed=0
 for t in $names; do

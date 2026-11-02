@@ -85,13 +85,14 @@ usage() {
 # The commit times of this dev's agent batches in repo $1, newest first, marked as the hook marks them: the cockpit
 # counts in batches, whatever the dev's pace.
 batches() {
-  local emails author
+  local emails ident me
   emails=$(sed -n "s/^AGENT_EMAILS='\(.*\)'$/\1/p" "$(dirname "$0")/sdd")
-  # The address git would commit with; without one, the dev has no batch.
-  author=$(git -C "$1" var GIT_AUTHOR_IDENT 2> /dev/null | sed -n 's/.*<\(.*\)>.*/\1/p')
-  [ -n "$author" ] || return 0
-  git -C "$1" log --no-merges --author="<$author>" -i -E \
-    --grep='^Agent-Assisted:[[:space:]]*yes[[:space:]]*$' --grep="^Co-Authored-By:.*<($emails)>" --format=%ct
+  # The address git would commit with, through the mailmap as %aE is; without one, the dev has no batch.
+  ident=$(git -C "$1" var GIT_AUTHOR_IDENT 2> /dev/null) || return 0
+  me=$(git -C "$1" check-mailmap "${ident%%>*}>" | sed 's/.*<\(.*\)>/\1/')
+  git -C "$1" log --no-merges -i -E --grep='^Agent-Assisted:[[:space:]]*yes[[:space:]]*$' \
+    --grep="^Co-Authored-By:.*<($emails)>" --format='%aE%x09%ct' |
+    ME=$me awk -F '\t' 'tolower($1) == tolower(ENVIRON["ME"]) { print $2 }'
 }
 
 if [ "${1:-}" = usage ] && [ $# -eq 4 ]; then

@@ -23,8 +23,10 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
 - `hints`, with Python 3, prints what the dev's last 10 agent batches show to cut, by batch: MCP servers whose
   instructions are sent but whose tools were never called, plugins never called when the skill listing weighs 5% of
   the cost or more, anything else sent along at 5% or more, a context over 150k tokens. The window counts batches, not
-  days, so that a slow dev and a busy one get the same advice; a teammate's batch is not the dev's. Each hint
-  comes back 10 batches later at the earliest; before the first batch or without Python, it says nothing:
+  days, so that a slow dev and a busy one get the same advice; a teammate's batch is not the dev's, who is the
+  address git would write, through the mailmap and in any case:
+  [test_hints_find_a_dev_with_a_plus_or_a_mailmap](/test/cockpit). Each hint comes back 10 batches later at the
+  earliest; before the first batch or without Python, it says nothing:
   [test_hints_say_what_to_cut_once_in_ten_batches](/test/cockpit), [test_claude_code_needs_no_python](/test/cockpit).
   Over the same batches, it reads the quiz journal and names a module whose answers were flagged unclear or not what
   the dev wanted twice or more, counted once per question title and cause:
