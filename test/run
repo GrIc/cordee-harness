@@ -267,11 +267,12 @@ push_branch() {
   git checkout -q main
 }
 
-# A remote with origin/HEAD on main, which holds a commit by Bob Roy pushed again as branch done.
+# A remote with origin/HEAD on main, which holds a commit by Bob Roy pushed again as branch done. It is 72 hours old,
+# so that only its merge keeps it out of brief.
 remote() {
   git init -q --bare "$tmp/origin.git"
   git remote add origin "$tmp/origin.git"
-  commit_as search 'Bob Roy'
+  GIT_COMMITTER_DATE="$(($(date +%s) - 72 * 3600)) +0000" commit_as search 'Bob Roy'
   git push -q origin main main:done
 }
 
@@ -607,6 +608,22 @@ test_a_markdown_only_batch_needs_no_quiz() {
   git add -A
   fails agent_commit 'Explain more'
   says 'No quiz for this agent-assisted batch'
+}
+
+test_a_governed_markdown_batch_asks_a_quiz() {
+  echo 'How search ranks.' > src/search/notes.md
+  git add -A
+  fails git commit -q -m 'Explain ranking' -m 'Agent-Assisted: yes' -m 'Spec-Unchanged(search): notes only'
+  says 'No quiz for this agent-assisted batch'
+}
+
+test_a_deleted_high_risk_contract_is_high_risk() {
+  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  git add -A
+  git commit -qm 'Search is at high risk'
+  git rm -q sdd/modules/search.md
+  bash sdd/bin/sdd audit > "$out" 2>&1 || true
+  says 'NOTE search: high risk'
 }
 
 test_a_quiz_older_than_the_batch_only_warns() {

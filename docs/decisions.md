@@ -232,10 +232,10 @@ learning (the journal stays local, the ledger already has `sdd.ledger false`).
 ## 31. The quiz follows the risk (2026-10-27)
 
 The quiz weighs what a mistake costs. A contract may declare `risk: high`: a batch changing that module asks five
-questions, and the handoff and `audit` recommend a second human's reading. A batch of prose outside the contracts asks
-none: the human reads its diff, and a quiz on prose teaches little. Everything else asks three, as before. The OWF notes
-(October 2026) ask for a demanding quiz and two humans on API contracts, security and data; the owner kept the second
-human a recommendation, so that a dev alone can use the whole harness.
+questions, and the handoff and `audit` recommend a second human's reading. A batch of prose outside the contracts and
+what modules govern (since 38) asks none: the human reads its diff, and a quiz on prose teaches little. Everything else
+asks three, as before. The OWF notes (October 2026) ask for a demanding quiz and two humans on API contracts, security
+and data; the owner kept the second human a recommendation, so that a dev alone can use the whole harness.
 _Rejected:_ a required `Reviewed-by:` trailer at high risk (a dev alone could not commit); levels the dev declares for
 themself (the risk belongs to the module, not to the person); a level guessed from the code (a rule the human cannot
 read in the contract); a quiz on every Markdown change (questions on prose ask little).
@@ -294,3 +294,12 @@ which decision 36 removed. A commit that fails after the pass journals the quiz 
 per module, title and cause. *quiz feedback* reads `QUIZ.md`, which holds the same, under each wrong question.
 _Rejected:_ a line at every try (counted twice, read by no one); the journal in the ledger's place for a report on
 the dev's own understanding (a score of themselves nobody asked for).
+
+## 38. Markdown a module governs asks a quiz (2026-11-02)
+
+Decision 31 spared prose outside the contracts, which the script read as any Markdown outside `sdd/modules/`. A module
+may govern Markdown that carries its intent, such as templates or docs it ships: a batch there now asks a quiz like
+the module's code. A batch that deletes a `risk: high` contract is judged at high risk, as one that drops the line
+already was. Both were found by the review of the rope team's scripts.
+_Rejected:_ sparing every Markdown file, as before (prose a module governs is its behavior); reading risk from the
+staged tree only (the batch that removes a high-risk module is one to read twice).

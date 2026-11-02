@@ -8,17 +8,6 @@ that grew with the plan are made readable on the way. Each batch writes its deci
 `Rejected:` line (a decision it supersedes in part loses that part and points to the new one), updates the docs where
 its behavior shows, and moves its criteria into its module's contract.
 
-## Fix what the review found, then make check readable (checks)
-
-- The quiz-free rule becomes: every changed file is Markdown that no contract is and no module governs. A module's
-  Markdown asks a quiz: `test_a_governed_markdown_batch_asks_a_quiz`. A batch that deletes a `risk: high` contract
-  is judged at high risk: `test_a_deleted_high_risk_contract_is_high_risk`; its issue goes. In the brief tests, the
-  branch already merged is dated 72 hours back, so that only `--no-merged` keeps it out.
-- Then `check` keeps one job per function: drift, size (reading the count of modules drift leaves, as a global),
-  quiz level. Behavior unchanged: the suite passes as is.
-- `checks.md` restates nothing the workflow says. `guide/upgrade.md` lists `REVIEW_WAIT_HOURS` and removes the
-  journal's folder on uninstall.
-
 ## The quiz covers the batch (checks)
 
 - A `See` line cites one to three places, `file:line` or `file:line-line`, separated by `, `. A hunk of
@@ -30,7 +19,7 @@ its behavior shows, and moves its criteria into its module's contract.
   instead of "five". The hook never checks coverage, so the human is never refused for it:
   `test_a_high_risk_quiz_covers_every_hunk`, in place of `test_a_high_risk_module_asks_five_questions`. Otherwise,
   three questions.
-- WORKFLOW: questions ask what this code does, never the technology, from what it does to how, then why. Decision 38
+- WORKFLOW: questions ask what this code does, never the technology, from what it does to how, then why. Decision 39
   supersedes the five questions of 31 and says that a new file is one hunk.
 
 ## Find the dev's batches as brief does (cockpit)

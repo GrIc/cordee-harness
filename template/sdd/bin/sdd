@@ -57,32 +57,36 @@ touched() {
   done
 }
 
-# Checks the change from $1 to $2 (commits or trees) under the commit message $3.
-# Sets changed (the changed files), hit (the modules whose code or contract changed, joined by ","), high (those of
-# them at high risk), level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
-# notes.
-check() {
-  local base=$1 tree=$2 msg=$3 module contract paths path drift touched=0 lines
-  errors= findings= notes= hit= high=
-  changed=$(git diff --name-only --no-renames "$base" "$tree")
+# Drift between the contracts and their code, from $1 to $2 under the message $3. Sets hit (the modules whose code or
+# contract changed, joined by ","), high (those of them at high risk) and touched (how many changed code that no
+# Spec-Unchanged spares).
+drift() {
+  local base=$1 tree=$2 msg=$3 module contracts contract paths path broken
+  hit= high= touched=0
   for module in $(sed -n 's/^Spec-Unchanged(\([^)]*\)):.*/\1/p' <<< "$msg"); do
     git cat-file -e "$tree:sdd/modules/$module.md" 2> /dev/null ||
       errors="${errors}ERROR Spec-Unchanged($module): no such module. Modules: $(modules "$tree").
 "
   done
-  for contract in $(git ls-tree -r --name-only "$tree" sdd/modules/ | awk '/\.md$/'); do
+  # The base's contracts too: a batch that deletes a high-risk contract is one to read twice.
+  contracts=$({ git ls-tree -r --name-only "$tree" sdd/modules/; git ls-tree -r --name-only "$base" sdd/modules/; } |
+    awk '/\.md$/ && !seen[$0]++')
+  for contract in $contracts; do
     module=$(basename "$contract" .md)
-    paths=$(governs "$tree:$contract")
-    if [ -z "$paths" ]; then
-      errors="${errors}ERROR $contract: governs is empty. List the paths this module owns.
+    path=
+    if git cat-file -e "$tree:$contract" 2> /dev/null; then
+      paths=$(governs "$tree:$contract")
+      if [ -z "$paths" ]; then
+        errors="${errors}ERROR $contract: governs is empty. List the paths this module owns.
 "
-      continue
-    fi
-    drift=$(links "$tree" "$contract")
-    [ -z "$drift" ] || findings="${findings}$drift
+        continue
+      fi
+      broken=$(links "$tree" "$contract")
+      [ -z "$broken" ] || findings="${findings}$broken
       Fix the link, or the name of the test it points to.
 "
-    path=$(git diff --name-only --no-renames "$base" "$tree" -- $paths | head -n 1)
+      path=$(git diff --name-only --no-renames "$base" "$tree" -- $paths | head -n 1)
+    fi
     if [ -n "$path" ] || grep -qxF "$contract" <<< "$changed"; then
       hit=$hit${hit:+,}$module
       # The batch that drops risk: high is still judged at high risk.
@@ -97,16 +101,15 @@ check() {
       or add 'Spec-Unchanged($module): <reason>' to the message if the behavior is unchanged.
 "
   done
-  # Prose outside the contracts asks little of a quiz: the human reads its diff.
-  level=normal
-  if [ -n "$high" ]; then
-    level=high
-  elif [ -n "$changed" ] && ! grep -qv '\.md$' <<< "$changed" && ! grep -q '^sdd/modules/' <<< "$changed"; then
-    level=low
-  fi
-  lines=$(git diff --numstat --no-renames "$base" "$tree" |
+}
+
+# The size of the change from $1 to $2 under the message $3: its lines of code and tests, and the modules drift
+# counted in touched.
+size() {
+  local lines
+  lines=$(git diff --numstat --no-renames "$1" "$2" |
     awk -F '\t' '$1 != "-" && $3 !~ /(\.md|\.lock|lock\.json|lock\.yaml)$/ { n += $1 + $2 } END { print n + 0 }')
-  if grep -q '^Large-Batch:[[:space:]]*[^[:space:]]' <<< "$msg"; then
+  if grep -q '^Large-Batch:[[:space:]]*[^[:space:]]' <<< "$3"; then
     [ "$lines" -le "$MAX_LINES" ] ||
       notes="${notes}NOTE $lines changed lines of code and tests, over $MAX_LINES: Large-Batch lifts it.
 "
@@ -127,6 +130,26 @@ check() {
       Split it by module, or the human adds 'Large-Batch: <reason>' to the message.
 "
   fi
+}
+
+# Markdown that no contract is and no module governs asks little of a quiz: the human reads its diff.
+quiz_level() {
+  level=normal
+  if [ -n "$high" ]; then
+    level=high
+  elif [ -n "$changed" ] && [ -z "$hit" ] && ! grep -qv '\.md$' <<< "$changed"; then
+    level=low
+  fi
+}
+
+# Checks the change from $1 to $2 (commits or trees) under the commit message $3. Sets changed (the changed files),
+# hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and notes.
+check() {
+  errors= findings= notes=
+  changed=$(git diff --name-only --no-renames "$1" "$2")
+  drift "$1" "$2" "$3"
+  size "$1" "$2" "$3"
+  quiz_level
 }
 
 report() {

@@ -66,10 +66,10 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 
 ## Quiz
 
-How many questions depends on the risk. A batch whose changed files are all Markdown outside `sdd/modules/` needs no
-quiz (one written is still graded). A batch that changes a module declaring `risk: high` (an API contract, security,
-personal data, money) needs five, and the handoff recommends a second human's reading; nothing requires one, so a dev
-alone uses the whole harness. Any other batch needs three.
+How many questions depends on the risk. A batch whose changed files are all Markdown that no contract is and no module
+governs needs no quiz (one written is still graded). A batch that changes or deletes a module declaring `risk: high` (an
+API contract, security, personal data, money) needs five, and the handoff recommends a second human's reading; nothing
+requires one, so a dev alone uses the whole harness. Any other batch needs three.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 

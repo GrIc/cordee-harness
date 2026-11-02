@@ -21,17 +21,16 @@ check can be bypassed.
   still notes what it lifts. Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run), [test_up_to_five_percent_over_only_notes](/test/run),
   [test_two_modules_block_an_agent](/test/run), [test_large_batch_lifts_both_limits](/test/run).
-- Quiz: three questions, five when the batch changes a module declaring `risk: high`, none when every changed file is
-  Markdown outside `sdd/modules/` (one written is still graded), on the staged batch in `QUIZ.md`, graded offline
-  against a key: [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
+- Quiz, on an agent batch, as the workflow's Quiz section says: three questions, five when the batch changes or deletes
+  a module declaring `risk: high`, where `audit` recommends a second human's reading, none when every changed file is
+  Markdown that no contract is and no module governs (one written is still graded):
+  [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
   [test_wrong_answer_explains_then_a_retry_passes](/test/run), [test_a_high_risk_module_asks_five_questions](/test/run),
-  [test_a_markdown_only_batch_needs_no_quiz](/test/run). The trailer records the count, `Quiz: 5/5`, and `audit`
-  recommends a second human's reading at high risk, never requires it. A wrong answer prints one line, and writes under
-  its question, once, a quoted block the parser skips: the key's hint, a call to type *quiz feedback* to the agent, and
-  optional boxes to say why. A new try leaves the block as the dev left it; the boxes never change the grade:
-  [test_a_wrong_answer_writes_a_hint_block_in_the_quiz](/test/run),
-  [test_a_new_try_keeps_the_feedback_ticked](/test/run), [test_feedback_never_changes_the_grade](/test/run). When the
-  quiz passes, each question the dev flagged or commented goes to the quiz journal, which the clone's worktrees share:
+  [test_a_deleted_high_risk_contract_is_high_risk](/test/run), [test_a_markdown_only_batch_needs_no_quiz](/test/run),
+  [test_a_governed_markdown_batch_asks_a_quiz](/test/run). A wrong answer writes its block once, and the boxes never
+  change the grade: [test_a_wrong_answer_writes_a_hint_block_in_the_quiz](/test/run),
+  [test_a_new_try_keeps_the_feedback_ticked](/test/run), [test_feedback_never_changes_the_grade](/test/run). A passed
+  quiz journals its flagged questions, for all the clone's worktrees:
   [test_a_passed_quiz_journals_its_flagged_questions](/test/run), [test_worktrees_share_the_quiz_journal](/test/run).
   `audit` checks its form, so that the reviewer, not the human, meets a malformed quiz:
   [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_may_cite_more_places](/test/run).
@@ -54,12 +53,10 @@ check can be bypassed.
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run).
-- A link in a contract is drift when the commit lacks the file it points to, or when its text is neither found, as
-  whole words, in that file, nor its name or path: [test_a_link_to_a_missing_file_is_drift](/test/run),
-  [test_a_link_to_a_missing_test_name_is_drift](/test/run).
-- A link may name a test or a group, even wrapped over two lines, or point to a whole file when its text is the file's
-  name or path. Its target may be relative to the contract or start at the repo root, with or without an anchor. Web
-  links and links to markdown or to a directory are not checked:
+- A link in a contract, written as the workflow says, even wrapped over two lines or with an anchor, is drift when the
+  commit lacks its file, or when its text is neither found as whole words in that file nor its name or path. Web links
+  and links to markdown or to a directory are not checked: [test_a_link_to_a_missing_file_is_drift](/test/run),
+  [test_a_link_to_a_missing_test_name_is_drift](/test/run),
   [test_audit_accepts_links_to_names_groups_and_files](/test/run).
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
   workflow and guides, governs paths that match nothing, a quiz older than its batch, a right answer always in the same
