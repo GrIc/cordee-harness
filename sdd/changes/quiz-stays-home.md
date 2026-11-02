@@ -8,16 +8,6 @@ that grew with the plan are made readable on the way. Each batch writes its deci
 `Rejected:` line (a decision it supersedes in part loses that part and points to the new one), updates the docs where
 its behavior shows, and moves its criteria into its module's contract.
 
-## Read the quiz once, write its block once (checks)
-
-- One awk run joins `QUIZ.md` and the key, and prints per question: number, boxes, ticks, pick, see, right letter,
-  hint. `quiz_form` and `quiz` both read it; nothing else reads the key.
-- Under a wrong question whose next lines hold no block (lines starting with `>`), the hook writes the block: the
-  hint, the call to type *quiz feedback*, the boxes. A later wrong try leaves the block and what the dev ticked as
-  they are; tries are no longer counted: `test_a_wrong_answer_writes_a_hint_block_in_the_quiz`,
-  `test_a_new_try_keeps_the_feedback_ticked`, `test_feedback_never_changes_the_grade`.
-- Decision 29 and `checks.md` lose "from the second try".
-
 ## Fix what the review found, then make check readable (checks)
 
 - The quiz-free rule becomes: every changed file is Markdown that no contract is and no module governs. A module's

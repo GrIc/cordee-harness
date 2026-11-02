@@ -154,19 +154,32 @@ fail() {
   exit 1
 }
 
-# One line per question of QUIZ.md: its number, boxes, ticked boxes, the ticked letter and what its See cites.
+# One tab-separated line per question of QUIZ.md: its number, boxes, ticked boxes, the ticked letter, what its See
+# cites, the key's letter for it (- when the key has none among the boxes) and the key's hint. The one reader of the
+# key's answers.
 questions() {
-  tr -d '\r' < QUIZ.md | awk '
+  tr -d '\r' < QUIZ.md | KEY=$(quiz_key) awk '
+    BEGIN { while ((getline line < ENVIRON["KEY"]) > 0) { sub(/\r$/, "", line); key[n++] = line } }
     /^## / { q++; boxes[q] = 0; ticks[q] = 0; pick[q] = "-"; see[q] = "-"; next }
-    q && /^See / { see[q] = substr($0, 5) }
+    q && /^See / { see[q] = substr($0, 5); sub(/^ +/, "", see[q]); if (see[q] == "") see[q] = "-" }
     q && /^- \[[ xX]\]/ { boxes[q]++; if (/^- \[[xX]\]/) { ticks[q]++; pick[q] = substr("ABCD", boxes[q], 1) } }
-    END { for (i = 1; i <= q; i++) print i, boxes[i], ticks[i], pick[i], see[i] }'
+    END {
+      for (i = 1; i <= q; i++) {
+        right = hint = key[i]
+        sub(/ .*/, "", right)
+        sub(/^[^ ]* */, "", hint)
+        if (length(right) != 1 || !index(substr("ABCD", 1, boxes[i]), right)) right = "-"
+        gsub(/\t/, " ", see[i])
+        gsub(/\t/, " ", hint)
+        printf "%d\t%d\t%d\t%s\t%s\t%s\t%s\n", i, boxes[i], ticks[i], pick[i], see[i], right, hint
+      }
+    }'
 }
 
-# The reviewer's part: QUIZ.md and its key fit the staged batch. Sets count, the questions a quiz needs, and ranks,
-# the right letters in order. Needs changed and level, set by check.
+# The reviewer's part: QUIZ.md and its key fit the staged batch. Sets rows, the output of questions; count, the
+# questions a quiz needs; and ranks, the right letters in order. Needs changed and level, set by check.
 quiz_form() {
-  local key i boxes ticks pick see answer letters=ABCD
+  local key i boxes ticks pick see right hint
   key=$(quiz_key)
   ranks=
   count=3
@@ -175,49 +188,44 @@ quiz_form() {
   [ "$(head -n 1 "$key" | tr -d '\r')" = "$(fingerprint)" ] ||
     echo 'NOTE The batch changed since the quiz was written. If your changes touch what it asks, ask for a new one.' >&2
   [ "$(grep -c '^## ' QUIZ.md)" -eq "$count" ] || fail "QUIZ.md needs $count questions, each under a \"## \" heading."
-  while read -r i boxes ticks pick see; do
+  rows=$(questions)
+  while IFS=$'\t' read -r i boxes ticks pick see right hint; do
     grep -qxF "${see%%:*}" <<< "$changed" ||
       fail "Question $i needs a 'See <file>:<line>' line pointing to a file of this batch."
     [ "$boxes" -ge 2 ] && [ "$boxes" -le 4 ] || fail "Question $i needs 2 to 4 boxes."
-    answer=$(sed -n "$((i + 1))p" "$key" | tr -d '\r')
-    answer=${answer%% *}
-    case ${letters:0:$boxes} in *"$answer"*) ;; *) answer= ;; esac
-    [ ${#answer} -eq 1 ] ||
+    [ "$right" != - ] ||
       fail "Question $i has no right box in the key: line $((i + 1)) starts with its letter, A for the first box."
-    ranks=$ranks$answer
-  done <<< "$(questions)"
+    ranks=$ranks$right
+  done <<< "$rows"
 }
 
-# Writes under each wrong question of QUIZ.md a quoted block, which the parser skips: its tries, the key's hint, and
-# optional boxes for the dev to say why. A new try counts up and keeps what the dev ticked and wrote.
-# $1: one line per wrong question, its number, a tab and its hint.
+# Writes under each wrong question of QUIZ.md that has none yet a quoted block, which the parser skips: the key's
+# hint, the call to type *quiz feedback*, and optional boxes for the dev to say why. A block already there stays as
+# the dev left it. $1: one line per wrong question, its number, a tab and its hint.
 feedback() {
   tr -d '\r' < QUIZ.md | WRONG=$1 awk '
     BEGIN {
       n = split(ENVIRON["WRONG"], rows, "\n")
       for (i = 1; i <= n; i++) if (split(rows[i], f, "\t") == 2) hint[f[1]] = f[2]
-      split("I had not understood the code|The question is unclear|The code does not do what I wanted: check" \
-        " this box and type *quiz feedback* to your agent to clarify", causes, "|")
     }
-    function flush(   i, last, tries) {
-      if (!(q in hint)) { for (i = 1; i <= lines; i++) print buf[i]; lines = 0; return }
-      tries = 1
-      for (i = 1; i <= lines; i++) {
-        if (buf[i] ~ /^> Wrong, [0-9]+ tr/) { split(buf[i], w, " "); tries = w[3] + 1 }
-        if (buf[i] ~ /^> - \[[xX]\] /) ticked[substr(buf[i], 9)] = 1
-        if (buf[i] ~ /^> - Other:/) other = substr(buf[i], 11)
-      }
-      for (last = lines; last > 0 && (buf[last] == "" || buf[last] ~ /^>/); last--) ;
+    function flush(   i, last, block, wrong) {
+      for (i = 1; i <= lines; i++) if (buf[i] ~ /^>/) block = 1
+      if (!(q in hint) || block) { for (i = 1; i <= lines; i++) print buf[i]; lines = 0; return }
+      for (last = lines; last > 0 && buf[last] == ""; last--) ;
       for (i = 1; i <= last; i++) print buf[i]
+      wrong = "> Wrong."
+      if (hint[q] != "") wrong = wrong " Hint: " hint[q]
       print ""
-      printf "> Wrong, %d %s.%s\n", tries, (tries == 1 ? "try" : "tries"), (hint[q] == "" ? "" : " Hint: " hint[q])
-      if (tries > 1) printf "> %d tries on this question: type *quiz feedback* to your agent to clear it up.\n", tries
+      print wrong
+      print "> Type *quiz feedback* to your agent to talk it through."
       print ">"
       print "> Optional, why? (stays on this machine)"
-      for (i = 1; i <= 3; i++) printf "> - [%s] %s\n", ticked[causes[i]] ? "x" : " ", causes[i]
-      print "> - Other:" other
+      print "> - [ ] I had not understood the code"
+      print "> - [ ] The question is unclear"
+      print "> - [ ] The code does not do what I wanted"
+      print "> - Other:"
       if (!end) print ""
-      lines = 0; other = ""; delete ticked
+      lines = 0
     }
     /^## / { flush(); q++ }
     { buf[++lines] = $0 }
@@ -250,21 +258,17 @@ journal() {
 
 # Checks the boxes ticked in QUIZ.md against the reviewer's key. Needs changed and hit, set by check.
 quiz() {
-  local key wrong= i boxes ticks pick see expected hint
-  key=$(quiz_key)
+  local wrong= i boxes ticks pick see right hint
   [ -f QUIZ.md ] ||
     fail 'No quiz for this agent-assisted batch: ask the fresh reviewer for QUIZ.md (see sdd/WORKFLOW.md).'
   quiz_form
-  while read -r i boxes ticks pick see; do
+  while IFS=$'\t' read -r i boxes ticks pick see right hint; do
     [ "$ticks" -eq 1 ] || fail "Tick exactly one box for question $i in QUIZ.md, save, then commit again."
-    expected=$(sed -n "$((i + 1))p" "$key" | tr -d '\r')
-    if [ "$pick" != "${expected%% *}" ]; then
-      hint=${expected:1}
-      wrong="$wrong$i	${hint# }
+    [ "$pick" != "$right" ] || continue
+    wrong="$wrong$i	$hint
 "
-      echo "Question $i is wrong: a hint is in QUIZ.md." >&2
-    fi
-  done <<< "$(questions)"
+    echo "Question $i is wrong: a hint is in QUIZ.md." >&2
+  done <<< "$rows"
   if [ -z "$wrong" ]; then
     journal
     return 0

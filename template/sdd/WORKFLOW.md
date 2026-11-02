@@ -101,9 +101,9 @@ alone uses the whole harness. Any other batch needs three.
   ```
 
 The commit fails until every answer is right. Under each wrong question, the hook writes a quoted block in
-`QUIZ.md`: the tries, the hint, and optional boxes for the dev to say why (not understood, question unclear, the code
-does not do what they wanted). The boxes never change the grade. If the batch changed since the quiz was written, the
-hook only warns: ask for a new quiz when the changes touch what it asks.
+`QUIZ.md`, once: the hint, a call to type *quiz feedback*, and optional boxes for the dev to say why (not understood,
+question unclear, the code does not do what they wanted). The boxes never change the grade. If the batch changed
+since the quiz was written, the hook only warns: ask for a new quiz when the changes touch what it asks.
 
 When the quiz passes, each question the dev flagged or commented goes to
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one

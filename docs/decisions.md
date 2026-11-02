@@ -209,7 +209,8 @@ quality (the logs show what is used, not what it is worth).
 The quiz learns from the dev instead of only grading them. Under a wrong question, the hook writes in `QUIZ.md` the
 key's hint and optional boxes: not understood, question unclear, the code does not do what I wanted. A wrong answer
 often shows a gap of intent, not of the dev: the owner, answering from what they had asked for, found an implementation
-that was not what he wanted. From the second try, the block invites the dev to type *quiz feedback* to the agent.
+that was not what he wanted. The block invites the dev to type *quiz feedback* to the agent, and is written once:
+a new try leaves it as the dev left it, and counts nothing.
 Nothing there blocks or allows a commit: the human keeps the last word. The terminal shows one line per wrong question,
 the hint stays in the file next to its question. Hints point where to look and never name the box.
 _Rejected:_ the quiz in the chat with the agent (tokens on every batch, the agent becomes the judge, tied to one

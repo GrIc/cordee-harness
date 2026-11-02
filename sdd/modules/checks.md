@@ -27,9 +27,9 @@ check can be bypassed.
   [test_wrong_answer_explains_then_a_retry_passes](/test/run), [test_a_high_risk_module_asks_five_questions](/test/run),
   [test_a_markdown_only_batch_needs_no_quiz](/test/run). The trailer records the count, `Quiz: 5/5`, and `audit`
   recommends a second human's reading at high risk, never requires it. A wrong answer prints one line, and writes under
-  its question a quoted block the parser skips: the tries, the key's hint, from the second try a call to type *quiz
-  feedback* to the agent, and optional boxes to say why. A new try keeps what the dev ticked and wrote; the boxes never
-  change the grade: [test_a_wrong_answer_writes_a_hint_block_in_the_quiz](/test/run),
+  its question, once, a quoted block the parser skips: the key's hint, a call to type *quiz feedback* to the agent, and
+  optional boxes to say why. A new try leaves the block as the dev left it; the boxes never change the grade:
+  [test_a_wrong_answer_writes_a_hint_block_in_the_quiz](/test/run),
   [test_a_new_try_keeps_the_feedback_ticked](/test/run), [test_feedback_never_changes_the_grade](/test/run). When the
   quiz passes, each question the dev flagged or commented goes to the quiz journal, which the clone's worktrees share:
   [test_a_passed_quiz_journals_its_flagged_questions](/test/run), [test_worktrees_share_the_quiz_journal](/test/run).

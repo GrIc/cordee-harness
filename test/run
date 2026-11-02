@@ -498,15 +498,14 @@ test_a_wrong_answer_writes_a_hint_block_in_the_quiz() {
   write_quiz src/search/a.py 'A B C'
   answer A C C
   fails agent_commit 'Change search'
-  question 2 | grep -qxF '> Wrong, 1 try. Hint: Because of B.'
+  question 2 | grep -qxF '> Wrong. Hint: Because of B.'
+  question 2 | grep -qxF '> Type *quiz feedback* to your agent to talk it through.'
   question 2 | grep -qxF '> - [ ] The question is unclear'
-  ! question 2 | grep -qF 'type *quiz feedback* to your agent to clear it up'
   ! question 1 | grep -q '^>'
   [ "$(grep -c '^## ' QUIZ.md)" -eq 3 ]
+  before=$(cat QUIZ.md)
   fails agent_commit 'Change search'
-  question 2 | grep -qxF '> Wrong, 2 tries. Hint: Because of B.'
-  question 2 | grep -qxF '> 2 tries on this question: type *quiz feedback* to your agent to clear it up.'
-  [ "$(grep -c '^> Wrong' QUIZ.md)" -eq 1 ]
+  [ "$(cat QUIZ.md)" = "$before" ]
 }
 
 test_a_new_try_keeps_the_feedback_ticked() {
