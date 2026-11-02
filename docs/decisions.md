@@ -231,8 +231,8 @@ learning (the journal stays local, the ledger already has `sdd.ledger false`).
 
 ## 31. The quiz follows the risk (2026-10-27)
 
-The quiz weighs what a mistake costs. A contract may declare `risk: high`: a batch changing that module asks five
-questions, and the handoff and `audit` recommend a second human's reading. A batch of prose outside the contracts and
+The quiz weighs what a mistake costs. A contract may declare `risk: high`: the handoff and `audit` recommend a second
+human's reading of a batch changing that module, whose quiz decision 39 sets. A batch of prose outside the contracts and
 what modules govern (since 38) asks none: the human reads its diff, and a quiz on prose teaches little. Everything else
 asks three, as before. The OWF notes (October 2026) ask for a demanding quiz and two humans on API contracts, security
 and data; the owner kept the second human a recommendation, so that a dev alone can use the whole harness.
@@ -303,3 +303,15 @@ the module's code. A batch that deletes a `risk: high` contract is judged at hig
 already was. Both were found by the review of the rope team's scripts.
 _Rejected:_ sparing every Markdown file, as before (prose a module governs is its behavior); reading risk from the
 staged tree only (the batch that removes a high-risk module is one to read twice).
+
+## 39. The quiz covers the batch (2026-11-02)
+
+Five questions said nothing of what they left out: a quiz on one function of a seven-hunk batch passed as well as one
+on all of it. Each `See` line now cites one to three places, and the trailer says how many hunks of code they meet,
+`Quiz: 3/3, covers 5/7`: a fact about the code, in each commit, with no aggregate, as decision 36 asks. A new file is
+one hunk; a deletion is met at the line before or after it. At high risk the quiz has three questions or more and
+`audit` fails until they cite every hunk; the hook never checks it, so the human is never refused for the reviewer's
+miss. This supersedes the five questions of 31.
+_Rejected:_ five questions (a count, not a reach); coverage on the hook (it would refuse the human for the reviewer's
+quiz); a share of lines (a long new file would weigh more than the risky line beside it); questions on the technology
+(they test the reader, not their grasp of this code).

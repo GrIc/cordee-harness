@@ -21,11 +21,11 @@ check can be bypassed.
   still notes what it lifts. Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run), [test_up_to_five_percent_over_only_notes](/test/run),
   [test_two_modules_block_an_agent](/test/run), [test_large_batch_lifts_both_limits](/test/run).
-- Quiz, on an agent batch, as the workflow's Quiz section says: three questions, five when the batch changes or deletes
-  a module declaring `risk: high`, where `audit` recommends a second human's reading, none when every changed file is
-  Markdown that no contract is and no module governs (one written is still graded):
-  [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
-  [test_wrong_answer_explains_then_a_retry_passes](/test/run), [test_a_high_risk_module_asks_five_questions](/test/run),
+- Quiz, on an agent batch, as the workflow's Quiz section says: three questions, none when every changed file is
+  Markdown that no contract is and no module governs (one written is still graded). A batch that changes or deletes a
+  module declaring `risk: high` may ask more, and `audit` fails until their `See` lines cite every hunk of code, the
+  hook never: [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
+  [test_wrong_answer_explains_then_a_retry_passes](/test/run), [test_a_high_risk_quiz_covers_every_hunk](/test/run),
   [test_a_deleted_high_risk_contract_is_high_risk](/test/run), [test_a_markdown_only_batch_needs_no_quiz](/test/run),
   [test_a_governed_markdown_batch_asks_a_quiz](/test/run). A wrong answer writes its block once, and the boxes never
   change the grade: [test_a_wrong_answer_writes_a_hint_block_in_the_quiz](/test/run),
@@ -33,7 +33,9 @@ check can be bypassed.
   quiz journals its flagged questions, for all the clone's worktrees:
   [test_a_passed_quiz_journals_its_flagged_questions](/test/run), [test_worktrees_share_the_quiz_journal](/test/run).
   `audit` checks its form, so that the reviewer, not the human, meets a malformed quiz:
-  [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_may_cite_more_places](/test/run).
+  [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_cites_three_places_at_most](/test/run).
+  The trailer says how many hunks of code the quiz cites:
+  [test_the_trailer_says_how_much_the_quiz_covers](/test/run).
 - `install-hook` writes the `commit-msg`, `post-commit` and `pre-push` hooks, or prints the line to add to a hook it
   did not write; each line passes in a repo without the harness. It says how to turn the ledger off:
   [test_install_hook_respects_an_existing_hook](/test/run),

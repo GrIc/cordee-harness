@@ -66,16 +66,19 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 
 ## Quiz
 
-How many questions depends on the risk. A batch whose changed files are all Markdown that no contract is and no module
-governs needs no quiz (one written is still graded). A batch that changes or deletes a module declaring `risk: high` (an
-API contract, security, personal data, money) needs five, and the handoff recommends a second human's reading; nothing
-requires one, so a dev alone uses the whole harness. Any other batch needs three.
+A quiz has three questions. A batch whose changed files are all Markdown that no contract is and no module governs
+needs none (one written is still graded). A batch that changes or deletes a module declaring `risk: high` (an API
+contract, security, personal data, money) may have more, and its `See` lines cite every hunk of code: `audit` fails
+until they do, the hook never checks it. The handoff then recommends a second human's reading; nothing requires one,
+so a dev alone uses the whole harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 
-- `QUIZ.md` at the repo root (kept out of git): questions that make the human predict, not recognize. What does
-  this return for that input, which line enforces this rule, what breaks if this line goes, why this option over that
-  one. Each question cites a changed `file:line` and has 2 to 4 boxes; the right box changes place.
+- `QUIZ.md` at the repo root (kept out of git): questions that make the human predict, not recognize. Ask what this
+  code does, never the technology: from what it does to how, then why. What does this return for that input, which
+  line enforces this rule, what breaks if this line goes, why this option over that one. Each question has a `See`
+  line citing one to three places of the batch, `file:line` or `file:line-line`, separated by `, `, and 2 to 4 boxes;
+  the right box changes place.
 
   ```markdown
   # Quiz for this batch
@@ -104,6 +107,11 @@ The commit fails until every answer is right. Under each wrong question, the hoo
 `QUIZ.md`, once: the hint, a call to type *quiz feedback*, and optional boxes for the dev to say why (not understood,
 question unclear, the code does not do what they wanted). The boxes never change the grade. If the batch changed
 since the quiz was written, the hook only warns: ask for a new quiz when the changes touch what it asks.
+
+The trailer says how much of the batch the quiz covers: `Quiz: 3/3, covers 5/7` counts the hunks of
+`git diff --cached -U0` outside Markdown and lock files that a `See` range meets. A new file is one hunk; a hunk that
+only deletes is met at the line before it or the one after, so a deleted file at its line 1. Without a hunk of code,
+the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
 
 When the quiz passes, each question the dev flagged or commented goes to
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one
@@ -148,7 +156,7 @@ keeps its text.
 | `Agent-Assisted: yes` | the agent, in its proposed message | drift and size block, the quiz is required |
 | `Spec-Unchanged(<module>): <reason>` | the author | spares that module from the drift check and the one-module limit |
 | `Large-Batch: <reason>` | the human | lifts the size limits (`MAX_LINES` in `sdd/bin/sdd`, one module) |
-| `Quiz: 3/3` | the hook | records the passed quiz and its number of questions |
+| `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
 A co-author address listed in `AGENT_EMAILS` (top of `sdd/bin/sdd`) counts as `Agent-Assisted: yes`; any other commit
 is the human's own. The script prints ERROR when every commit must stop; DRIFT (code against its contract, or a

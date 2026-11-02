@@ -5,6 +5,9 @@ set -euf  # f: governs paths go to git as pathspecs, the shell must not expand t
 # An agent batch up to 5% over only gets a note.
 MAX_LINES=200
 
+# Files that count neither in the size nor in what the quiz covers: prose and lock files.
+NOT_CODE='\.md$|\.lock$|lock\.json$|lock\.yaml$'
+
 # Co-author addresses that mark an agent batch, as an ERE alternation. Names are not enough: Claude is also a
 # first name. Any agent can mark its batch with Agent-Assisted: yes.
 AGENT_EMAILS='noreply@anthropic\.com|noreply@openai\.com|aider@aider\.chat'
@@ -108,7 +111,7 @@ drift() {
 size() {
   local lines
   lines=$(git diff --numstat --no-renames "$1" "$2" |
-    awk -F '\t' '$1 != "-" && $3 !~ /(\.md|\.lock|lock\.json|lock\.yaml)$/ { n += $1 + $2 } END { print n + 0 }')
+    NOT_CODE=$NOT_CODE awk -F '\t' '$1 != "-" && $3 !~ ENVIRON["NOT_CODE"] { n += $1 + $2 } END { print n + 0 }')
   if grep -q '^Large-Batch:[[:space:]]*[^[:space:]]' <<< "$3"; then
     [ "$lines" -le "$MAX_LINES" ] ||
       notes="${notes}NOTE $lines changed lines of code and tests, over $MAX_LINES: Large-Batch lifts it.
@@ -199,27 +202,75 @@ questions() {
     }'
 }
 
-# The reviewer's part: QUIZ.md and its key fit the staged batch. Sets rows, the output of questions; count, the
-# questions a quiz needs; and ranks, the right letters in order. Needs changed and level, set by check.
+# How much of the staged code the quiz cites: "covered total", then the hunks it misses, joined by ", ". $1: one cited
+# range per line, its file, first and last line, tab-separated. A hunk that only deletes is met at the line before it
+# or the one after, so a deleted file at its line 1.
+cover() {
+  # The parser reads plain a/ and b/ paths, whatever the dev's diff settings.
+  git diff --cached -U0 --no-renames --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ |
+    CITES=$1 NOT_CODE=$NOT_CODE awk '
+    BEGIN {
+      n = split(ENVIRON["CITES"], rows, "\n")
+      for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); file[i] = f[1]; first[i] = f[2] + 0; last[i] = f[3] + 0 }
+    }
+    /^diff --git / { head = 1; code = 0; next }
+    head && /^--- / { path = substr($0, 7) }
+    head && /^\+\+\+ / {
+      if ($0 != "+++ /dev/null") path = substr($0, 7)
+      sub(/\t$/, "", path)
+      code = (path !~ ENVIRON["NOT_CODE"])
+      head = 0
+    }
+    /^@@ / && code {
+      split($3, side, ",")
+      lo = substr(side[1], 2) + 0
+      hi = lo
+      if (side[2] != "") hi = lo + side[2] - 1
+      if (side[2] == "0") hi = lo + 1
+      total++
+      for (i = 1; i <= n; i++) if (file[i] == path && first[i] <= hi && last[i] >= lo) break
+      if (i <= n) covered++
+      else { miss = miss sep path ":" lo; sep = ", " }
+    }
+    END { print covered + 0, total + 0; print miss }'
+}
+
+# The reviewer's part: QUIZ.md and its key fit the staged batch. Sets rows, the output of questions; count, its
+# questions; ranks, the right letters in order; and coverage, the output of cover. Needs changed and level, set by
+# check.
 quiz_form() {
-  local key i boxes ticks pick see right hint
+  local key i boxes ticks pick see right hint places place file span cites=
   key=$(quiz_key)
   ranks=
-  count=3
-  [ "$level" != high ] || count=5
   [ -f "$key" ] || fail "QUIZ.md has no key: the reviewer writes it at $key (see sdd/WORKFLOW.md)."
   [ "$(head -n 1 "$key" | tr -d '\r')" = "$(fingerprint)" ] ||
     echo 'NOTE The batch changed since the quiz was written. If your changes touch what it asks, ask for a new one.' >&2
-  [ "$(grep -c '^## ' QUIZ.md)" -eq "$count" ] || fail "QUIZ.md needs $count questions, each under a \"## \" heading."
+  count=$(grep -c '^## ' QUIZ.md) || :
+  if [ "$level" = high ]; then
+    [ "$count" -ge 3 ] || fail 'QUIZ.md needs 3 questions or more, each under a "## " heading.'
+  else
+    [ "$count" -eq 3 ] || fail 'QUIZ.md needs 3 questions, each under a "## " heading.'
+  fi
   rows=$(questions)
   while IFS=$'\t' read -r i boxes ticks pick see right hint; do
-    grep -qxF "${see%%:*}" <<< "$changed" ||
-      fail "Question $i needs a 'See <file>:<line>' line pointing to a file of this batch."
+    places=$(SEE=$see awk 'BEGIN { n = split(ENVIRON["SEE"], p, ", "); for (j = 1; j <= n; j++) print p[j] }')
+    [ "$(grep -c . <<< "$places")" -le 3 ] || see=
+    while IFS= read -r place; do
+      file=${place%:*}
+      span=${place##*:}
+      case $span in '' | *[!0-9-]* | -* | *- | *-*-*) see= ;; esac
+      grep -qxF "$file" <<< "$changed" || see=
+      [ -n "$see" ] ||
+        fail "Question $i needs a See line citing one to three places of this batch, as 'See a.py:4, b.py:10-12'."
+      cites="$cites$file	${span%-*}	${span#*-}
+"
+    done <<< "$places"
     [ "$boxes" -ge 2 ] && [ "$boxes" -le 4 ] || fail "Question $i needs 2 to 4 boxes."
     [ "$right" != - ] ||
       fail "Question $i has no right box in the key: line $((i + 1)) starts with its letter, A for the first box."
     ranks=$ranks$right
   done <<< "$rows"
+  coverage=$(cover "$cites")
 }
 
 # Writes under each wrong question of QUIZ.md that has none yet a quoted block, which the parser skips: the key's
@@ -348,7 +399,7 @@ guidance() {
 }
 
 hook() {
-  local msg base
+  local msg base covered total trailer
   # Finishing a merge: its commits were checked one by one.
   [ ! -f "$(git rev-parse --git-path MERGE_HEAD)" ] || return 0
   msg=$(grep -v '^#' "$1" || true)
@@ -360,7 +411,10 @@ hook() {
   [ -n "$changed" ] || return 0
   [ "$level" != low ] || [ -f QUIZ.md ] || return 0
   quiz
-  git interpret-trailers --in-place --trailer "Quiz: $count/$count" "$1"
+  read -r covered total <<< "$coverage"
+  trailer="Quiz: $count/$count"
+  [ "$total" -eq 0 ] || trailer="$trailer, covers $covered/$total"
+  git interpret-trailers --in-place --trailer "$trailer" "$1"
   rm -f QUIZ.md "$(quiz_key)"
 }
 
@@ -372,13 +426,17 @@ audit_staged() {
   check "$base" "$(git write-tree)" "$msg"
   report "$msg" || status=1
   [ -z "$high" ] ||
-    echo "NOTE $high: high risk, the quiz asks five questions and a second human's reading is recommended." >&2
+    echo "NOTE $high: high risk, the quiz cites every hunk of code and a second human's reading is recommended." >&2
   # The reviewer checks its quiz here, so that a malformed one never reaches the human.
   if [ -f QUIZ.md ]; then
     (
       quiz_form
       [ -n "${ranks//${ranks:0:1}/}" ] ||
         echo "NOTE QUIZ.md: the right answer is box ${ranks:0:1} every time, vary it." >&2
+      read -r covered total <<< "$coverage"
+      [ "$level" != high ] || [ "$covered" -eq "$total" ] ||
+        fail "QUIZ.md cites $covered of $total hunks of code; at high risk, its See lines cite them all. Missed: $(
+          sed -n 2p <<< "$coverage")."
     ) || status=1
   fi
   [ "$status" -ne 0 ] || echo 'OK: the staged batch passes the checks.'

@@ -445,7 +445,7 @@ write_quiz() {
     echo '# Quiz for this batch'
     for a in $2; do
       i=$((i + 1))
-      printf '\n## %s. Question %s?\n\nSee %s:1\n\n- [ ] one\n- [ ] two\n- [ ] three\n' "$i" "$i" "$1"
+      printf '\n## %s. Question %s?\n\nSee %s:2\n\n- [ ] one\n- [ ] two\n- [ ] three\n' "$i" "$i" "$1"
     done
   } > QUIZ.md
 }
@@ -456,6 +456,12 @@ tick() {
     /^## / { n++; box = 0 }
     n == q && /^- \[[ x]\]/ { box++; sub(/\[[ x]\]/, substr("ABCD", box, 1) == pick ? "[x]" : "[ ]") }
     { print }' QUIZ.md > QUIZ.tmp
+  mv QUIZ.tmp QUIZ.md
+}
+
+# Sets the See line of question $1 to $2.
+see() {
+  awk -v q="$1" -v see="See $2" '/^## / { n++ } n == q && /^See / { $0 = see } 1' QUIZ.md > QUIZ.tmp
   mv QUIZ.tmp QUIZ.md
 }
 
@@ -473,9 +479,34 @@ test_quiz_passed_adds_the_trailer_and_cleans_up() {
   answer A B C
   succeeds agent_commit 'Change search'
   lacks 'The batch changed'
-  git log -1 --format=%B | grep -qx 'Quiz: 3/3'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
   [ ! -e QUIZ.md ]
   [ ! -e "$(git rev-parse --git-path sdd/quiz-key)" ]
+}
+
+# Hunks of code: a change, a deletion met at the line before it, a change, and a new file. Markdown counts for none.
+test_the_trailer_says_how_much_the_quiz_covers() {
+  seq 1 9 > src/search/a.py
+  git add -A
+  git commit -qm 'Nine lines' 2> /dev/null
+  git config diff.noprefix true
+  git config color.diff always
+  sed -e 's/^2$/two/' -e '/^5$/d' -e 's/^8$/eight/' src/search/a.py > a.tmp && mv a.tmp src/search/a.py
+  echo new > src/search/b.py
+  echo 'More intent.' >> sdd/modules/search.md
+  git add -A
+  write_quiz src/search/a.py 'A B C'
+  see 1 src/search/a.py:1
+  see 3 src/search/a.py:4
+  answer A B C
+  succeeds agent_commit 'Change search'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 2/4'
+  echo 'How to run it.' > README.md
+  git add -A
+  write_quiz README.md 'A B C'
+  answer A B C
+  succeeds agent_commit 'Explain how to run it'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3'
 }
 
 test_wrong_answer_explains_then_a_retry_passes() {
@@ -532,7 +563,7 @@ test_feedback_never_changes_the_grade() {
   says 'Question 2 is wrong'
   answer A B C
   succeeds agent_commit 'Change search'
-  git log -1 --format=%B | grep -qx 'Quiz: 3/3'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
 }
 
 journal() { cat "$(git rev-parse --git-common-dir)/sdd/quiz-journal"; }
@@ -569,27 +600,35 @@ test_worktrees_share_the_quiz_journal() {
   [ "$(grep -c '^v2' "$tmp/repo/.git/sdd/quiz-journal")" -eq 2 ]
 }
 
-test_a_high_risk_module_asks_five_questions() {
+test_a_high_risk_quiz_covers_every_hunk() {
   printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
   git add -A
   git commit -qm 'Search is at high risk'
   batch
-  write_quiz src/search/a.py 'A B C'
-  fails bash sdd/bin/sdd audit
-  says 'NOTE search: high risk, the quiz asks five questions and a second human'
-  says 'QUIZ.md needs 5 questions'
-  write_quiz src/search/a.py 'A B C A B'
-  answer A B C A C
-  fails agent_commit 'Change search'
-  says '4/5.'
-  answer A B C A B
-  succeeds agent_commit 'Change search'
-  git log -1 --format=%B | grep -qx 'Quiz: 5/5'
-  printf -- '---\ngoverns: [src/search/]\n---\n# search\n' > sdd/modules/search.md
-  echo three >> src/search/a.py
+  echo new > src/search/b.py
   git add -A
-  bash sdd/bin/sdd audit > "$out" 2>&1 || true
+  write_quiz src/search/a.py 'A B'
+  fails bash sdd/bin/sdd audit
+  says 'NOTE search: high risk, the quiz cites every hunk of code and a second human'
+  says 'QUIZ.md needs 3 questions or more'
+  write_quiz src/search/a.py 'A B C A'
+  fails bash sdd/bin/sdd audit
+  says 'QUIZ.md cites 1 of 2 hunks of code; at high risk, its See lines cite them all. Missed: src/search/b.py:1.'
+  see 1 'src/search/a.py:2, src/search/b.py:1'
+  succeeds bash sdd/bin/sdd audit
+  answer A B C A
+  succeeds agent_commit 'Change search'
+  git log -1 --format=%B | grep -qx 'Quiz: 4/4, covers 2/2'
+  # The batch that drops risk: high is still judged at high risk, and the hook never checks what the quiz covers.
+  printf -- '---\ngoverns: [src/search/]\n---\n# search\n' > sdd/modules/search.md
+  echo three >> src/search/b.py
+  git add -A
+  write_quiz sdd/modules/search.md 'A B C'
+  fails bash sdd/bin/sdd audit
   says 'NOTE search: high risk'
+  answer A B C
+  succeeds agent_commit 'Lower the risk of search'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 0/1'
 }
 
 test_a_markdown_only_batch_needs_no_quiz() {
@@ -649,7 +688,7 @@ test_an_incomplete_quiz_is_refused() {
   write_quiz README.md 'A B C'
   answer A B C
   fails agent_commit 'Change search'
-  says "Question 1 needs a 'See <file>:<line>' line pointing to a file of this batch."
+  says 'Question 1 needs a See line citing one to three places of this batch'
 }
 
 # The reviewer runs the audit once the quiz is written: what the hook would refuse shows up before the human sees it.
@@ -657,7 +696,7 @@ test_audit_checks_the_quiz_before_the_human() {
   batch
   write_quiz README.md 'A B C'
   fails bash sdd/bin/sdd audit
-  says "Question 1 needs a 'See <file>:<line>' line pointing to a file of this batch."
+  says 'Question 1 needs a See line citing one to three places of this batch'
   write_quiz src/search/a.py 'A B D'
   fails bash sdd/bin/sdd audit
   says 'Question 3 has no right box in the key'
@@ -669,11 +708,15 @@ test_audit_checks_the_quiz_before_the_human() {
   says 'QUIZ.md has no key'
 }
 
-test_a_see_line_may_cite_more_places() {
+test_a_see_line_cites_three_places_at_most() {
   batch
   write_quiz src/search/a.py 'A B C'
   answer A B C
-  sed 's/^See .*/See src\/search\/a.py:1-2 and sdd\/modules\/search.md:5/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
+  sed '/^See /s/$/, sdd\/modules\/search.md:2-3, src\/search\/a.py:1, src\/search\/a.py:3/' QUIZ.md > QUIZ.tmp
+  mv QUIZ.tmp QUIZ.md
+  fails agent_commit 'Change search'
+  says 'Question 1 needs a See line citing one to three places of this batch'
+  sed 's/, src\/search\/a.py:3$//' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
   succeeds agent_commit 'Change search'
 }
 
@@ -693,7 +736,7 @@ test_quiz_trailer_with_editor_comments() {
   answer A B C
   printf 'Change search\n\nAgent-Assisted: yes\n' > "$msg"
   GIT_EDITOR=true succeeds git commit -q -e -F "$msg"
-  git log -1 --format=%B | grep -qx 'Quiz: 3/3'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
   git log -1 --format=%B | grep -qx 'Agent-Assisted: yes'
 }
 
