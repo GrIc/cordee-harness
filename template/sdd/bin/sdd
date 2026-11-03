@@ -169,9 +169,10 @@ report() {
   printf 'Warnings only, this is your own commit:\n%s' "$findings" >&2
 }
 
-fingerprint() {
-  printf '%s %s' "$(git write-tree)" "$(git rev-parse -q --verify HEAD || echo none)" | git hash-object --stdin
-}
+# The batch the quiz is for: tree $1 on top of commit $2 (none for a first commit).
+fingerprint() { printf '%s %s' "$1" "$2" | git hash-object --stdin; }
+
+staged() { fingerprint "$(git write-tree)" "$(git rev-parse -q --verify HEAD || echo none)"; }
 
 quiz_key() { git rev-parse --git-path sdd/quiz-key; }
 
@@ -243,7 +244,7 @@ quiz_form() {
   key=$(quiz_key)
   ranks=
   [ -f "$key" ] || fail "QUIZ.md has no key: the reviewer writes it at $key (see sdd/WORKFLOW.md)."
-  [ "$(head -n 1 "$key" | tr -d '\r')" = "$(fingerprint)" ] ||
+  [ "$(head -n 1 "$key" | tr -d '\r')" = "$(staged)" ] ||
     echo 'NOTE The batch changed since the quiz was written. If your changes touch what it asks, ask for a new one.' >&2
   count=$(grep -c '^## ' QUIZ.md) || :
   if [ "$level" = high ]; then
@@ -308,8 +309,8 @@ feedback() {
 }
 
 # Appends to the quiz journal a line per question the dev flagged or commented: v2, the time, the batch's modules, the
-# causes, the title and the words. It runs when the quiz passes, when the boxes are the dev's last word. The journal
-# stays on this machine, shared by the clone's worktrees; the cockpit reads it.
+# causes, the title and the words. It runs once the commit of a passed quiz exists, when the boxes are the dev's last
+# word. The journal stays on this machine, shared by the clone's worktrees; the cockpit reads it.
 journal() {
   local file
   file=$(git rev-parse --git-common-dir)/sdd/quiz-journal
@@ -330,7 +331,7 @@ journal() {
     END { out() }' >> "$file"
 }
 
-# Checks the boxes ticked in QUIZ.md against the reviewer's key. Needs changed and hit, set by check.
+# Checks the boxes ticked in QUIZ.md against the reviewer's key. Needs changed and level, set by check.
 quiz() {
   local wrong= i boxes ticks pick see right hint
   [ -f QUIZ.md ] ||
@@ -343,10 +344,7 @@ quiz() {
 "
     echo "Question $i is wrong: a hint is in QUIZ.md." >&2
   done <<< "$rows"
-  if [ -z "$wrong" ]; then
-    journal
-    return 0
-  fi
+  [ -n "$wrong" ] || return 0
   feedback "$wrong"
   fail "$((count - $(grep -c . <<< "$wrong")))/$count. Fix your answers in QUIZ.md, save, then commit again."
 }
@@ -413,6 +411,7 @@ hook() {
   # Finishing a merge or a cherry-pick: their commits were checked when first made.
   [ ! -f "$(git rev-parse --git-path MERGE_HEAD)" ] || return 0
   [ ! -f "$(git rev-parse --git-path CHERRY_PICK_HEAD)" ] || return 0
+  committed
   msg=$(grep -v '^#' "$1" || true)
   base=$(git rev-parse -q --verify HEAD || echo "$EMPTY_TREE")
   check "$base" "$(git write-tree)" "$msg"
@@ -426,7 +425,25 @@ hook() {
   trailer="Quiz: $count/$count"
   [ "$total" -eq 0 ] || trailer="$trailer, covers $covered/$total"
   git interpret-trailers --in-place --trailer "$trailer" "$1"
-  rm -f QUIZ.md "$(quiz_key)"
+}
+
+# After a commit: its quiz, once the commit exists, goes to the journal if it passed, then away. A later commit-msg
+# hook that fails keeps the quiz, and a commit made with --no-verify leaves none behind for the next batch. The
+# post-commit hook runs it; the next commit and the next fingerprint do too, for a clone whose hooks predate it.
+committed() {
+  local key quiz tree
+  key=$(quiz_key)
+  [ -f QUIZ.md ] && [ -f "$key" ] && git rev-parse -q --verify HEAD > /dev/null || return 0
+  quiz=$(head -n 1 "$key" | tr -d '\r')
+  tree=$(git rev-parse HEAD^{tree})
+  # An amend builds on what HEAD was before it, not on HEAD^.
+  [ "$quiz" = "$(fingerprint "$tree" "$(git rev-parse -q --verify HEAD^ || echo none)")" ] ||
+    [ "$quiz" = "$(fingerprint "$tree" "$(git rev-parse -q --verify HEAD@{1} || echo none)")" ] || return 0
+  if git log -1 --format=%B | grep -q '^Quiz:'; then
+    hit=$(touched HEAD | cut -f 1 | paste -s -d , -)
+    journal
+  fi
+  rm -f QUIZ.md "$key"
 }
 
 # Without a message file, the batch is judged as an agent's with no trailers.
@@ -565,7 +582,9 @@ install_hook() {
   mkdir -p "$(dirname "$exclude")"
   grep -qx '/QUIZ.md' "$exclude" 2> /dev/null || echo '/QUIZ.md' >> "$exclude"
   install_one commit-msg '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd hook "$1" || exit 1' || status=1
-  install_one post-commit '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' || status=1
+  install_one post-commit \
+    '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' ||
+    status=1
   install_one pre-push '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"' || status=1
   echo 'The token ledger notes what agents spend on each module, never who: git config sdd.ledger false stops it.'
   return $status
@@ -573,6 +592,7 @@ install_hook() {
 
 case ${1:-} in
   hook) hook "$2" ;;
+  committed) committed ;;
   audit)
     case ${2:-} in
       --message) audit_staged "$3" ;;
@@ -580,8 +600,9 @@ case ${1:-} in
       *) audit_staged ;;
     esac ;;
   fingerprint)
+    committed
     mkdir -p "$(dirname "$(quiz_key)")"
-    echo "fingerprint: $(fingerprint)"
+    echo "fingerprint: $(staged)"
     echo 'quiz: QUIZ.md'
     echo "key: $(quiz_key)" ;;
   install-hook) install_hook ;;

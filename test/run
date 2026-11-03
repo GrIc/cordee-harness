@@ -125,8 +125,10 @@ test_install_hook_respects_an_existing_hook() {
 }
 
 test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
-  grep -qxF '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' "$(git rev-parse --git-path hooks)/post-commit"
-  grep -qxF '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"' "$(git rev-parse --git-path hooks)/pre-push"
+  hooks=$(git rev-parse --git-path hooks)
+  line='[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record'
+  grep -qxF "$line" "$hooks/post-commit"
+  grep -qxF '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"' "$hooks/pre-push"
   git init -q --bare "$tmp/origin.git"
   succeeds git push -q "$tmp/origin.git" HEAD:main
 }
@@ -136,7 +138,7 @@ test_the_line_for_a_shared_hook() {
   git config core.hooksPath "$tmp/hooks"
   fails bash sdd/bin/sdd install-hook
   says "Your commit-msg hook is $(git rev-parse --git-path hooks)/commit-msg"
-  says '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record'
+  says '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record'
   says '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"'
   mkdir "$tmp/hooks"
   { echo '#!/bin/sh'; sed -n '/commit-msg hook/{n;p;}' "$out"; echo 'echo other checks pass'; } \
@@ -695,6 +697,62 @@ test_a_cherry_pick_asks_no_new_quiz() {
   printf 'one\ntwo\n' > src/search/a.py
   git add -A
   GIT_EDITOR=true succeeds git cherry-pick --continue
+}
+
+# The quiz goes once its commit exists: a later commit-msg hook that fails keeps it.
+test_a_failing_later_hook_keeps_the_quiz() {
+  hook=$(git rev-parse --git-path hooks)/commit-msg
+  echo 'exit 1' >> "$hook"
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  fails agent_commit 'Change search'
+  [ -f QUIZ.md ] && [ -f "$(git rev-parse --git-path sdd/quiz-key)" ]
+  sed '$d' "$hook" > "$tmp/hook" && cat "$tmp/hook" > "$hook"
+  succeeds agent_commit 'Change search'
+  [ ! -e QUIZ.md ]
+}
+
+# A batch committed without the hook leaves no quiz for the next one, and journals nothing.
+test_a_commit_without_the_hook_leaves_no_quiz() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  tick 1 A
+  echo '> - [x] The question is unclear' >> QUIZ.md
+  git commit -q --no-verify -m 'Change search'
+  [ ! -e QUIZ.md ]
+  [ ! -e "$(git rev-parse --git-common-dir)/sdd/quiz-journal" ]
+  echo three >> src/search/a.py
+  echo 'More.' >> sdd/modules/search.md
+  git add -A
+  fails agent_commit 'Change search again'
+  says 'No quiz for this agent-assisted batch'
+}
+
+test_an_amend_clears_its_quiz() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  agent_commit 'Change search'
+  echo three >> src/search/a.py
+  echo 'More.' >> sdd/modules/search.md
+  git add -A
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  succeeds git commit -q --amend -m 'Change search' -m 'Agent-Assisted: yes'
+  [ ! -e QUIZ.md ]
+}
+
+# A clone whose hooks predate the post-commit line: the reviewer's next fingerprint clears the quiz.
+test_the_next_fingerprint_clears_a_quiz_left_behind() {
+  rm "$(git rev-parse --git-path hooks)/post-commit"
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  agent_commit 'Change search'
+  [ -f QUIZ.md ]
+  bash sdd/bin/sdd fingerprint > /dev/null
+  [ ! -e QUIZ.md ]
 }
 
 test_a_quiz_older_than_the_batch_only_warns() {

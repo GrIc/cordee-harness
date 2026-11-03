@@ -113,7 +113,7 @@ The trailer says how much of the batch the quiz covers: `Quiz: 3/3, covers 5/7` 
 only deletes is met at the line before it or the one after, so a deleted file at its line 1. Without a hunk of code,
 the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
 
-When the quiz passes, each question the dev flagged or commented goes to
+Once the commit of a passed quiz exists, each question the dev flagged or commented goes to
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one
 tab-separated line, `v2`, the time in epoch seconds, the batch's modules (joined by `,`, or `-`), the boxes ticked
 (`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words (or

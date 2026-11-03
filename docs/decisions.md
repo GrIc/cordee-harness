@@ -274,11 +274,12 @@ already shows who worked where); rewriting the pushed notes (the kit's ledger ho
 
 ## 37. The journal keeps the flags, at the pass (2026-10-28)
 
-The quiz journal gets a line only for a question the dev flagged or commented, and only when the quiz passes, when
-the boxes are their last word: the time, the batch's modules, the causes, the title and the words. Its one reader, the
+The quiz journal gets a line only for a question the dev flagged or commented, and only when the quiz passes, when the
+boxes are their last word: the time, the batch's modules, the causes, the title and the words. Its one reader, the
 cockpit, needs no more. The tries, the batch fingerprint and the questions nobody flagged had a reader, the ledger,
-which decision 36 removed. A commit that fails after the pass journals the quiz again: the cockpit counts a flag once
-per module, title and cause. *quiz feedback* reads `QUIZ.md`, which holds the same, under each wrong question.
+which decision 36 removed. The post-commit hook journals it once the commit exists, so a later hook that fails journals
+nothing; an amend with a new quiz journals that one too, and the cockpit counts a flag once per module, title and cause.
+*quiz feedback* reads `QUIZ.md`, which holds the same, under each wrong question.
 _Rejected:_ a line at every try (counted twice, read by no one); the journal in the ledger's place for a report on
 the dev's own understanding (a score of themselves nobody asked for).
 
