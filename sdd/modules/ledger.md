@@ -19,7 +19,8 @@ default; with `git config sdd.ledger false`, nothing is noted, and the ledger ne
 - For a dev who turns it off, nothing is noted: [test_a_dev_who_turns_it_off_notes_nothing](/test/ledger). The hooks
   `install-hook` writes run `record` at each commit and `sync` at each push:
   [test_installed_hooks_record_and_share_the_ledger](/test/ledger).
-- `sync` merges the remote's ledger into ours and pushes it, so that two devs' notes add up:
+- `sync` merges the remote's ledger into ours and pushes the result as one commit with no parent, so that two devs'
+  notes add up and the shared history never shows whose came first:
   [test_sync_merges_two_devs_ledgers](/test/ledger). A dev with no ledger fetches nothing:
   [test_sync_without_a_ledger_fetches_nothing](/test/ledger).
 - `report` sums the ledger by month, module, role and model, then shows per month the batches noted against the

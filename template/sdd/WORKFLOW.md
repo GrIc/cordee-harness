@@ -48,11 +48,11 @@ A file is created when first needed.
 4. Read the whole diff against the coding style and delete what does not earn its place.
 5. Stage the batch, write the proposed message with `Agent-Assisted: yes` to `.git/sdd/message`, and run
    `bash sdd/bin/sdd audit --message .git/sdd/message`.
-6. Review: spawn a fresh reviewer, a new context that did not write the batch. It reads the staged diff, the contract
-   and the coding style, and reports findings with their evidence. Once they are fixed, it writes the quiz, then runs
-   the audit of step 5 again, which checks the quiz. Give it a smaller model than the writer's unless the batch is
-   large or touches security or data. After a fix, send the same reviewer the change: it checks that its quiz still
-   holds for a fraction of a fresh one.
+6. Review: spawn a fresh reviewer, a new context that did not write the batch, and tell it the language the human writes
+   to you in. It reads the staged diff, the contract and the coding style, and reports findings with their evidence.
+   Once they are fixed, it writes the quiz, then runs the audit of step 5 again, which checks the quiz. Give it a
+   smaller model than the writer's unless the batch is large or touches security or data. After a fix, send the same
+   reviewer the change: it checks that its quiz still holds for a fraction of a fresh one.
 7. Hand off: purpose, the decisions you took alone, evidence, limits and a short "understand this" for the human, and at
    high risk the advice to have a second human read the diff. The human reads the diff, answers `QUIZ.md` and commits
    with `git commit -F .git/sdd/message`. Start the next batch in a fresh session: a long one reads its whole history
@@ -78,7 +78,8 @@ so a dev alone uses the whole harness.
   code does, never the technology: from what it does to how, then why. What does this return for that input, which
   line enforces this rule, what breaks if this line goes, why this option over that one. Each question has a `See`
   line citing one to three places of the batch, `file:line` or `file:line-line`, separated by `, `, and 2 to 4 boxes;
-  the right box changes place.
+  the right box changes place. Questions, boxes and the key's hints are in the human's language; the headings,
+  `See` and the boxes' marks stay as shown.
 
   ```markdown
   # Quiz for this batch

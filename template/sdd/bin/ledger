@@ -54,16 +54,21 @@ record() {
   neutral "$month" notes --ref sdd-ledger add -m "$note" "$key"
 }
 
-# Merges the remote's ledger into ours, then pushes it. Runs before a push and never stops it. A dev with no ledger
-# has nothing to send, so their push stays a single round trip.
+# Merges the remote's ledger into ours, then pushes the merged notes as one commit with no parent: the shared history
+# never shows whose notes came in which order. Runs before a push and never stops it. A dev with no ledger has nothing
+# to send, so their push stays a single round trip.
 sync() {
-  local remote=$1
+  local remote=$1 month seen= flat
   git rev-parse -q --verify "$REF" > /dev/null || return 0
+  month=$(date -u +%Y-%m)
   if git fetch -q "$remote" "+$REF:$REF-remote" 2> /dev/null; then
-    neutral "$(date -u +%Y-%m)" notes --ref sdd-ledger merge -q "$REF-remote" ||
+    seen=$(git rev-parse "$REF-remote")
+    neutral "$month" notes --ref sdd-ledger merge -q "$REF-remote" ||
       { echo "NOTE the token ledger could not merge $remote's: the next push retries." >&2; return 0; }
   fi
-  git push -q --no-verify "$remote" "$REF" ||
+  flat=$(neutral "$month" commit-tree -m 'Token ledger' "$REF^{tree}")
+  # The lease: a ledger another dev pushed since the fetch is merged at the next push, never overwritten.
+  git push -q --no-verify --force-with-lease="$REF:$seen" "$remote" "$flat:$REF" ||
     echo "NOTE the token ledger did not reach $remote: the next push retries." >&2
 }
 

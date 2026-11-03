@@ -317,3 +317,21 @@ move comes after the fixes the team needs to test the harness (`sdd/changes/team
 _Rejected:_ bash with its awk in `.awk` files (readable in part, JSON still hard); a compiled binary (a build and a
 release per platform); one big batch for fixes and move together (nobody could read it, against the harness's own
 rule); the pre-commit framework (it needs pip).
+
+## 41. The pushed ledger has no history (2026-11-03)
+
+Each `record` was a notes commit and `sync` merged the clones' chains, so `git log --graph refs/notes/sdd-ledger`
+showed each clone's notes on its own side of a merge, in commit order: matched with the agent commits of an author,
+the k-th note gave each dev's cost per batch (review of 2026-11-02), against decision 22. `sync` now pushes the merged
+notes as one commit with no parent, dated the first of the month by `sdd-fabrik`; the local chain is never pushed.
+A lease on the fetched commit keeps a ledger pushed meanwhile from being overwritten: it is merged at the next push.
+_Rejected:_ one ref per dev (it names them); squashing the local chain too (the local history names no one else).
+
+## 42. The quiz speaks the human's language (2026-11-03)
+
+The owner talks to the agent in French and asked for a quiz in French: a question read in a second language tests
+the language as much as the code. The writer tells the reviewer the language the human writes in; questions, boxes and
+hints are in it. The marks the hook parses (`## `, `See`, `- [ ]`) and the block it writes under a wrong answer stay
+in English, so the journal reads the same in every team.
+_Rejected:_ a language setting in the repo (a team may mix languages; the human's own words are the evidence);
+translating the hook's block (the journal would parse each language).

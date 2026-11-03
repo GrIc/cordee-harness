@@ -6,12 +6,10 @@ another hook fails, and a ledger whose history tells which clone spent what. The
 scripts, so that the human tags v2.3.0 for the team; the move to Python (decision 40) comes after it. The first batch,
 committed with this plan, stops the hook's false refusals (worktree links, cherry-pick, hunk context).
 
-## A pushed ledger tells no clone (ledger)
+## Audit clears the last commit's quiz, the docs say what the harness does (checks)
 
-- `sync` pushes the merged notes as one commit with no parent, so the shared history never shows whose notes came in
-  which order. The assertions of `test/ledger` that checked nothing check again.
-
-## The docs say what the harness does (docs)
+- `audit` runs `committed` first, as the hook and `fingerprint` do, so that a quiz left by a clone whose hooks predate
+  the post-commit line is not graded as the staged batch's.
 
 - README (the ledger holds no quiz), `upgrade.md` (`NOT_CODE`, each worktree's folder, the ledger's refs), "nothing
   leaves the machine" worded as "nothing is pushed". Then the human tags v2.3.0.
