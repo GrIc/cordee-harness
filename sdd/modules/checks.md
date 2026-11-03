@@ -54,12 +54,15 @@ check can be bypassed.
   [test_brief_spots_a_dev_s_first_batch_in_a_module](/test/run), [test_brief_is_silent_in_a_known_module](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
-- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run).
+- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). The hook
+  checks nothing when it finishes a merge or a cherry-pick, whose commits were checked when first made:
+  [test_a_cherry_pick_asks_no_new_quiz](/test/run).
 - A link in a contract, written as the workflow says, even wrapped over two lines or with an anchor, is drift when the
   commit lacks its file, or when its text is neither found as whole words in that file nor its name or path. Web links
   and links to markdown or to a directory are not checked: [test_a_link_to_a_missing_file_is_drift](/test/run),
   [test_a_link_to_a_missing_test_name_is_drift](/test/run),
-  [test_audit_accepts_links_to_names_groups_and_files](/test/run).
+  [test_audit_accepts_links_to_names_groups_and_files](/test/run), also in a worktree's hook:
+  [test_a_worktree_hook_reads_relative_links](/test/run).
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
   workflow and guides, governs paths that match nothing, a quiz older than its batch, a right answer always in the same
   place: [test_audit_notes_the_markdown_ratio](/test/run), [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),

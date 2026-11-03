@@ -491,6 +491,7 @@ test_the_trailer_says_how_much_the_quiz_covers() {
   git commit -qm 'Nine lines' 2> /dev/null
   git config diff.noprefix true
   git config color.diff always
+  git config diff.interHunkContext 3
   sed -e 's/^2$/two/' -e '/^5$/d' -e 's/^8$/eight/' src/search/a.py > a.tmp && mv a.tmp src/search/a.py
   echo new > src/search/b.py
   echo 'More intent.' >> sdd/modules/search.md
@@ -533,7 +534,7 @@ test_a_wrong_answer_writes_a_hint_block_in_the_quiz() {
   question 2 | grep -qxF '> Wrong. Hint: Because of B.'
   question 2 | grep -qxF '> Type *quiz feedback* to your agent to talk it through.'
   question 2 | grep -qxF '> - [ ] The question is unclear'
-  ! question 1 | grep -q '^>'
+  [ -z "$(question 1 | grep '^>')" ]
   [ "$(grep -c '^## ' QUIZ.md)" -eq 3 ]
   before=$(cat QUIZ.md)
   fails agent_commit 'Change search'
@@ -635,7 +636,7 @@ test_a_markdown_only_batch_needs_no_quiz() {
   echo 'How to run it.' > README.md
   git add -A
   succeeds agent_commit 'Explain how to run it'
-  ! git log -1 --format=%B | grep -q '^Quiz:'
+  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
   echo 'More.' >> README.md
   git add -A
   write_quiz README.md 'A B C'
@@ -663,6 +664,37 @@ test_a_deleted_high_risk_contract_is_high_risk() {
   git rm -q sdd/modules/search.md
   bash sdd/bin/sdd audit > "$out" 2>&1 || true
   says 'NOTE search: high risk'
+}
+
+test_a_worktree_hook_reads_relative_links() {
+  mkdir tests
+  echo 'def test_x(): pass' > tests/test_search.py
+  printf -- '---\ngoverns: [src/search/]\n---\n# search\n\n- X: [test_x](../../tests/test_search.py).\n' \
+    > sdd/modules/search.md
+  git add -A
+  git commit -qm 'Link a test'
+  git worktree add -q "$tmp/other" -b other
+  cd "$tmp/other"
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  succeeds agent_commit 'Change search'
+}
+
+# Its commit was checked when first made; finishing it after a conflict asks for no new quiz.
+test_a_cherry_pick_asks_no_new_quiz() {
+  git checkout -q -b side
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  agent_commit 'Change search'
+  git checkout -q main
+  echo clash >> src/search/a.py
+  git commit -qam 'Clash' 2> /dev/null
+  git cherry-pick side > /dev/null 2>&1 || true
+  printf 'one\ntwo\n' > src/search/a.py
+  git add -A
+  GIT_EDITOR=true succeeds git cherry-pick --continue
 }
 
 test_a_quiz_older_than_the_batch_only_warns() {

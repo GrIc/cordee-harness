@@ -206,8 +206,8 @@ questions() {
 # range per line, its file, first and last line, tab-separated. A hunk that only deletes is met at the line before it
 # or the one after, so a deleted file at its line 1.
 cover() {
-  # The parser reads plain a/ and b/ paths, whatever the dev's diff settings.
-  git diff --cached -U0 --no-renames --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ |
+  # The parser reads plain a/ and b/ paths and one hunk per change, whatever the dev's diff settings.
+  git diff --cached -U0 --inter-hunk-context=0 --no-renames --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ |
     CITES=$1 NOT_CODE=$NOT_CODE awk '
     BEGIN {
       n = split(ENVIRON["CITES"], rows, "\n")
@@ -353,7 +353,7 @@ quiz() {
 
 # Drift between contract $2 and the tests it links, in tree $1: a linked file the tree lacks, or a name the file lacks.
 links() {
-  local link text target file
+  local link text target path file
   git show "$1:$2" | tr '\r\n' '  ' | tr -s ' ' | grep -o '\[[^]]*\]([^)]*)' | while IFS= read -r link; do
     text=${link#[}
     text=${text%%](*}
@@ -361,11 +361,21 @@ links() {
     target=${target%)}
     target=${target%%#*}
     case $target in '' | *:* | *.md | */) continue ;; esac
-    # A target is relative to the contract, or starts at the repo root.
+    # A target is relative to the contract, or starts at the repo root. Resolved here, not by git -C: in a worktree's
+    # hook, git -C takes the contract's folder for the work tree.
     case $target in
-      /*) file=$(git ls-tree --name-only "$1" -- "${target#/}" 2> /dev/null) ;;
-      *) file=$(git -C "${2%/*}" ls-tree --full-name --name-only "$1" -- "$target" 2> /dev/null) ;;
+      /*) path=${target#/} ;;
+      *) path=$(PATH_IN="${2%/*}/$target" awk 'BEGIN {
+           n = split(ENVIRON["PATH_IN"], part, "/")
+           for (i = 1; i <= n; i++) {
+             if (part[i] == "..") { if (k == 0) exit; k-- }
+             else if (part[i] != "." && part[i] != "") kept[++k] = part[i]
+           }
+           for (i = 1; i <= k; i++) { out = out sep kept[i]; sep = "/" }
+           print out }') ;;
     esac
+    file=
+    [ -z "$path" ] || file=$(git ls-tree --name-only "$1" -- "$path" 2> /dev/null)
     if [ -z "$file" ]; then
       echo "DRIFT $2: links \"$text\" to $target, a file the commit does not have."
     elif [ "$(git cat-file -t "$1:$file")" = blob ] && [ "$text" != "${file##*/}" ] && [ "$text" != "$file" ] &&
@@ -400,8 +410,9 @@ guidance() {
 
 hook() {
   local msg base covered total trailer
-  # Finishing a merge: its commits were checked one by one.
+  # Finishing a merge or a cherry-pick: their commits were checked when first made.
   [ ! -f "$(git rev-parse --git-path MERGE_HEAD)" ] || return 0
+  [ ! -f "$(git rev-parse --git-path CHERRY_PICK_HEAD)" ] || return 0
   msg=$(grep -v '^#' "$1" || true)
   base=$(git rev-parse -q --verify HEAD || echo "$EMPTY_TREE")
   check "$base" "$(git write-tree)" "$msg"

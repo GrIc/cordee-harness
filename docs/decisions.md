@@ -14,12 +14,7 @@ _Rejected:_ the four protocol files, the generated `SOURCE.md`, `last-sync` and 
 Drift is computed from the history that spec and code share. _Rejected:_ the detached topology (no shared history,
 so drift becomes a ritual instead of a check).
 
-## 3. Bash and git only (2026-10-03)
-
-git is already there; on Windows, Git for Windows brings bash, sed and awk. Three scripts, about 570 lines in all, land
-in each project, and `cockpit.py`, the only Python, read-only and optional (decision 26). _Rejected:_ Python (a 458-line
-runner was written: too heavy to copy into every project, and a runtime to install); the pre-commit framework (needs
-Python and pip).
+## 3. Superseded by 40.
 
 ## 4. A native commit-msg hook (2026-10-03)
 
@@ -174,15 +169,7 @@ agents nothing: an upgrade replaces the scripts without reading their diff. _Rej
 their PATH (most would not, the kit read as two products, and agents could not count on it); a ledger each dev joins
 by choice (it names no one, and a tower that misses most batches tells nothing).
 
-## 26. The ledger's reader needs no Python (2026-10-25)
-
-`bash sdd/bin/cockpit usage` reads Claude Code's logs with awk, so the ledger counts the devs without Python, most of
-them on Windows. On the logs of two repos, it gives the same sums as the Python reader did. A reply is matched where
-Claude Code writes its keys (model and id first, usage and timestamp last), so a change of its log format can silence
-it: the test logs keep that order. opencode's logs, a SQLite base, and the report stay in `cockpit.py`.
-_Rejected:_ the report in awk (it weighs nested pieces of each entry: long and fragile, for a screen only the dev
-reads); opencode through the `sqlite3` program (missing from Git for Windows and most Linux installs, where Python is
-there).
+## 26. Superseded by 40.
 
 ## 27. The workflow keeps the loop, guides keep the rest (2026-10-25)
 
@@ -315,3 +302,17 @@ miss. This supersedes the five questions of 31.
 _Rejected:_ five questions (a count, not a reach); coverage on the hook (it would refuse the human for the reviewer's
 quiz); a share of lines (a long new file would weigh more than the risky line beside it); questions on the technology
 (they test the reader, not their grasp of this code).
+
+## 40. The harness moves to Python 3 (2026-11-02)
+
+The scripts grew to 825 lines of bash with awk programs inside quotes, plus 331 of Python, which the owner and the team
+find hard to read, and the readers of agent logs (Claude Code, opencode, then Kilo Code and Copilot) parse JSON, which
+awk does badly: the bash and Python readers of Claude Code's logs already disagree on an escaped quote. The owner
+confirmed that Python 3 is on every dev machine of the team. The scripts move to Python 3, standard library only, behind
+the same commands, so that the tests, which call the commands, prove the move. Decision 3 rejected Python as a runtime
+to install and too heavy to copy; the team has the runtime, and the standard library keeps the copy to a few files with
+no package to install. This supersedes decisions 3 (bash and git only) and 26 (the ledger's reader without Python). The
+move comes after the fixes the team needs to test the harness (`sdd/changes/team-ready.md`).
+_Rejected:_ bash with its awk in `.awk` files (readable in part, JSON still hard); a compiled binary (a build and a
+release per platform); one big batch for fixes and move together (nobody could read it, against the harness's own
+rule); the pre-commit framework (it needs pip).

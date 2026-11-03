@@ -165,5 +165,5 @@ agent batch and only warn on the human's own; and NOTE, guidance that never refu
 pushed commit, never the quiz. Everything here can be bypassed: it is there to help, not to lock.
 
 The hook compares the batch with HEAD: to amend an agent batch that changes files, run `git reset --soft HEAD^` and
-commit again. Merge pull requests with a merge commit or a rebase: a squash adds the batches up, so the size check
-fails on the default branch, or it drops their trailers.
+commit again. It checks nothing when it finishes a merge or a cherry-pick. Merge pull requests with a merge commit or
+a rebase: a squash adds the batches up, so the size check fails on the default branch, or it drops their trailers.
