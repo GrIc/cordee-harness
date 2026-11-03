@@ -23,7 +23,7 @@ To install, tell your agent: `Deploy https://github.com/GrIc/sdd-fabrik in this 
 | Where the rules live | Long prompts, protocols and personas the agent must remember, and drops as context grows. | About 200 lines of rules, backed by a git hook and a CI step the agent meets without remembering them. |
 | What a spec is | A long document written before the code, which drifts once the code moves. | A contract of at most 50 lines per module, linked to its tests: an agent commit whose code moves without it is refused. |
 | Size of a change | As large as the agent makes it. | 200 changed lines of code and tests in one module, unless a human writes why. |
-| What is measured | People: velocity or tokens per developer. | The product: tokens and quiz results per module and month, with no name. |
+| What is measured | People: velocity or tokens per developer. | The product: tokens per module and month, and in each commit how much of it the quiz covered, with no name. |
 | What it takes | A wrapper, an SDK, a service, or one vendor's agent. | git and bash, inside your repo, with any agent that reads `AGENTS.md`. |
 
 Why it matters: human understanding is now the scarce part, knowing what the code does, why, and answering for it when
@@ -41,7 +41,7 @@ production breaks. A team that merges faster than it understands builds comprehe
   risk, a second human's reading is recommended, never enforced, so a solo developer can use the entire harness.
 - Measure the product, never the people. Token spend is summed by module and month in anonymous git notes
   (`refs/notes/sdd-ledger`), under random keys dated the first of the month: no commit, no author, no day. Nothing the
-  quiz learns about a developer leaves their machine.
+  quiz learns about a developer is ever pushed: their agent reads it on their machine, to talk it through with them.
   Names appear only to coordinate action right now (whose branch waits for review, or whom to ask on an unfamiliar
   module), never to score individuals.
 - Adapt to humans and learn from them, locally. Seniority is never guessed and quizzes never grade people: a

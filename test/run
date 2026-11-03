@@ -543,6 +543,24 @@ test_a_wrong_answer_writes_a_hint_block_in_the_quiz() {
   [ "$(cat QUIZ.md)" = "$before" ]
 }
 
+# The block speaks the dev's language when the key gives its eight lines; the journal reads its boxes by place.
+test_the_block_speaks_the_key_s_language() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  printf '%s\n' 'Faux.' 'Indice :' 'Tape *quiz feedback* pour en parler avec ton agent.' \
+    'Facultatif, pourquoi ? (reste sur cette machine)' "Je n'avais pas compris le code" 'La question est floue' \
+    'Le code ne fait pas ce que je voulais' 'Autre :' >> "$(git rev-parse --git-path sdd/quiz-key)"
+  answer A C C
+  fails agent_commit 'Change search'
+  question 2 | grep -qxF '> Faux. Indice : Because of B.'
+  question 2 | grep -qxF '> - [ ] La question est floue'
+  sed -e 's/^> - \[ \] La question est floue/> - [x] La question est floue/' \
+    -e 's/^> - Autre :$/> - Autre : trop long/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
+  answer A B C
+  succeeds agent_commit 'Change search'
+  [ "$(cut -f 4,6 "$(git rev-parse --git-common-dir)/sdd/quiz-journal")" = "unclear	trop long" ]
+}
+
 test_a_new_try_keeps_the_feedback_ticked() {
   batch
   write_quiz src/search/a.py 'A B C'
@@ -752,6 +770,19 @@ test_the_next_fingerprint_clears_a_quiz_left_behind() {
   agent_commit 'Change search'
   [ -f QUIZ.md ]
   bash sdd/bin/sdd fingerprint > /dev/null
+  [ ! -e QUIZ.md ]
+}
+
+test_audit_clears_the_last_commit_s_quiz() {
+  rm "$(git rev-parse --git-path hooks)/post-commit"
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  agent_commit 'Change search'
+  echo three >> src/search/a.py
+  echo 'More.' >> sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd audit
   [ ! -e QUIZ.md ]
 }
 

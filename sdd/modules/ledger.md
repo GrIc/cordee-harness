@@ -31,4 +31,5 @@ default; with `git config sdd.ledger false`, nothing is noted, and the ledger ne
 Constraints: as [checks](checks.md): bash 3.2 and git with POSIX tools, LF line ends even on a Windows checkout:
 [test_ledger_survives_a_crlf_checkout](/test/ledger).
 Non-goals: the readers of each agent's logs (they live in the cockpit, so a new tool changes nothing here), prices,
-anonymity when one person alone worked on a module in a month (the module and the month name them).
+anonymity when one person alone worked on a module in a month (the module and the month name them), a push of every
+ref (`git push --mirror`, a `refs/notes/*` refspec), which sends the local chain and its order.

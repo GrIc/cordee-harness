@@ -327,11 +327,16 @@ notes as one commit with no parent, dated the first of the month by `sdd-fabrik`
 A lease on the fetched commit keeps a ledger pushed meanwhile from being overwritten: it is merged at the next push.
 _Rejected:_ one ref per dev (it names them); squashing the local chain too (the local history names no one else).
 
-## 42. The quiz speaks the human's language (2026-11-03)
+## 42. Superseded by 43.
 
-The owner talks to the agent in French and asked for a quiz in French: a question read in a second language tests
-the language as much as the code. The writer tells the reviewer the language the human writes in; questions, boxes and
-hints are in it. The marks the hook parses (`## `, `See`, `- [ ]`) and the block it writes under a wrong answer stay
-in English, so the journal reads the same in every team.
+## 43. The quiz speaks the human's language, its block too (2026-11-03)
+
+The owner talks to the agent in French and asked for everything the quiz shows in French, the block under a wrong
+answer included: a question read in a second language tests the language as much as the code. The writer tells the
+reviewer the language the human writes in. The reviewer writes the quiz in it, and, for a language other than
+English, eight lines after the key's answers that word the hook's block. The journal reads the block's boxes by their
+place, so it reads the same in every language. The marks the hook parses (`## `, `See`, `- [ ]`) and its messages in
+the terminal stay in English, like git's own.
 _Rejected:_ a language setting in the repo (a team may mix languages; the human's own words are the evidence);
-translating the hook's block (the journal would parse each language).
+translations shipped in the script (one table per language to maintain); the terminal messages translated too (the
+same eight lines would not cover them, for lines read once).

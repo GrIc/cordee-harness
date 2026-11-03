@@ -276,29 +276,33 @@ quiz_form() {
 
 # Writes under each wrong question of QUIZ.md that has none yet a quoted block, which the parser skips: the key's
 # hint, the call to type *quiz feedback*, and optional boxes for the dev to say why. A block already there stays as
-# the dev left it. $1: one line per wrong question, its number, a tab and its hint.
+# the dev left it. $1: one line per wrong question, its number, a tab and its hint. Its words are the eight lines the
+# key may hold after its answers, in the dev's language; English otherwise.
 feedback() {
-  tr -d '\r' < QUIZ.md | WRONG=$1 awk '
+  tr -d '\r' < QUIZ.md | WRONG=$1 KEY=$(quiz_key) COUNT=$count awk '
     BEGIN {
       n = split(ENVIRON["WRONG"], rows, "\n")
       for (i = 1; i <= n; i++) if (split(rows[i], f, "\t") == 2) hint[f[1]] = f[2]
+      split("Wrong.|Hint:|Type *quiz feedback* to your agent to talk it through.|" \
+        "Optional, why? (stays on this machine)|I had not understood the code|The question is unclear|" \
+        "The code does not do what I wanted|Other:", word, "|")
+      while ((getline line < ENVIRON["KEY"]) > 0) { sub(/\r$/, "", line); key[k++] = line }
+      if (k >= ENVIRON["COUNT"] + 9) for (i = 1; i <= 8; i++) word[i] = key[ENVIRON["COUNT"] + i]
     }
     function flush(   i, last, block, wrong) {
       for (i = 1; i <= lines; i++) if (buf[i] ~ /^>/) block = 1
       if (!(q in hint) || block) { for (i = 1; i <= lines; i++) print buf[i]; lines = 0; return }
       for (last = lines; last > 0 && buf[last] == ""; last--) ;
       for (i = 1; i <= last; i++) print buf[i]
-      wrong = "> Wrong."
-      if (hint[q] != "") wrong = wrong " Hint: " hint[q]
+      wrong = "> " word[1]
+      if (hint[q] != "") wrong = wrong " " word[2] " " hint[q]
       print ""
       print wrong
-      print "> Type *quiz feedback* to your agent to talk it through."
+      print "> " word[3]
       print ">"
-      print "> Optional, why? (stays on this machine)"
-      print "> - [ ] I had not understood the code"
-      print "> - [ ] The question is unclear"
-      print "> - [ ] The code does not do what I wanted"
-      print "> - Other:"
+      print "> " word[4]
+      for (i = 5; i <= 7; i++) print "> - [ ] " word[i]
+      print "> - " word[8]
       if (!end) print ""
       lines = 0
     }
@@ -310,7 +314,8 @@ feedback() {
 
 # Appends to the quiz journal a line per question the dev flagged or commented: v2, the time, the batch's modules, the
 # causes, the title and the words. It runs once the commit of a passed quiz exists, when the boxes are the dev's last
-# word. The journal stays on this machine, shared by the clone's worktrees; the cockpit reads it.
+# word. The block's boxes are read by their place, so in any language. The journal stays on this machine, shared by
+# the clone's worktrees; the cockpit reads it.
 journal() {
   local file
   file=$(git rev-parse --git-common-dir)/sdd/quiz-journal
@@ -323,11 +328,11 @@ journal() {
       gsub(/\t/, " ", other)
       printf "v2\t%s\t%s\t%s\t%s\t%s\n", now, modules, (causes == "" ? "-" : causes), title, (other == "" ? "-" : other)
     }
-    /^## / { out(); title = $0; sub(/^## ([0-9]+\. )?/, "", title); causes = other = ""; next }
-    /^> - \[[xX]\] I had not understood/ { cause("not-understood") }
-    /^> - \[[xX]\] The question is unclear/ { cause("unclear") }
-    /^> - \[[xX]\] The code does not do/ { cause("not-wanted") }
-    /^> - Other:/ { other = substr($0, 11); sub(/^[[:space:]]+/, "", other) }
+    BEGIN { split("not-understood unclear not-wanted", name, " ") }
+    /^## / { out(); title = $0; sub(/^## ([0-9]+\. )?/, "", title); causes = other = ""; box = 0; next }
+    /^> - \[[ xX]\]/ { box++; if (/^> - \[[xX]\]/) cause(name[box]) }
+    # The words follow the label and its ":"; a label without one leaves no words.
+    /^> - [^[]/ { other = $0; if (!sub(/^> - [^:]*:[[:space:]]*/, "", other)) other = "" }
     END { out() }' >> "$file"
 }
 
@@ -429,7 +434,7 @@ hook() {
 
 # After a commit: its quiz, once the commit exists, goes to the journal if it passed, then away. A later commit-msg
 # hook that fails keeps the quiz, and a commit made with --no-verify leaves none behind for the next batch. The
-# post-commit hook runs it; the next commit and the next fingerprint do too, for a clone whose hooks predate it.
+# post-commit hook runs it; the next commit, audit and fingerprint do too, for a clone whose hooks predate it.
 committed() {
   local key quiz tree
   key=$(quiz_key)
@@ -450,6 +455,7 @@ committed() {
 audit_staged() {
   local msg='Agent-Assisted: yes' base status=0
   [ -z "${1:-}" ] || msg=$(cat "$1")
+  committed
   base=$(git rev-parse -q --verify HEAD || echo "$EMPTY_TREE")
   check "$base" "$(git write-tree)" "$msg"
   report "$msg" || status=1

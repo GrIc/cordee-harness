@@ -78,8 +78,8 @@ so a dev alone uses the whole harness.
   code does, never the technology: from what it does to how, then why. What does this return for that input, which
   line enforces this rule, what breaks if this line goes, why this option over that one. Each question has a `See`
   line citing one to three places of the batch, `file:line` or `file:line-line`, separated by `, `, and 2 to 4 boxes;
-  the right box changes place. Questions, boxes and the key's hints are in the human's language; the headings,
-  `See` and the boxes' marks stay as shown.
+  the right box changes place. Everything the human reads is in their language: the title and the line under it,
+  questions, boxes, hints; the marks `## `, `See` and `- [ ]` stay as shown.
 
   ```markdown
   # Quiz for this batch
@@ -97,7 +97,9 @@ so a dev alone uses the whole harness.
 
 - the key, at the printed path: the fingerprint, then one line per question with the right letter (A for the first
   box) and a hint for a wrong answer: where to look, never which box. No question asks for a computation nobody does
-  when reading code.
+  when reading code. For a human who does not write in English, eight more lines word the block the hook writes under
+  a wrong answer: wrong, hint, the call to type *quiz feedback*, the question why, the three reasons (code not
+  understood, question unclear, code not what they wanted) in that order, and other, ending with `:`.
 
   ```
   3f2a9c...
