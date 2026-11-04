@@ -16,8 +16,10 @@ from fabrik.drift import touched
 def quiet(command):
     """Runs a command and keeps its output short for the agent: one line when it passes, its last 30 lines when it
     fails."""
-    # Through sh, which runs scripts as the dev's shell does, and words its own errors.
-    result = subprocess.run(["sh", "-c", '"$@"', "sh", *command], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # Through sh, which runs scripts as the dev's shell does, and words its own errors. The script goes through the
+    # environment: on Windows, Git Bash's runtime does not give back the escaped quotes Python puts on a command line.
+    result = subprocess.run(["sh", "-c", "eval $SDD_QUIET", "sh", *command], env=dict(os.environ, SDD_QUIET='"$@"'),
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     out, status = result.stdout, result.returncode
     if status == 0:
         hidden = out.count(b"\n")
