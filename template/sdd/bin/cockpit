@@ -1,113 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # SDD-Fabrik cockpit: where a dev's agent tokens go, read from the agents' own logs on this machine. Nothing leaves it
 # but what the token ledger asks for. See sdd/WORKFLOW.md.
-#
-# `usage <repo> <since> <until>` prints, for sdd/bin/ledger, the tokens spent in <repo> between two epoch seconds: one
-# tab-separated line per role and model family, with calls, input, output (reasoning included), cache read and cache
-# write tokens. Claude Code's logs need only bash and awk, so the ledger counts every dev; opencode's, a SQLite base,
-# `report` and `hints` need Python 3 (cockpit.py).
-set -eu
-
-# Each Claude Code log of repo $1 with its role: the session is the writer, a sub-agent whose description names a
-# review or a quiz is the reviewer.
-claude_logs() {
-  local folder log meta
-  folder=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$(sed 's/[^A-Za-z0-9]/-/g' <<< "$1")
-  for log in "$folder"/*.jsonl "$folder"/*/subagents/*.jsonl; do
-    [ -f "$log" ] || continue
-    case $log in
-      */subagents/*)
-        meta=$(cat "${log%.jsonl}.meta.json" 2> /dev/null) || true
-        if grep -qiE '"description":"[^"]*(review|quiz)' <<< "$meta"; then
-          printf 'reviewer\t%s\n' "$log"
-        else
-          printf 'agent:%s\t%s\n' "$(sed -n 's/.*"agentType":"\([^"]*\)".*/\1/p' <<< "$meta")" "$log"
-        fi ;;
-      *) printf 'writer\t%s\n' "$log" ;;
-    esac
-  done
-}
-
-# One line per Claude Code reply in the window, read without a JSON parser. A reply opens with its model and id, and
-# its usage and the entry's timestamp come last. A string inside cannot fake a key, since its quotes are escaped.
-claude_code() {
-  claude_logs "$1" | awk -F '\t' -v OFS='\t' -v since="$2" -v until="$3" '
-    function epoch(t,   y, m) {
-      y = substr(t, 1, 4); m = substr(t, 6, 2) + 0
-      if (m <= 2) { y--; m += 12 }
-      return (365 * y + int(y / 4) - int(y / 100) + int(y / 400) + int((153 * (m - 3) + 2) / 5) + substr(t, 9, 2) \
-        - 719469) * 86400 + substr(t, 12, 2) * 3600 + substr(t, 15, 2) * 60 + substr(t, 18, 2)
-    }
-    # The text from the last match of pattern on.
-    function last(text, pattern,   found) {
-      for (found = ""; match(text, pattern); text = substr(text, RSTART + 1)) found = substr(text, RSTART)
-      return found
-    }
-    function count(text, key) {
-      return match(text, "\"" key "\":[0-9]+") ? substr(text, RSTART + length(key) + 3) + 0 : 0
-    }
-    {
-      while ((getline line < $2) > 0) {
-        # A session still running may hold a half-written last line: without its timestamp, it falls out of the window.
-        if (!match(line, /"message":\{"model":"[^"]*","id":"[^"]*"/)) continue
-        split(substr(line, RSTART, RLENGTH), head, "\"")
-        model = head[6]; id = head[10]
-        use = last(line, "\"usage\":\\{")
-        if (use == "" || model == "<synthetic>" || id in seen) continue
-        seen[id] = 1
-        stamp = substr(last(line, "\"timestamp\":\""), 14, 19)
-        if (epoch(stamp) <= since || epoch(stamp) > until) continue
-        if (match(model, /opus|sonnet|haiku|fable/)) model = substr(model, RSTART, RLENGTH)
-        print $1, model, 1, count(use, "input_tokens"), count(use, "output_tokens"),
-          count(use, "cache_read_input_tokens"), count(use, "cache_creation_input_tokens")
-      }
-      close($2)
-    }'
-}
-
-usage() {
-  {
-    claude_code "$@"
-    # Windows answers python3 with a stub that fails until Python is installed.
-    if python3 -c '' > /dev/null 2>&1; then python3 "$(dirname "$0")/cockpit.py" opencode "$@"; fi
-  } | awk -F '\t' -v OFS='\t' '
-    { key = $1 OFS $2; keys[key] = 1; for (j = 3; j <= 7; j++) sum[key, j] += $j }
-    END {
-      # printf: some awks print a large sum in exponent form.
-      for (key in keys) {
-        line = key
-        for (j = 3; j <= 7; j++) line = line OFS sprintf("%.0f", sum[key, j])
-        print line | "LC_ALL=C sort"
-      }
-    }'
-}
-
-# The commit times of this dev's agent batches in repo $1, newest first, marked as the hook marks them: the cockpit
-# counts in batches, whatever the dev's pace.
-batches() {
-  local emails ident me
-  emails=$(sed -n "s/^AGENT_EMAILS='\(.*\)'$/\1/p" "$(dirname "$0")/sdd")
-  # The address git would commit with, through the mailmap as %aE is; without one, the dev has no batch.
-  ident=$(git -C "$1" var GIT_AUTHOR_IDENT 2> /dev/null) || return 0
-  me=$(git -C "$1" check-mailmap "${ident%%>*}>" | sed 's/.*<\(.*\)>/\1/')
-  git -C "$1" log --no-merges -i -E --grep='^Agent-Assisted:[[:space:]]*yes[[:space:]]*$' \
-    --grep="^Co-Authored-By:.*<($emails)>" --format='%aE%x09%ct' |
-    ME=$me awk -F '\t' 'tolower($1) == tolower(ENVIRON["ME"]) { print $2 }'
-}
-
-if [ "${1:-}" = usage ] && [ $# -eq 4 ]; then
-  usage "$2" "$3" "$4"
-elif [ "${1:-}" = report ] && [ $# -eq 2 ]; then
-  batches "$2" | exec python3 "$(dirname "$0")/cockpit.py" report "$2"
-elif [ "${1:-}" = report ]; then
-  shift
-  exec python3 "$(dirname "$0")/cockpit.py" report "$@"
-elif [ "${1:-}" = hints ] && [ $# -eq 1 ]; then
-  # Hints are advice: without Python, the batch goes on without them.
-  python3 -c '' > /dev/null 2>&1 || exit 0
-  batches . | exec python3 "$(dirname "$0")/cockpit.py" hints "$(git rev-parse --show-toplevel)" \
-    "$(git rev-parse --git-path sdd/hints)" "$(git rev-parse --git-common-dir)/sdd/quiz-journal"
-else
-  echo 'usage: bash sdd/bin/cockpit report <repo> [<since> <until>] | hints | usage <repo> <since> <until>' >&2
-  exit 2
-fi
+# Python 3.10 or later, as python3, python or py -3. Windows answers python3 with a stub that fails until Python is
+# installed: the version check skips it.
+for python in python3 python 'py -3'; do
+  $python -c 'import sys; sys.exit(sys.version_info < (3, 10))' > /dev/null 2>&1 &&
+    exec $python -B "$(dirname "$0")/fabrik" cockpit "$@"
+done
+# Without it, what the ledger asks and the hints say nothing: they are advice.
+case ${1:-} in usage | hints) exit 0 ;; esac
+echo 'SDD-Fabrik needs Python 3.10 or later: install it (https://www.python.org/downloads/), then try again.' >&2
+exit 1

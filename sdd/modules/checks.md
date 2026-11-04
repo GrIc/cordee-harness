@@ -1,5 +1,9 @@
 ---
-governs: [template/sdd/bin/sdd, template/.github/workflows/sdd.yml, test/run]
+governs: [template/sdd/bin/sdd, template/sdd/bin/fabrik/__init__.py, template/sdd/bin/fabrik/__main__.py,
+  template/sdd/bin/fabrik/git.py, template/sdd/bin/fabrik/contracts.py, template/sdd/bin/fabrik/drift.py,
+  template/sdd/bin/fabrik/size.py, template/sdd/bin/fabrik/quiz.py, template/sdd/bin/fabrik/journal.py,
+  template/sdd/bin/fabrik/checks.py, template/sdd/bin/fabrik/hooks.py, template/sdd/bin/fabrik/brief.py,
+  template/.github/workflows/sdd.yml, test/run]
 ---
 # checks
 
@@ -76,8 +80,9 @@ check can be bypassed.
   [test_audit_points_out_governs_paths_that_match_nothing](/test/run),
   [test_a_quiz_older_than_the_batch_only_warns](/test/run).
 
-Constraints: bash 3.2, the one macOS ships (no `mapfile`, no associative arrays, no `${var,,}`), and git with POSIX
-tools, on Linux, macOS and Windows (Git Bash).
+Constraints: Python 3.10, standard library only, behind a `sh` launcher, and git, on Linux, macOS and Windows (Git
+Bash). Without it, `install-hook` and the hook say what to install, and `--no-verify` still commits:
+[test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
 Non-goals: locks, an LLM at commit time, drift below the file level, CI for other forges (they run the same command).
 
 Formats and usage: [WORKFLOW.md](../../template/sdd/WORKFLOW.md).

@@ -18,7 +18,7 @@ setup() {
   new_repo repo
   git config core.autocrlf false
   mkdir -p sdd/bin sdd/modules src/search src/import
-  cp "$kit/template/sdd/bin/sdd" sdd/bin/sdd
+  cp -R "$kit/template/sdd/bin/." sdd/bin/
   contract search src/search/
   contract import src/import
   echo one > src/search/a.py
@@ -108,7 +108,7 @@ test_merge_is_not_checked() {
 test_first_commit_of_a_repo() {
   new_repo new
   mkdir -p sdd/bin
-  cp "$kit/template/sdd/bin/sdd" sdd/bin/sdd
+  cp -R "$kit/template/sdd/bin/." sdd/bin/
   bash sdd/bin/sdd install-hook > /dev/null
   git add -A
   succeeds git commit -qm 'Start'
@@ -421,7 +421,7 @@ test_range_ignores_commits_before_adoption() {
   git add -A
   git commit -qm 'Before adoption' -m 'Agent-Assisted: yes'
   mkdir -p sdd/bin sdd/modules
-  cp "$kit/template/sdd/bin/sdd" sdd/bin/sdd
+  cp -R "$kit/template/sdd/bin/." sdd/bin/
   printf -- '---\ngoverns: [src/]\n---\n# app\n' > sdd/modules/app.md
   git add -A
   git commit -qm 'Adopt'

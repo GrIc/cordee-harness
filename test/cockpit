@@ -45,16 +45,32 @@ test_claude_code_splits_writer_and_reviewer_once_per_reply() {
 writer opus 2 2 20 200 2000'
 }
 
-# As Windows answers before Python is installed.
-test_claude_code_needs_no_python() {
+# As Windows answers before Python is installed: the commit-msg hook stops and says what to install, as install-hook
+# does; what the ledger asks and the hints say nothing, and a push goes through.
+test_without_python_only_the_commit_msg_hook_stops() {
+  export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
+  git init -q --bare "$tmp/origin.git"
+  git clone -q "$tmp/origin.git" "$repo" 2> /dev/null && cd "$repo"
+  git config user.email dev@example.test && git config user.name Dev
+  mkdir sdd && cp -R "$kit/template/sdd/bin" sdd/
+  bash sdd/bin/sdd install-hook > /dev/null
   mkdir "$tmp/bin"
-  printf '#!/bin/sh\necho Python was not found >&2\nexit 9009\n' > "$tmp/bin/python3"
-  chmod +x "$tmp/bin/python3"
+  for python in python3 python py; do
+    printf '#!/bin/sh\necho Python was not found >&2\nexit 9009\n' > "$tmp/bin/$python"
+    chmod +x "$tmp/bin/$python"
+  done
   PATH=$tmp/bin:$PATH
+  text='SDD-Fabrik needs Python 3.10 or later: install it (https://www.python.org/downloads/), then try again.'
+  if bash sdd/bin/sdd install-hook 2> "$tmp/err"; then return 1; fi
+  fails "$(cat "$tmp/err")" "$text"
+  git add -A
+  if git commit -qm Start 2> "$tmp/err"; then return 1; fi
+  fails "$(cat "$tmp/err")" "$text"
   reply m1 2026-10-23T10:30:00Z claude-opus-5-5 1 10 100 1000 > "$claude/s1.jsonl"
-  fails "$(usage 2> "$tmp/err")" 'writer opus 1 1 10 100 1000'
-  [ ! -s "$tmp/err" ]
-  fails "$(bash "$kit/template/sdd/bin/cockpit" hints 2>&1)" ''
+  fails "$(git commit -q --no-verify -m Start 2>&1)" ''
+  fails "$(git push -q origin HEAD:main 2>&1)" ''
+  fails "$(usage 2>&1)" ''
+  fails "$(bash sdd/bin/cockpit hints 2>&1)" ''
 }
 
 test_opencode_child_session_is_the_reviewer() {

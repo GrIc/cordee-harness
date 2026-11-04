@@ -14,7 +14,7 @@ setup() {
   git -c init.defaultBranch=main init -q --bare "$tmp/origin.git"
   git clone -q "$tmp/origin.git" "$tmp/a" 2> /dev/null && cd "$tmp/a"
   mkdir -p sdd/bin sdd/modules src/search src/import
-  cp "$kit/template/sdd/bin/sdd" "$kit/template/sdd/bin/ledger" sdd/bin/
+  cp -R "$kit/template/sdd/bin/." sdd/bin/
   printf 'echo "$@" > "%s/args"\ncat "%s/usage"\n' "$tmp" "$tmp" > sdd/bin/cockpit
   printf -- '---\ngoverns: [src/search]\n---\n# search\n' > sdd/modules/search.md
   printf -- '---\ngoverns: [src/import]\n---\n# import\n' > sdd/modules/import.md

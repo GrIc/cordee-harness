@@ -1,121 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # SDD-Fabrik token ledger: what agents spent on each module, by month, with no link to a commit or a person.
 # See sdd/WORKFLOW.md.
-#
-# The tokens come from `bash sdd/bin/cockpit usage <repo> <since> <until>` (epoch seconds), which reads the agents'
-# logs on this machine: one tab-separated line per role and model family, with calls, input, output (reasoning
-# included), cache read and cache write tokens. With `git config sdd.ledger false`, nothing is noted.
-#
-# The keys are no objects: `git notes --ref sdd-ledger prune` would delete the whole ledger.
-set -eu
-
-REF=refs/notes/sdd-ledger
-
-# A ledger commit names neither who wrote it nor when: a neutral author, dated the first of month $1.
-neutral() {
-  local date="$1-01T00:00:00Z"
-  shift
-  GIT_AUTHOR_NAME=sdd-fabrik GIT_AUTHOR_EMAIL=sdd-fabrik@localhost GIT_AUTHOR_DATE=$date \
-    GIT_COMMITTER_NAME=sdd-fabrik GIT_COMMITTER_EMAIL=sdd-fabrik@localhost GIT_COMMITTER_DATE=$date git "$@"
-}
-
-# Notes the tokens spent since the last commit, split over the modules HEAD changes by their changed lines.
-record() {
-  local state since until usage touched month note key
-  [ "$(git config --bool sdd.ledger)" != false ] || return 0
-  state=$(git rev-parse --git-path sdd/ledger-until)
-  until=$(git log -1 --format=%ct)
-  # Each window starts where the last record ended: an amend counts nothing twice, a failure loses nothing.
-  since=$(cat "$state" 2> /dev/null || git log -1 --format=%ct HEAD^ 2> /dev/null || echo 0)
-  mkdir -p "$(dirname "$state")"
-  echo "$since" > "$state"
-  usage=$(bash "$(dirname "$0")/cockpit" usage "$(git rev-parse --show-toplevel)" "$since" "$until")
-  echo "$until" > "$state"
-  [ -n "$usage" ] || return 0
-  touched=$(bash "$(dirname "$0")/sdd" touched)
-  month=$(TZ=UTC git log -1 --date=format-local:%Y-%m --format=%cd)
-  # Through the environment: BSD awk refuses a newline in a -v value.
-  note=$(TOUCHED=$touched awk -F '\t' -v month="$month" '
-    BEGIN {
-      n = split(ENVIRON["TOUCHED"], rows, "\n")
-      for (i = 1; i <= n; i++) { split(rows[i], f, "\t"); module[i] = f[1]; share[i] = f[2]; total += f[2] }
-      # A batch that changes no module still costs: it goes to "-".
-      if (!total) { n = 1; module[1] = "-"; share[1] = total = 1 }
-    }
-    {
-      for (i = 1; i <= n; i++) {
-        printf "v1\t%s\t%s\t%s\t%s", month, module[i], $1, $2
-        for (j = 3; j <= 7; j++) printf "\t%.0f", int($j * share[i] / total)
-        print ""
-      }
-    }' <<< "$usage")
-  # A random key: the note hangs on no commit.
-  key=$({ echo "$note"; od -An -N16 -tx1 /dev/urandom; } | git hash-object --stdin)
-  neutral "$month" notes --ref sdd-ledger add -m "$note" "$key"
-}
-
-# Merges the remote's ledger into ours, then pushes the merged notes as one commit with no parent: the shared history
-# never shows whose notes came in which order. Runs before a push and never stops it. A dev with no ledger has nothing
-# to send, so their push stays a single round trip.
-sync() {
-  local remote=$1 month seen= flat
-  git rev-parse -q --verify "$REF" > /dev/null || return 0
-  month=$(date -u +%Y-%m)
-  if git fetch -q "$remote" "+$REF:$REF-remote" 2> /dev/null; then
-    seen=$(git rev-parse "$REF-remote")
-    neutral "$month" notes --ref sdd-ledger merge -q "$REF-remote" ||
-      { echo "NOTE the token ledger could not merge $remote's: the next push retries." >&2; return 0; }
-  fi
-  flat=$(neutral "$month" commit-tree -m 'Token ledger' "$REF^{tree}")
-  # The lease: a ledger another dev pushed since the fetch is merged at the next push, never overwritten.
-  git push -q --no-verify --force-with-lease="$REF:$seen" "$remote" "$flat:$REF" ||
-    echo "NOTE the token ledger did not reach $remote: the next push retries." >&2
-}
-
-# The ledger summed by month, module, role and model; then, per month, the batches noted against the agent commits,
-# to show what it misses.
-report() {
-  local emails agent
-  git rev-parse -q --verify "$REF" > /dev/null || {
-    echo "No token ledger here. Fetch it: git fetch origin $REF:$REF" >&2
-    exit 1
-  }
-  # An agent commit as the hook sees it: the trailer, or a co-author address of the project's AGENT_EMAILS.
-  emails=$(sed -n "s/^AGENT_EMAILS='\(.*\)'$/\1/p" "$(dirname "$0")/sdd")
-  agent=$(TZ=UTC git log --no-merges -i -E --grep='^Agent-Assisted:[[:space:]]*yes[[:space:]]*$' \
-    --grep="^Co-Authored-By:.*<($emails)>" --date=format-local:%Y-%m --format=%cd)
-  git ls-tree -r "$REF" | awk '{ print $3 }' | git cat-file --batch | AGENT=$agent awk -F '\t' -v OFS='\t' '
-    / blob [0-9]+$/ { note++; next }
-    $1 == "v1" {
-      key = $2 OFS $3 OFS $4 OFS $5
-      keys[key] = 1
-      for (j = 6; j <= 10; j++) sum[key, j] += $j
-      if (!((note, $2) in counted)) { counted[note, $2] = 1; batches[$2]++ }
-    }
-    END {
-      n = split(ENVIRON["AGENT"], months, "\n")
-      for (i = 1; i <= n; i++) commits[months[i]]++
-      for (m in batches) commits[m] += 0
-      print "month", "module", "role", "model", "calls", "input", "output", "cache_read", "cache_write"
-      # printf: some awks print a large sum in exponent form.
-      for (key in keys) {
-        line = key
-        for (j = 6; j <= 10; j++) line = line OFS sprintf("%.0f", sum[key, j])
-        print line | "sort"
-      }
-      close("sort")
-      print ""
-      print "month", "batches", "agent_commits"
-      for (m in commits) print m, batches[m] + 0, commits[m] | "sort"
-      close("sort")
-    }'
-}
-
-case ${1:-} in
-  record) record ;;
-  sync) sync "${2:-origin}" ;;
-  report) report ;;
-  *)
-    echo 'usage: bash sdd/bin/ledger record | sync [<remote>] | report' >&2
-    exit 2 ;;
-esac
+# Python 3.10 or later, as python3, python or py -3. Windows answers python3 with a stub that fails until Python is
+# installed: the version check skips it.
+for python in python3 python 'py -3'; do
+  $python -c 'import sys; sys.exit(sys.version_info < (3, 10))' > /dev/null 2>&1 &&
+    exec $python -B "$(dirname "$0")/fabrik" ledger "$@"
+done
+# Without Python, the ledger notes nothing, and never stops a commit or a push.
+case ${1:-} in record | sync) exit 0 ;; esac
+echo 'SDD-Fabrik needs Python 3.10 or later: install it (https://www.python.org/downloads/), then try again.' >&2
+exit 1
