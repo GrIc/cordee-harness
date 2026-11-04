@@ -340,3 +340,17 @@ the terminal stay in English, like git's own.
 _Rejected:_ a language setting in the repo (a team may mix languages; the human's own words are the evidence);
 translations shipped in the script (one table per language to maintain); the terminal messages translated too (the
 same eight lines would not cover them, for lines read once).
+
+## 44. Python is a firm dependency (2026-11-04)
+
+Since the move to Python (decision 40), no check runs without it. Without Python 3.10 or later, `install-hook` fails
+and says what to install, and the commit-msg hook refuses with the same words: a batch never goes in unchecked without
+anyone seeing it, and `--no-verify` still passes, as for any check (decision 19). The post-commit hook, the ledger and
+the hints say nothing, and never stop a commit or a push. Each command is a `sh` launcher of a few lines that tries
+`python3`, `python` and `py -3` and checks the version, which also skips the stub Windows answers `python3` with until
+Python is installed. 3.10 is the floor the CI pins; Ubuntu 22.04 LTS ships it. The code runs on 3.9 too (the three
+suites pass under 3.9.25), but 3.9 is no longer maintained since October 2025, so a Mac whose only `python3` is
+Apple's (3.9 with the Command Line Tools) needs a newer one, from python.org or Homebrew.
+_Rejected:_ the hook passing silently without Python (an agent batch would go in unchecked); a Python found once at
+install and written into the hooks (a dev who installs Python later would have to run `install-hook` again); bash
+kept for the checks with Python for the rest (two languages to read, and the awk decision 40 left).

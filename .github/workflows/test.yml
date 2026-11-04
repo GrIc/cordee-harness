@@ -14,11 +14,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      # /bin first: on macOS, /bin/bash is 3.2, the oldest bash the script supports.
-      - run: PATH="/bin:$PATH" bash test/run
+      # The oldest Python the harness supports (decision 44).
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - run: bash test/run
         shell: bash
-      - run: PATH="/bin:$PATH" bash test/ledger
+      - run: bash test/ledger
         shell: bash
+      # On Windows, Git Bash hands Python the C:/ form of the test's repo path, so the logs folder differs.
       - run: bash test/cockpit
         if: runner.os != 'Windows'
         shell: bash

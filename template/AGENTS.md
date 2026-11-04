@@ -37,6 +37,7 @@ Be lazy with effort, never with thought.
 - Mark your work `Agent-Assisted: yes` in the proposed commit message. Never commit, push, bypass a hook, or tick
   `QUIZ.md`: the human does.
 - Fix a red main before anything else. Run the CI checks locally before proposing a batch.
+- The harness runs on Python 3.10 or later: when a command says it is missing, tell the human how to install it.
 - Each clone needs the hooks once: if `$(git rev-parse --git-path hooks)/pre-push` does not mention `sdd/bin/ledger`,
   run `bash sdd/bin/sdd install-hook` and tell the human.
 

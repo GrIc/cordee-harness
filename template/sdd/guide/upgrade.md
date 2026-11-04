@@ -6,8 +6,11 @@
    `https://github.com/GrIc/sdd-fabrik`. `git ls-remote --tags --refs <source>` gives the latest `vX.Y.Z`.
 2. `git clone <source> <tmp>`; `git -C <tmp> diff <old> <new> -- template/ ':!template/sdd/bin/'` shows what changed
    besides the scripts, which you replace without reading. Then `git -C <tmp> checkout -q <new>`.
-3. Replace `sdd/WORKFLOW.md`, `sdd/guide/` and the scripts in `sdd/bin/` with the new tag's (keep the project's changes
-   to `MAX_LINES`, `NOT_CODE`, `AGENT_EMAILS` and `REVIEW_WAIT_HOURS`), and the block between `<!-- sdd-fabrik -->` and
+3. Coming from a version without `sdd/bin/fabrik/`, check first that the human has Python 3.10 or later
+   (`python3 --version`, or `python`, or `py -3`); if not, tell them how to install it for their system, and stop.
+   Replace `sdd/WORKFLOW.md`, `sdd/guide/` and `sdd/bin/` with the new tag's, deleting what it no longer has, such as
+   `sdd/bin/cockpit.py`. Keep the project's changes to `MAX_LINES` and `NOT_CODE` (`sdd/bin/fabrik/size.py`),
+   `AGENT_EMAILS` (`git.py`) and `REVIEW_WAIT_HOURS` (`brief.py`). Replace the block between `<!-- sdd-fabrik -->` and
    `<!-- /sdd-fabrik -->` in `AGENTS.md`. Apply the other template changes the diff shows, such as the CI workflow, with
    the human. Put the new tag on the first line of `sdd/README.md`. Delete `<tmp>`, then run
    `bash sdd/bin/sdd install-hook`: a new version may add a hook.

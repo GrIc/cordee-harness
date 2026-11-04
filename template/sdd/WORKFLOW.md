@@ -158,11 +158,11 @@ keeps its text.
 |---|---|---|
 | `Agent-Assisted: yes` | the agent, in its proposed message | drift and size block, the quiz is required |
 | `Spec-Unchanged(<module>): <reason>` | the author | spares that module from the drift check and the one-module limit |
-| `Large-Batch: <reason>` | the human | lifts the size limits (`MAX_LINES` in `sdd/bin/sdd`, one module) |
+| `Large-Batch: <reason>` | the human | lifts the size limits (`MAX_LINES` in `sdd/bin/fabrik/size.py`, one module) |
 | `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
-A co-author address listed in `AGENT_EMAILS` (top of `sdd/bin/sdd`) counts as `Agent-Assisted: yes`; any other commit
-is the human's own. The script prints ERROR when every commit must stop; DRIFT (code against its contract, or a
+A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`; any other
+commit is the human's own. The script prints ERROR when every commit must stop; DRIFT (code against its contract, or a
 contract link to a missing test or file) and SIZE (more than 5% over `MAX_LINES`, or a second module), which refuse an
 agent batch and only warn on the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every
 pushed commit, never the quiz. Everything here can be bypassed: it is there to help, not to lock.

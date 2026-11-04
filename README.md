@@ -9,8 +9,8 @@ single-module batches, and an agent code batch enters history only once the huma
 makes them predict what the new code does.
 
 Works with any coding agent that reads `AGENTS.md` (Claude Code, Codex, opencode, Cursor, Copilot, Aider), on Linux,
-macOS and Windows. Needs only `git` (on Windows, Git for Windows, which brings `bash`, `sed` and `awk`). Python 3 is
-optional: it adds opencode's logs to the team ledger and unlocks local hints and Claude Code's cost report.
+macOS and Windows. Needs `git` (on Windows, Git for Windows, which brings `sh`) and Python 3.10 or later, standard
+library only (on macOS, Apple's own `python3` is too old: install one from python.org or Homebrew).
 
 To install, tell your agent: `Deploy https://github.com/GrIc/sdd-fabrik in this repo` (see
 [Deploy (for agents)](#deploy-for-agents)).
@@ -24,7 +24,7 @@ To install, tell your agent: `Deploy https://github.com/GrIc/sdd-fabrik in this 
 | What a spec is | A long document written before the code, which drifts once the code moves. | A contract of at most 50 lines per module, linked to its tests: an agent commit whose code moves without it is refused. |
 | Size of a change | As large as the agent makes it. | 200 changed lines of code and tests in one module, unless a human writes why. |
 | What is measured | People: velocity or tokens per developer. | The product: tokens per module and month, and in each commit how much of it the quiz covered, with no name. |
-| What it takes | A wrapper, an SDK, a service, or one vendor's agent. | git and bash, inside your repo, with any agent that reads `AGENTS.md`. |
+| What it takes | A wrapper, an SDK, a service, or one vendor's agent. | git and Python, inside your repo, with any agent that reads `AGENTS.md`. |
 
 Why it matters: human understanding is now the scarce part, knowing what the code does, why, and answering for it when
 production breaks. A team that merges faster than it understands builds comprehension debt until the first incident.
@@ -47,9 +47,9 @@ production breaks. A team that merges faster than it understands builds comprehe
 - Adapt to humans and learn from them, locally. Seniority is never guessed and quizzes never grade people: a
   developer's first visit to a module is spotted from local `git log` alone, and recurring *unclear* or *not what I
   wanted* flags in the local quiz journal turn into proposed rules, applied only on a human *yes*.
-- Owned by the repository, tied to no vendor. Plain Markdown, about 800 lines of bash 3.2 across three scripts, and
-  one optional, read-only Python 3 file (`cockpit.py`, stdlib only) inside your repo. MIT licensed, deployable from an
-  internal git mirror, and removable without losing the project's own knowledge.
+- Owned by the repository, tied to no vendor. Plain Markdown, and about 1,300 lines of Python (standard library only)
+  behind three `sh` launchers, inside your repo. MIT licensed, deployable from an internal git mirror, and removable
+  without losing the project's own knowledge.
 
 ## What it does, and what it does not
 
@@ -63,7 +63,7 @@ production breaks. A team that merges faster than it understands builds comprehe
 | Quiz feedback loop | Questions the developer flags are logged locally in `quiz-journal` when the quiz passes. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
 | Pace & module onboarding (`sdd brief`) | Before a batch, surfaces unanswered `QUIZ.md` files in sibling worktrees and remote branches waiting for review past `REVIEW_WAIT_HOURS` (4h by default), and spots a developer's first batch in a module to offer discovery mode and name the three teammates who delivered there most. |
 | Anonymous team ledger | Hooks record token spend (writer vs. reviewer, by model) per module and month in `refs/notes/sdd-ledger` and sync it on push (`git config sdd.ledger false` opts out). `ledger report` shows what each feature cost. The quiz never goes there. |
-| Private cockpit & self-tuning | On the developer's machine over their last 10 agent batches (with Python 3), `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
+| Private cockpit & self-tuning | On the developer's machine over their last 10 agent batches, `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
 | Quiet runner (`sdd quiet`) | Runs verbose test or build commands and prints one line when green, or the last 30 lines when red, keeping agent context lean. |
 
 ### What it deliberately does not do
@@ -83,8 +83,8 @@ production breaks. A team that merges faster than it understands builds comprehe
   where supported, but preventing access to secrets or real data belongs to your environment.
 - Monitor or rank developers. No per-person token chart, velocity metric, or quiz score.
 - Read every agent's cost logs yet. Any agent that reads `AGENTS.md` gets the workflow, checks, quiz, and
-  quiz-flag hints (with Python 3); token accounting reads Claude Code (in awk) and opencode (with Python 3), and
-  `cockpit report` / cost hints read Claude Code.
+  quiz-flag hints; token accounting reads Claude Code and opencode, and `cockpit report` / cost hints read Claude
+  Code.
 
 ## Getting started and daily use
 
@@ -101,8 +101,8 @@ sdd/
   README.md                your system map and module table (first line tracks source URL and tag)
   coding-style.md          your settled code, test and command conventions
   WORKFLOW.md, guide/      kit-owned batch loop and on-demand guides (start, plan, tokens, upgrade)
-  bin/{sdd,ledger,cockpit,cockpit.py}
-                           kit-owned scripts
+  bin/{sdd,ledger,cockpit}  kit-owned launchers, which find Python
+  bin/fabrik/              kit-owned Python package they run, one module per topic
   modules/<module>.md      created as needed: short contracts (<= 50 lines)
   {product,design,architecture,decisions,roadmap}.md
                            created as needed: flat topic files (decisions carry Rejected: lines)
@@ -159,7 +159,7 @@ flowchart LR
 |---|---|
 | `bash sdd/bin/sdd audit [--message <file>]` | Check staged changes (drift, contract links, size, `QUIZ.md` form if present, markdown-to-code ratio). |
 | `bash sdd/bin/sdd brief [<module>]` | Show pending quizzes, branches awaiting review, or whether a module is new to you. |
-| `bash sdd/bin/cockpit report "$PWD"` | Inspect your local Claude Code token breakdown: roles, models, cache, MCP, plugins, tool output (Python 3). |
+| `bash sdd/bin/cockpit report "$PWD"` | Inspect your local Claude Code token breakdown: roles, models, cache, MCP, plugins, tool output. |
 | `bash sdd/bin/ledger report` | View the team's anonymous feature costs. |
 | `git config sdd.ledger false` | Stop recording ledger notes in this clone (`--global` for every repository). |
 
@@ -167,8 +167,8 @@ flowchart LR
 
 You were asked to deploy SDD-Fabrik in the current repository. Do this:
 
-1. Check the dependencies: `git`, `bash`, `sed` and `awk`. If any is missing, tell the human which ones and how to
-   install them for their system, and stop.
+1. Check the dependencies: `git`, and Python 3.10 or later as `python3`, `python` or `py -3` (`python3 --version`).
+   If one is missing, tell the human how to install it for their system, and stop.
 2. Fetch the latest release into a temporary directory, taking the highest `vX.Y.Z` from the first command. `<source>`
    is the URL the human gave, such as an internal mirror, or else `https://github.com/GrIc/sdd-fabrik`:
 
@@ -189,7 +189,7 @@ You were asked to deploy SDD-Fabrik in the current repository. Do this:
    own (Aider does by default, without hooks), turn that off. Tell the human that for their other agents these rules
    are instructions only.
 7. Delete `<tmp>`. Report the files added and merged, the dependencies, and a proposed commit message with
-   `Large-Batch: deploys SDD-Fabrik` (the script alone is over the size limit) and without `Agent-Assisted` or an
+   `Large-Batch: deploys SDD-Fabrik` (the scripts alone are over the size limit) and without `Agent-Assisted` or an
    agent's `Co-Authored-By` (the files come from the kit, not from you). The human commits.
 8. Then follow GENESIS (no code yet) or ADOPT (existing code) in `sdd/guide/start.md`, as your first batch.
 
