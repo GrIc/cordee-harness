@@ -7,13 +7,16 @@ import re
 import time
 from collections import Counter
 
-from fabrik.logs import REVIEW
+from fabrik.logs import MCP, REVIEW, SKILLS, Call
 
 # Anthropic's price ratios, in input tokens: a cache read costs a tenth, a cache write 1.25 (2 when kept an hour),
 # an output token 5.
 READ, WRITE, WRITE_HOUR, OUTPUT = 0.1, 1.25, 2, 5
 # Text runs about 3.5 characters a token; an image about 1600 tokens.
 CHARS_PER_TOKEN, IMAGE = 3.5, 1600
+
+NAME = "Claude Code"
+PRICES = f"cache read x{READ}, cache write x{WRITE} or x{WRITE_HOUR}, output x{OUTPUT}"
 
 
 def usage(repo, start, end):
@@ -45,11 +48,21 @@ def logs(repo):
         yield path, role
 
 
-def trace(path, start, end, seen):
-    """Each reply of a log in the window, as its context, cost, cache read cost, model, and whether it opens the log.
-    Adds to seen.sources what each piece sent along costs: written once, then read again with every later call until a
-    compaction drops it."""
-    live, pending, names, replies = Counter(), Counter(), {}, set()
+def calls(repo, start, end, sent):
+    """Each reply in the window, from every log of the repo. Adds to sent what is sent along, and, once every log is
+    read, which MCP servers and plugins were called, in the window or not."""
+    tools = set()
+    for path, role in logs(repo):
+        yield from trace(path, role, start, end, sent, tools)
+    # Claude Code names a server's tools mcp__<server>__<tool>, its name's other signs turned to "_".
+    sent.servers_called.update(name for kind, name in sent.costs if kind == MCP and any(
+        tool.startswith(f"mcp__{re.sub(r'[^A-Za-z0-9_-]', '_', name)}__") for tool in tools))
+
+
+def trace(path, role, start, end, sent, tools):
+    """Each reply of a log in the window. Adds to sent.costs what each piece sent along costs: written once, then read
+    again with every later call until a compaction drops it."""
+    live, pending, names, replies, rank = Counter(), Counter(), {}, set(), 0
     for entry in entries(path):
         if entry.get("subtype") == "compact_boundary":
             live.clear()
@@ -60,22 +73,24 @@ def trace(path, start, end, seen):
             if start < epoch(entry["timestamp"]) <= end:
                 read = READ * use.get("cache_read_input_tokens", 0)
                 for source, size in live.items():
-                    seen.sources[source] += READ * size
+                    sent.costs[source] += READ * size
                 for source, size in pending.items():
-                    seen.sources[source] += write * size
+                    sent.costs[source] += write * size
                 context = sum(use.get(f, 0) for f in ["input_tokens", "cache_creation_input_tokens",
                                                        "cache_read_input_tokens"])
-                cost = use.get("input_tokens", 0) + write * use.get("cache_creation_input_tokens", 0) + read
-                yield context, cost + OUTPUT * use.get("output_tokens", 0), read, message["model"], len(replies) == 1
+                cost = (use.get("input_tokens", 0) + write * use.get("cache_creation_input_tokens", 0) + read
+                        + OUTPUT * use.get("output_tokens", 0))
+                rank += 1
+                yield Call(role, message["model"], context, cost, read, len(replies) == 1, rank)
             live.update(pending)
             pending.clear()
-        for source, size in pieces(entry, names, seen):
+        for source, size in pieces(entry, names, sent, tools):
             pending[source] += size
 
 
-def pieces(entry, names, seen):
+def pieces(entry, names, sent, tools):
     """What an entry sends along with the next calls, other than the conversation, as (source, estimated tokens).
-    Notes in seen each tool called, and each plugin's share of the skill listing."""
+    Notes in tools each tool called, in sent each plugin called and its share of the skill listing."""
     attachment = entry.get("attachment") or {}
     kind = attachment.get("type")
     if kind == "skill_listing":
@@ -84,26 +99,26 @@ def pieces(entry, names, seen):
             sizes[plugin(line[2:].split(": ")[0])] += len(line)
         # The largest listing a plugin had: a later one may only add skills.
         for name, size in sizes.items():
-            seen.listing[name] = max(seen.listing.get(name, 0), size)
-        yield "skill listing", tokens(attachment.get("content", ""))
+            sent.plugin_sizes[name] = max(sent.plugin_sizes.get(name, 0), size)
+        yield (SKILLS, ""), tokens(attachment.get("content", ""))
     elif kind == "hook_additional_context":
-        yield f"hook {attachment.get('hookEvent')}", tokens(str(attachment.get("content", "")))
+        yield ("hook", attachment.get("hookEvent")), tokens(str(attachment.get("content", "")))
     elif kind == "mcp_instructions_delta":
         for name, block in zip(attachment.get("addedNames", []), attachment.get("addedBlocks", [])):
-            yield f"MCP instructions {name}", tokens(block)
+            yield (MCP, name), tokens(block)
     elif kind in ("instructions", "nested_memory"):
-        yield "memory files (CLAUDE.md, AGENTS.md)", tokens(json.dumps(attachment))
+        yield ("memory files (CLAUDE.md, AGENTS.md)", ""), tokens(json.dumps(attachment))
     content = (entry.get("message") or {}).get("content")
     for block in content if isinstance(content, list) else []:
         if block.get("type") == "tool_use":
             names[block["id"]] = block["name"]
-            seen.called[block["name"]] += 1
+            tools.add(block["name"])
             if block["name"] == "Skill":
-                seen.called["skill " + plugin((block.get("input") or {}).get("skill", ""))] += 1
+                sent.plugins_called.add(plugin((block.get("input") or {}).get("skill", "")))
         elif block.get("type") == "tool_result":
             # One line per MCP server, not per tool.
             name = re.sub(r"^(mcp__[^_]+(?:_[^_]+)*?)__.*", r"\1", names.get(block.get("tool_use_id"), "?"))
-            yield f"tool results {name}", tokens(block.get("content"))
+            yield ("tool results", name), tokens(block.get("content"))
 
 
 def plugin(skill):

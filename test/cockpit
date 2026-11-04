@@ -117,12 +117,16 @@ test_report_weighs_roles_and_what_is_sent_along() {
 # An agent batch of the dev's at time $1, or now.
 batch() { GIT_COMMITTER_DATE=${1:-} git commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'; }
 
-test_hints_say_what_to_cut_once_in_ten_batches() {
+# Its own repo, as Claude Code names the folder: from the real path, which macOS reaches through /private.
+real_repo() {
   git init -q "$repo" && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev
-  # As Claude Code names the folder: from the real path, which macOS reaches through /private.
   claude=$CLAUDE_CONFIG_DIR/projects/$(git rev-parse --show-toplevel | sed 's/[^A-Za-z0-9]/-/g')
   mkdir -p "$claude"
+}
+
+test_hints_say_what_to_cut_once_in_ten_batches() {
+  real_repo
   block=$(printf '%02000d' 0)
   # Two days ago, before the last ten batches of yesterday, a server that no hint names.
   {
@@ -152,6 +156,35 @@ test_hints_say_what_to_cut_once_in_ten_batches() {
   fails "$(hints)" ''
   batch
   fails "$(hints | wc -l | tr -d ' ')" 2
+}
+
+test_report_reads_the_last_ten_batches_by_default() {
+  real_repo
+  old=$(python3 -c 'import time; print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 172800)))')
+  reply m0 "$old" claude-opus-5-5 0 10 0 100 > "$claude/s0.jsonl"
+  for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
+  reply m1 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
+  bash "$kit/template/sdd/bin/cockpit" report "$(git rev-parse --show-toplevel)" | tr -s ' ' > "$tmp/out"
+  grep -q '^writer opus 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
+}
+
+# Anything else sent along at 5% or more, not below, and a context over 150k tokens. The long call makes most of the
+# cost: the hook weighs 6% of it, the memory file 4%.
+test_hints_name_what_else_is_sent_along_and_a_long_context() {
+  real_repo
+  batch
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  {
+    echo '{"attachment":{"type":"hook_additional_context","hookEvent":"SessionStart","content":"'\
+"$(printf '%02400d' 0)"'"}}'
+    echo '{"attachment":{"type":"nested_memory","content":"'"$(printf '%01400d' 0)"'"}}'
+    reply m1 "$now" claude-opus-5-5 0 10 0 100
+    reply m2 "$now" claude-opus-5-5 0 10 150001 0
+  } > "$claude/s1.jsonl"
+  bash "$kit/template/sdd/bin/cockpit" hints > "$tmp/out"
+  grep -q '^HINT Hook SessionStart cost .* tokens a batch (.*%), sent again with every later call\.$' "$tmp/out"
+  grep -q '^HINT A log reached 150\.0k tokens of context, read again with each call' "$tmp/out"
+  fails "$(wc -l < "$tmp/out" | tr -d ' ')" 2
 }
 
 test_hints_name_a_module_whose_quiz_is_flagged_twice() {
@@ -184,8 +217,9 @@ HINT Quiz answers in search $text 4 times: propose the rule you would write."
 # The dev's address as git writes it, through the mailmap, with a plus and in another case.
 test_hints_find_a_dev_with_a_plus_or_a_mailmap() {
   git init -q "$repo" && cd "$repo"
-  git config user.email Dev+sdd@example.test && git config user.name Dev
-  echo '<dev+sdd@example.test> <old@example.test>' > .mailmap
+  git config user.email older@example.test && git config user.name Dev
+  # The batch's address and the one the dev commits with now map to the same, in two cases.
+  printf '%s\n' '<Dev+sdd@example.test> <old@example.test>' '<dev+sdd@example.test> <older@example.test>' > .mailmap
   git -c user.email=old@example.test commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'
   mkdir -p .git/sdd
   printf 'v2\t%s\tsearch\tunclear\t%s\t-\n' "$(date +%s)" One "$(date +%s)" Two > .git/sdd/quiz-journal

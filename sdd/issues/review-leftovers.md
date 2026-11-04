@@ -3,9 +3,6 @@
 The fresh review of checks, ledger and cockpit found these; none blocks the team's test of v2.3.0. Each changes
 behavior, so they come after the move to Python, which changes none, each in its own batch.
 
-- cockpit: four criteria no test pins (anything else sent along at 5% or more, a context over 150k tokens, `report`'s
-  default window of 10 batches, the dev's own address through the mailmap in `batches`): each mutation leaves
-  `test/cockpit` green.
 - cockpit: the hints' state is kept per worktree (`--git-path sdd/hints`) while the journal is shared, so a quiz hint
   comes back in each worktree.
 - cockpit: `test/cockpit` stays off Windows in CI: Git Bash hands Python the `C:/` form of `$repo`, so the logs
