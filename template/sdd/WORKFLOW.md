@@ -49,10 +49,12 @@ A file is created when first needed.
 5. Stage the batch, write the proposed message with `Agent-Assisted: yes` to `.git/sdd/message`, and run
    `bash sdd/bin/sdd audit --message .git/sdd/message`.
 6. Review: spawn a fresh reviewer, a new context that did not write the batch, and tell it the language the human writes
-   to you in. It reads the staged diff, the contract and the coding style, and reports findings with their evidence.
-   Once they are fixed, it writes the quiz, then runs the audit of step 5 again, which checks the quiz. Give it a
-   smaller model than the writer's unless the batch is large or touches security or data. After a fix, send the same
-   reviewer the change: it checks that its quiz still holds for a fraction of a fresh one.
+   to you in. It reads the staged diff, the contract and the coding style, and reports findings with their evidence. A
+   finding that adds a check, an error path or a fallback names an input the code really receives and gets wrong;
+   without one, you leave it out and list it in the handoff. Once you have fixed or listed the findings, it writes the
+   quiz, then runs the audit of step 5 again, which checks the quiz. Give it a smaller model than the writer's unless
+   the batch is large or touches security or data. After a fix, send the same reviewer the change: it checks that its
+   quiz still holds for a fraction of a fresh one.
 7. Hand off: purpose, the decisions you took alone, evidence, limits and a short "understand this" for the human, and at
    high risk the advice to have a second human read the diff. The human reads the diff, answers `QUIZ.md` and commits
    with `git commit -F .git/sdd/message`. Start the next batch in a fresh session: a long one reads its whole history

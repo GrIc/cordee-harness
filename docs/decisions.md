@@ -366,3 +366,13 @@ has `calls`, so that Kilo Code or Copilot is a module in `fabrik/logs/` and noth
 _Rejected:_ a base class for readers (two readers, one with `calls`: a module with three names says as much); the
 reader computing the whole report (each tool would write its own hints, worded differently); keeping one tool in the
 cockpit until a second can weigh its calls (the next one would have to untangle it first).
+
+## 46. A defensive finding shows its input (2026-11-04)
+
+A finding of the fresh reviewer that adds a check, an error path or a fallback names an input the code really
+receives and gets wrong; without one, the writer leaves it out and lists it in the handoff. The coding style already
+refuses code "just in case", but nothing asked the same of the findings, which the writer fixes as they come. No pilot
+counted such findings; the evidence is Anthropic's write-up on Scion (October 2026), whose engineers had to turn down
+an over-defensive adversarial review that added complexity.
+_Rejected:_ a reviewer told to skip such findings (a gap at a real boundary is one to fix); the rule in the coding
+style alone (it is there already, and the findings are fixed in step 6, not against the style).
