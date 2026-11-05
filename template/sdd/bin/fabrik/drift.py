@@ -1,5 +1,6 @@
 """Drift between the contracts and their code, and the modules a commit touches."""
 import re
+import sys
 
 from fabrik.contracts import contracts, governs, links, module, modules, risky
 from fabrik.git import commit_or, empty_tree, exists, git, lines
@@ -41,6 +42,8 @@ def drift(batch, base, tree, message):
 
 def touched(commit):
     """The modules whose code or contract a commit changes, each with its changed lines."""
+    if commit_or(commit, None) is None:
+        sys.exit(f"No commit {commit} here: commit first, or name a commit.")
     parent = commit_or(f"{commit}^", empty_tree())
     found = []
     for contract in contracts(commit):

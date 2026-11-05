@@ -328,6 +328,45 @@ test_audit_points_out_governs_paths_that_match_nothing() {
   says 'NOTE sdd/modules/search.md: src/serch/ matches no tracked file, a typo or code still to come.'
 }
 
+# YAML's other ways to write a list: one path, or "- path" lines, flush or indented. The next key is no path.
+test_governs_reads_a_scalar_or_a_block_list() {
+  printf -- '---\ngoverns: src/search/\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns:\n# owned here\n  - src/import/a.py  # the code\n- lib/\nrisk: high\n---\n# import\n' \
+    > sdd/modules/import.md
+  git add -A
+  git commit -qm 'Write governs as YAML lists' 2> /dev/null
+  echo two >> src/import/a.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says 'DRIFT sdd/modules/import.md: src/import/a.py changed'
+  says 'NOTE sdd/modules/import.md: lib/ matches no tracked file'
+  lacks 'risk: matches'
+  lacks 'high matches'
+  lacks 'here matches'
+  lacks 'code matches'
+}
+
+test_a_governs_path_outside_the_repo_says_what_to_do() {
+  contract search ../shared/
+  git add -A
+  fails git commit -qm 'Share search'
+  says 'ERROR sdd/modules/search.md: governs ../shared/, outside the repo. Write each path from the repo root.'
+  lacks 'fatal'
+  contract search /shared/
+  git add -A
+  fails git commit -qm 'Share search'
+  says 'ERROR sdd/modules/search.md: governs /shared/, outside the repo.'
+}
+
+test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing() {
+  new_repo empty
+  mkdir sdd && cp -R "$kit/template/sdd/bin" sdd/
+  fails bash sdd/bin/sdd touched
+  says 'No commit HEAD here: commit first, or name a commit.'
+  succeeds bash sdd/bin/cockpit hints
+  [ ! -s "$out" ]
+}
+
 # The shell must not expand the glob: b.py is gone from the working tree, a.py is still there.
 test_governs_takes_git_pathspecs() {
   contract search 'src/search/*.py'

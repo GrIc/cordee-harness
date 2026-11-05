@@ -1,18 +1,31 @@
 """What a contract says: the paths it governs, its risk, its links to tests."""
 import posixpath
 import re
+import sys
 
 from fabrik.git import git, lines, try_git
 
 
 def governs(revision):
-    """The paths a contract governs, at a revision path such as HEAD:sdd/modules/search.md."""
-    paths, inside = [], False
+    """The paths a contract governs, at a revision path such as HEAD:sdd/modules/search.md. YAML writes them as a list
+    in brackets that may wrap, as "- path" lines below the key, or as one path; the next key ends them, comments are
+    no paths. An absolute path or one outside the repo stops the command, since git would refuse every diff."""
+    value, inside = [], False
     for line in front_matter(re.sub("[\"']", "", git("show", revision))):
-        inside = inside or line.startswith("governs:")
+        # A YAML comment starts with a "#" at the start of the line or after a space.
+        line = re.sub(r"(^|\s)#.*", "", line)
+        if not line.strip():
+            continue
+        # A line flush with the keys, other than a "- path" one, starts the next key.
+        if re.match(r"[^\s-]", line):
+            inside = line.startswith("governs:")
         if inside:
-            paths += re.sub(r"[][,]", " ", re.sub(r"^governs:\s*", "", line)).split()
-            inside = "]" not in line
+            value.append(re.sub(r"^(governs:|\s*-\s)", " ", line))
+    paths = re.sub(r"[][,]", " ", " ".join(value)).split()
+    for path in paths:
+        if path.startswith("/") or resolve("", path) is None:
+            sys.exit(f"ERROR {revision.split(':', 1)[1]}: governs {path}, outside the repo. Write each path from the"
+                     f" repo root.")
     return paths
 
 
@@ -70,12 +83,12 @@ def links(tree, contract):
 
 
 def resolve(folder, target):
-    """The path of target from folder, or "" when it climbs out of the repo."""
+    """The path of target from folder, or None when it climbs out of the repo."""
     kept = []
     for part in f"{folder}/{target}".split("/"):
         if part == "..":
             if not kept:
-                return ""
+                return None
             kept.pop()
         elif part not in (".", ""):
             kept.append(part)
