@@ -387,3 +387,14 @@ Scion (decision 46), whose review reads the intent of a change rather than every
 _Rejected:_ a setting of its own for the levels a quiz asks (code, architecture, functional, run): one more knob to
 explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
 even when the intent moves).
+
+## 48. Git's own files ask no quiz, like Markdown (2026-11-05)
+
+A batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or `.gitkeep`, outside every module and
+contract, asks no quiz, and those git files count neither in the size nor in the hunks a quiz covers. In the first
+field use (opencode and Qwen, 2026-11-05), the GENESIS batch wrote the project's documents and a `.gitignore`; the
+reviewer wrote no quiz, as the human expected, and the hook refused the commit. The human took the `.gitignore` out to
+the next batch. These files change what git tracks, not what the product does, and the human reads them in the diff.
+_Rejected:_ every dotfile (`.github/workflows/`, `.eslintrc` and `.env.example` carry behavior); a level judged on
+"no hunk of code" as the coverage counts it (a lock file alone would ask nothing, and a dependency bump deserves a
+question); a list the project sets (one more setting, for three files nobody debates).

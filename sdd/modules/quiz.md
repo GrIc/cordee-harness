@@ -7,10 +7,11 @@ depends: [checks]
 The questions that make the human understand an agent batch before it is committed. A fresh reviewer writes them, the
 [checks](checks.md)' hook grades them, as the workflow's Quiz section says.
 
-- An agent batch asks three questions, none when every changed file is Markdown that no contract is and no module
-  governs (one written is still graded): [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
+- An agent batch asks three questions, none when every changed file is Markdown, `.gitignore`, `.gitattributes` or
+  `.gitkeep` that no contract is and no module governs (one written is still graded):
+  [test_quiz_passed_adds_the_trailer_and_cleans_up](/test/run),
   [test_wrong_answer_explains_then_a_retry_passes](/test/run), [test_a_markdown_only_batch_needs_no_quiz](/test/run),
-  [test_a_governed_markdown_batch_asks_a_quiz](/test/run).
+  [test_markdown_and_git_files_need_no_quiz](/test/run), [test_a_governed_markdown_batch_asks_a_quiz](/test/run).
 - A batch that changes or deletes a module declaring `risk: high` may ask more, and `audit` fails until their `See`
   lines cite every hunk of code, the hook never: [test_a_high_risk_quiz_covers_every_hunk](/test/run),
   [test_a_deleted_high_risk_contract_is_high_risk](/test/run).

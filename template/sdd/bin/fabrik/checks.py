@@ -8,7 +8,7 @@ from fabrik.contracts import governs
 from fabrik.drift import drift
 from fabrik.git import commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from fabrik.journal import committed
-from fabrik.size import size
+from fabrik.size import PROSE_OR_GIT, size
 
 
 def audit_staged(message_file=None):
@@ -73,11 +73,12 @@ def check(base, tree, message):
                             findings="", notes="", hit=[], high=[], touched=0)
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
-    # Markdown that no contract is and no module governs asks little of a quiz: the human reads its diff.
+    # Markdown and git's own files that no contract is and no module governs ask little of a quiz: the human reads
+    # their diff.
     batch.level = "normal"
     if batch.high:
         batch.level = "high"
-    elif batch.changed and not batch.hit and all(path.endswith(".md") for path in batch.changed):
+    elif batch.changed and not batch.hit and all(PROSE_OR_GIT.search(path) for path in batch.changed):
         batch.level = "low"
     return batch
 

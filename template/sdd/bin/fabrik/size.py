@@ -6,8 +6,11 @@ from fabrik.git import git, lines
 # An agent batch up to 5% over only gets a note.
 MAX_LINES = 200
 
-# Files that count neither in the size nor in what the quiz covers: prose and lock files.
-NOT_CODE = re.compile(r"\.md$|\.lock$|lock\.json$|lock\.yaml$")
+# Files that ask no quiz when a batch changes only them, outside every module: prose and the files git itself reads.
+PROSE_OR_GIT = re.compile(r"\.md$|(^|/)\.git(ignore|attributes|keep)$")
+
+# Files that count neither in the size nor in what the quiz covers: those, and lock files.
+NOT_CODE = re.compile(PROSE_OR_GIT.pattern + r"|\.lock$|lock\.json$|lock\.yaml$")
 
 
 def size(batch, base, tree, message):

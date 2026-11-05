@@ -68,11 +68,11 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 
 ## Quiz
 
-A quiz has three questions. A batch whose changed files are all Markdown that no contract is and no module governs
-needs none (one written is still graded). A batch that changes or deletes a module declaring `risk: high` (an API
-contract, security, personal data, money) may have more, and its `See` lines cite every hunk of code: `audit` fails
-until they do, the hook never checks it. The handoff then recommends a second human's reading; nothing requires one,
-so a dev alone uses the whole harness.
+A quiz has three questions. A batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or `.gitkeep`
+that no contract is and no module governs needs none (one written is still graded). A batch that changes or deletes
+a module declaring `risk: high` (an API contract, security, personal data, money) may have more, and its `See` lines
+cite every hunk of code: `audit` fails until they do, the hook never checks it. The handoff then recommends a second
+human's reading; nothing requires one, so a dev alone uses the whole harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 
@@ -114,9 +114,9 @@ question unclear, the code does not do what they wanted). The boxes never change
 since the quiz was written, the hook only warns: ask for a new quiz when the changes touch what it asks.
 
 The trailer says how much of the batch the quiz covers: `Quiz: 3/3, covers 5/7` counts the hunks of
-`git diff --cached -U0` outside Markdown and lock files that a `See` range meets. A new file is one hunk; a hunk that
-only deletes is met at the line before it or the one after, so a deleted file at its line 1. Without a hunk of code,
-the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
+`git diff --cached -U0` outside Markdown, those git files and lock files that a `See` range meets. A new file is one
+hunk; a hunk that only deletes is met at the line before it or the one after, so a deleted file at its line 1. Without
+a hunk of code, the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
 
 Once the commit of a passed quiz exists, each question the dev flagged or commented goes to
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one

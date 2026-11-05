@@ -171,11 +171,12 @@ test_up_to_five_percent_over_only_notes() {
   says 'NOTE 210 changed lines of code and tests, over 200 but within 5%.'
 }
 
-test_markdown_and_lockfiles_do_not_count() {
+test_markdown_git_files_and_lockfiles_do_not_count() {
   echo 'More intent.' >> sdd/modules/search.md
   echo two >> src/search/a.py
   seq 1 300 > notes.md
   seq 1 300 > poetry.lock
+  seq 1 300 > .gitignore
   git add -A
   succeeds bash sdd/bin/sdd audit
 }
@@ -707,6 +708,21 @@ test_a_markdown_only_batch_needs_no_quiz() {
   git add -A
   fails agent_commit 'Explain more'
   says 'No quiz for this agent-assisted batch'
+}
+
+# As in the field: the first batch of a new project writes its documents and a .gitignore.
+test_markdown_and_git_files_need_no_quiz() {
+  echo 'What it is.' > README.md
+  printf '__pycache__/\n' > .gitignore
+  printf '* text=auto\n' > .gitattributes
+  printf '* text=auto\n' > docs.gitattributes
+  mkdir -p docs/drafts && touch docs/drafts/.gitkeep
+  git add -A
+  fails agent_commit 'Write the documents'
+  says 'No quiz for this agent-assisted batch'
+  git rm -q --cached docs.gitattributes
+  succeeds agent_commit 'Write the documents'
+  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
 }
 
 test_a_governed_markdown_batch_asks_a_quiz() {
