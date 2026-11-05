@@ -9,7 +9,8 @@ default; with `git config sdd.ledger false`, nothing is noted, and the ledger ne
 
 - `record` splits the tokens spent since the last commit over the modules HEAD changes, by their changed lines, into
   a note of the git notes `sdd-ledger` that hangs on a random key, written by `sdd-fabrik` on the first of the month:
-  [test_record_splits_a_batch_by_module_on_no_commit](/test/ledger). A batch outside the modules goes to `-`:
+  [test_record_splits_a_batch_by_module_on_no_commit](/test/ledger). Each count splits whole and sums to the
+  batch's: [test_record_splits_a_lone_call_without_losing_it](/test/ledger). A batch outside the modules goes to `-`:
   [test_a_batch_outside_the_modules_goes_to_a_dash](/test/ledger).
 - It never notes the quiz, whatever the journal holds, since what the quiz learns about a dev stays on their machine:
   [test_record_never_notes_the_quiz](/test/ledger).
@@ -21,7 +22,8 @@ default; with `git config sdd.ledger false`, nothing is noted, and the ledger ne
   [test_installed_hooks_record_and_share_the_ledger](/test/ledger).
 - `sync` merges the remote's ledger into ours and pushes the result as one commit with no parent, so that two devs'
   notes add up and the shared history never shows whose came first:
-  [test_sync_merges_two_devs_ledgers](/test/ledger). A dev with no ledger fetches nothing:
+  [test_sync_merges_two_devs_ledgers](/test/ledger). Two notes on one key keep both, and the next syncs go through:
+  [test_sync_merges_two_notes_on_one_key](/test/ledger). A dev with no ledger fetches nothing:
   [test_sync_without_a_ledger_fetches_nothing](/test/ledger).
 - `report` sums the ledger by month, module, role and model, then shows per month the batches noted against the
   agent commits, marked as the hook marks them:
