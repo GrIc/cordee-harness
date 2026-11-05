@@ -515,6 +515,43 @@ answer() {
   done
 }
 
+test_bypass_quiz_with_a_reason_skips_the_quiz() {
+  batch
+  succeeds git commit -q -m 'Change search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: redone after a passed quiz'
+  git log -1 --format=%B | grep -qx 'Bypass-Quiz: redone after a passed quiz'
+  if git log -1 --format=%B | grep -q '^Quiz:'; then echo '    a bypassed quiz has no Quiz trailer'; return 1; fi
+}
+
+test_bypass_quiz_holds_at_high_risk() {
+  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  git add -A
+  git commit -qm 'Search is risky'
+  batch
+  succeeds git commit -q -m 'Change search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: hotfix, reviewed by two'
+}
+
+test_bypass_quiz_still_checks_drift() {
+  echo two >> src/search/a.py
+  git add -A
+  fails git commit -q -m 'Change search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: urgent'
+  says 'DRIFT sdd/modules/search.md'
+}
+
+test_bypass_quiz_still_checks_size() {
+  echo 'More intent.' >> sdd/modules/search.md
+  seq 1 300 > src/search/big.py
+  git add -A
+  fails git commit -q -m 'Add a big search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: urgent'
+  says 'SIZE 300 changed lines of code and tests'
+}
+
+test_bypass_quiz_without_a_reason_asks_the_quiz() {
+  batch
+  fails git commit -q -m 'Change search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz:'
+  says 'Bypass-Quiz needs a reason after the colon'
+  says 'No quiz for this agent-assisted batch'
+}
+
 test_quiz_passed_adds_the_trailer_and_cleans_up() {
   batch
   write_quiz src/search/a.py 'A B C'

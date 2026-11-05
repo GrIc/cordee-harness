@@ -13,6 +13,11 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   wrong quiz. The human's own commits only get warnings on drift and size: [test_agent_drift_blocks](/test/run),
   [test_an_agent_co_author_marks_an_agent_batch](/test/run), [test_human_drift_warns_and_commits](/test/run),
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run).
+- `Bypass-Quiz: <reason>` lets an agent batch pass without a quiz, at high risk too, and the trailer stays as the
+  trace; drift and size still apply. Without a reason it lifts nothing, and the hook says to write one:
+  [test_bypass_quiz_with_a_reason_skips_the_quiz](/test/run), [test_bypass_quiz_holds_at_high_risk](/test/run),
+  [test_bypass_quiz_still_checks_drift](/test/run), [test_bypass_quiz_still_checks_size](/test/run),
+  [test_bypass_quiz_without_a_reason_asks_the_quiz](/test/run).
 - Drift: a commit that changes a module's governed paths changes its contract too, or names the module in
   `Spec-Unchanged(<module>): <reason>`, which also leaves it out of the one-module limit. A `Spec-Unchanged` naming no
   contract, or a contract with an empty `governs`, stops every commit:

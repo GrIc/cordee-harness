@@ -1,5 +1,6 @@
 """The commit-msg hook, and the install of the hooks."""
 import os
+import re
 import sys
 
 from fabrik import quiz
@@ -21,6 +22,10 @@ def hook(message_file):
     # A reword or an amend that changes no file leaves nothing to quiz on.
     if not is_agent(message) or not batch.changed or (batch.level == "low" and not os.path.isfile(quiz.QUIZ)):
         return
+    if re.search(r"^Bypass-Quiz:[^\S\n]*\S", message, re.M):
+        return
+    if re.search(r"^Bypass-Quiz:[^\S\n]*$", message, re.M):
+        print("Bypass-Quiz needs a reason after the colon: without one, the quiz is still asked.", file=sys.stderr)
     quiz.grade(batch)
     covered, total, _ = batch.coverage
     trailer = f"Quiz: {batch.count}/{batch.count}"

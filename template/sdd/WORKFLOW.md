@@ -111,7 +111,8 @@ human's reading; nothing requires one, so a dev alone uses the whole harness.
 The commit fails until every answer is right. Under each wrong question, the hook writes a quoted block in
 `QUIZ.md`, once: the hint, a call to type *quiz feedback*, and optional boxes for the dev to say why (not understood,
 question unclear, the code does not do what they wanted). The boxes never change the grade. If the batch changed
-since the quiz was written, the hook only warns: ask for a new quiz when the changes touch what it asks.
+since the quiz was written, the hook only warns: ask for a new quiz when the changes touch what it asks. A human with
+a reason to skip the quiz writes `Bypass-Quiz: <reason>` in the message; the history keeps it.
 
 The trailer says how much of the batch the quiz covers: `Quiz: 3/3, covers 5/7` counts the hunks of
 `git diff --cached -U0` outside Markdown, those git files and lock files that a `See` range meets. A new file is one
@@ -161,6 +162,7 @@ keeps its text.
 | `Agent-Assisted: yes` | the agent, in its proposed message | drift and size block, the quiz is required |
 | `Spec-Unchanged(<module>): <reason>` | the author | spares that module from the drift check and the one-module limit |
 | `Large-Batch: <reason>` | the human | lifts the size limits (`MAX_LINES` in `sdd/bin/fabrik/size.py`, one module) |
+| `Bypass-Quiz: <reason>` | the human, never the agent | the hook asks no quiz; drift and size still apply |
 | `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
 A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`; any other

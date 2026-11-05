@@ -8,13 +8,6 @@ instead of editing the kit's scripts, which an upgrade replaces. On a first try 
 the audit or calling a reviewer; light models are what the teams will run. A dev with a good reason to skip the quiz
 can only do it today by leaving out the agent's trailer or `--no-verify`, which leaves no trace of why.
 
-## The human may skip the quiz with a reason (checks)
-
-- A commit whose message carries `Bypass-Quiz: <reason>` passes the hook without a quiz and gets no `Quiz:` trailer;
-  drift and size still apply, on a `risk: high` module too. The trailer stays in the commit: it is the trace.
-- `Bypass-Quiz:` without a reason lifts nothing, and the hook says to write why after the colon.
-- The workflow's Quiz section and its trailers table say it, written by the human only.
-
 ## The script says the next step of a batch (brief)
 
 The command's line in `__main__.py` and its tests in `test/run` belong to checks: the batch carries
