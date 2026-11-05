@@ -22,9 +22,7 @@ jobs:
         shell: bash
       - run: bash test/ledger
         shell: bash
-      # On Windows, Git Bash hands Python the C:/ form of the test's repo path, so the logs folder differs.
       - run: bash test/cockpit
-        if: runner.os != 'Windows'
         shell: bash
   audit:
     runs-on: ubuntu-latest

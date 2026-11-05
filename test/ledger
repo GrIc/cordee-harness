@@ -47,6 +47,19 @@ v1 2026-10 search writer opus 3 30 300 3000 6'
   ! git notes --ref sdd-ledger list HEAD 2> /dev/null
 }
 
+# Each count splits whole: a module gets one more by the largest remainder, the first in the list on a tie, so the
+# parts sum to the count.
+test_record_splits_a_lone_call_without_losing_it() {
+  printf 'writer\topus\t1\t3\t5\t0\t2\n' > "$tmp/usage"
+  batch 2 1 2026-10-23T11:00:00Z
+  fails "$(ledger | tr '\t' ' ')" 'v1 2026-10 import writer opus 0 1 2 0 1
+v1 2026-10 search writer opus 1 2 3 0 1'
+  printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
+  batch 1 1 2026-10-23T12:00:00Z
+  fails "$(ledger | tr '\t' ' ' | grep -c ' 1 1 1 1 1$')" 1
+  fails "$(ledger | tr '\t' ' ' | grep ' 1 1 1 1 1$' | cut -d' ' -f3)" import
+}
+
 test_a_batch_outside_the_modules_goes_to_a_dash() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   echo doc > README.md
@@ -112,6 +125,21 @@ search writer'
   cd "$tmp/a"
   bash sdd/bin/ledger sync
   fails "$(ledger refs/notes/sdd-ledger | wc -l | tr -d ' ')" 2
+}
+
+# Keys are random, but if one ever held two notes, the merge keeps both and the next syncs still go through.
+test_sync_merges_two_notes_on_one_key() {
+  key=$(echo key | git hash-object --stdin)
+  git notes --ref sdd-ledger add -m "$(printf 'v1\t2026-10\tsearch\twriter\topus\t1\t1\t1\t1\t1')" "$key"
+  git clone -q "$tmp/origin.git" "$tmp/b" 2> /dev/null
+  bash sdd/bin/ledger sync
+  cd "$tmp/b"
+  git notes --ref sdd-ledger add -m "$(printf 'v1\t2026-10\timport\twriter\topus\t1\t1\t1\t1\t1')" "$key"
+  fails "$(bash sdd/bin/ledger sync 2>&1)" ''
+  fails "$(ledger | cut -f3 | tr '\n' ' ')" 'import search '
+  cd "$tmp/a"
+  fails "$(bash sdd/bin/ledger sync 2>&1)" ''
+  fails "$(ledger | wc -l | tr -d ' ')" 2
 }
 
 test_sync_without_a_ledger_fetches_nothing() {

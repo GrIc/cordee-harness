@@ -9,9 +9,22 @@ setup() {
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   repo=$tmp/repo
+  mkdir "$repo"
   export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
-  claude=$CLAUDE_CONFIG_DIR/projects/$(sed 's/[^A-Za-z0-9]/-/g' <<< "$repo")
+  # The Python the launchers find, for the fixtures.
+  for python in python3 python 'py -3'; do
+    $python -c 'import sys; sys.exit(sys.version_info < (3, 10))' > /dev/null 2>&1 && break
+  done
+  # The folder from the path as Python reads it, which Git Bash rewrites on the way. No newline: Windows would add \r.
+  name='import re, sys; sys.stdout.write(re.sub(r"[^A-Za-z0-9]", "-", sys.argv[1]))'
+  claude=$CLAUDE_CONFIG_DIR/projects/$($python -c "$name" "$repo")
   mkdir -p "$claude/s1/subagents"
+}
+
+# The UTC timestamp $1 seconds ago, by GNU date or BSD date.
+ago() {
+  local when=$(($(date +%s) - $1))
+  date -u -d "@$when" +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || date -u -r "$when" +%Y-%m-%dT%H:%M:%SZ
 }
 
 usage() { bash "$kit/template/sdd/bin/cockpit" usage "$repo" 1792749600 1792753200 | tr '\t' ' '; }
@@ -75,7 +88,7 @@ test_without_python_only_the_commit_msg_hook_stops() {
 
 test_opencode_child_session_is_the_reviewer() {
   mkdir -p "$XDG_DATA_HOME/opencode"
-  python3 - "$XDG_DATA_HOME/opencode/opencode.db" "$repo" <<'PY'
+  $python - "$XDG_DATA_HOME/opencode/opencode.db" "$repo" <<'PY'
 import json, sqlite3, sys
 db = sqlite3.connect(sys.argv[1])
 db.execute("create table session (id, parent_id, directory, title)")
@@ -93,6 +106,7 @@ writer glm-4.6 1 5 7 50 9'
 }
 
 test_report_weighs_roles_and_what_is_sent_along() {
+  real_repo
   {
     echo '{"type":"attachment","attachment":{"type":"skill_listing","content":"'"$(printf '%0350d' 0)"'"}}'
     printf '%s' '{"type":"assistant","timestamp":"2026-10-23T10:30:00Z","message":{"model":"claude-opus-5-5",' \
@@ -122,7 +136,7 @@ real_repo() {
   git init -q "$repo" && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev
   claude=$CLAUDE_CONFIG_DIR/projects/$(git rev-parse --show-toplevel | sed 's/[^A-Za-z0-9]/-/g')
-  mkdir -p "$claude"
+  mkdir -p "$claude/s1/subagents"
 }
 
 test_hints_say_what_to_cut_once_in_ten_batches() {
@@ -131,8 +145,7 @@ test_hints_say_what_to_cut_once_in_ten_batches() {
   # Two days ago, before the last ten batches of yesterday, a server that no hint names.
   {
     echo '{"attachment":{"type":"mcp_instructions_delta","addedNames":["old"],"addedBlocks":["'"$block"'"]}}'
-    old=$(python3 -c 'import time; print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 172800)))')
-    reply m0 "$old" claude-opus-5-5 0 10 0 100
+    reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100
   } > "$claude/s0.jsonl"
   for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -160,11 +173,12 @@ test_hints_say_what_to_cut_once_in_ten_batches() {
 
 test_report_reads_the_last_ten_batches_by_default() {
   real_repo
-  old=$(python3 -c 'import time; print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 172800)))')
-  reply m0 "$old" claude-opus-5-5 0 10 0 100 > "$claude/s0.jsonl"
+  reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100 > "$claude/s0.jsonl"
   for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
   reply m1 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
-  bash "$kit/template/sdd/bin/cockpit" report "$(git rev-parse --show-toplevel)" | tr -s ' ' > "$tmp/out"
+  # From a folder below the root, as $PWD may differ from the real path.
+  mkdir sub && cd sub
+  bash "$kit/template/sdd/bin/cockpit" report "$PWD" | tr -s ' ' > "$tmp/out"
   grep -q '^writer opus 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
 }
 
@@ -212,6 +226,11 @@ test_hints_name_a_module_whose_quiz_is_flagged_twice() {
   fails "$(hints)" "HINT Quiz answers in import $text 2 times: propose the rule you would write.
 HINT Quiz answers in search $text 4 times: propose the rule you would write."
   fails "$(hints)" ''
+  # Nor in another worktree of the clone, until ten batches there, though its branch has fewer.
+  git worktree add -q --detach "$tmp/other" HEAD~5 && cd "$tmp/other"
+  fails "$(hints)" ''
+  for i in 1 2 3 4 5 6 7 8 9 10; do batch; done
+  fails "$(hints | wc -l | tr -d ' ')" 2
 }
 
 # The dev's address as git writes it, through the mailmap, with a plus and in another case.

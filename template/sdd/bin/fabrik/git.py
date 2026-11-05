@@ -48,6 +48,11 @@ def empty_tree():
     return git("hash-object", "-t", "tree", "--stdin", input="")
 
 
+def shared_path(name):
+    """A file of the harness on this machine, shared by the clone's worktrees."""
+    return os.path.join(git("rev-parse", "--git-common-dir"), "sdd", name)
+
+
 def is_agent(message):
     return bool(AGENT.search(message))
 

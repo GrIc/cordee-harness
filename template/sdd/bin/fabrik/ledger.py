@@ -44,18 +44,32 @@ def record():
         return
     # A batch that changes no module still costs: it goes to "-".
     shares = touched("HEAD") or [("-", 1)]
-    total = sum(share for _, share in shares)
+    weights = [weight for _, weight in shares]
     month = git("log", "-1", "--date=format-local:%Y-%m", "--format=%cd", env={"TZ": "UTC"})
     note = []
     for line in lines(usage.stdout.decode().rstrip("\n")):
         role, model, *counts = line.split("\t")
-        for module, share in shares:
-            note.append("\t".join(["v1", month, module, role, model] +
-                                  [str(int(count) * share // total) for count in counts]))
+        rows = {module: [] for module, _ in shares}
+        for count in counts:
+            for (module, _), part in zip(shares, split(int(count), weights)):
+                rows[module].append(str(part))
+        for module, row in rows.items():
+            note.append("\t".join(["v1", month, module, role, model] + row))
     note = "\n".join(note)
     # A random key: the note hangs on no commit.
     key = git("hash-object", "--stdin", input=f"{note}\n{os.urandom(16).hex()}\n")
     git("notes", "--ref", "sdd-ledger", "add", "-m", note, key, env=neutral(month))
+
+
+def split(count, weights):
+    """Splits count into whole parts in proportion to weights, summing to count: each part its floor, then one more to
+    the largest remainders, the first on a tie. A lone call split over two modules still counts once."""
+    total = sum(weights)
+    parts = [count * weight // total for weight in weights]
+    by_remainder = sorted(range(len(weights)), key=lambda i: -(count * weights[i] % total))
+    for i in by_remainder[:count - sum(parts)]:
+        parts[i] += 1
+    return parts
 
 
 def neutral(month):
@@ -74,7 +88,9 @@ def sync(remote):
     month, seen = time.strftime("%Y-%m", time.gmtime()), ""
     if try_git("fetch", "-q", remote, f"+{REF}:{REF}-remote") is not None:
         seen = git("rev-parse", f"{REF}-remote")
-        if run(["notes", "--ref", "sdd-ledger", "merge", "-q", f"{REF}-remote"], env=neutral(month)).returncode:
+        # Two notes on one key keep their lines: the strategy never leaves a merge open for the next sync to trip on.
+        if run(["notes", "--ref", "sdd-ledger", "merge", "-q", "-s", "cat_sort_uniq", f"{REF}-remote"],
+               env=neutral(month)).returncode:
             print(f"NOTE the token ledger could not merge {remote}'s: the next push retries.", file=sys.stderr)
             return
     flat = git("commit-tree", "-m", "Token ledger", f"{REF}^{{tree}}", env=neutral(month))
