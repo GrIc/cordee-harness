@@ -9,9 +9,22 @@ setup() {
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   repo=$tmp/repo
+  mkdir "$repo"
   export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
-  claude=$CLAUDE_CONFIG_DIR/projects/$(sed 's/[^A-Za-z0-9]/-/g' <<< "$repo")
+  # The Python the launchers find, for the fixtures.
+  for python in python3 python 'py -3'; do
+    $python -c 'import sys; sys.exit(sys.version_info < (3, 10))' > /dev/null 2>&1 && break
+  done
+  # The folder from the path as Python reads it, which Git Bash rewrites on the way. No newline: Windows would add \r.
+  name='import re, sys; sys.stdout.write(re.sub(r"[^A-Za-z0-9]", "-", sys.argv[1]))'
+  claude=$CLAUDE_CONFIG_DIR/projects/$($python -c "$name" "$repo")
   mkdir -p "$claude/s1/subagents"
+}
+
+# The UTC timestamp $1 seconds ago, by GNU date or BSD date.
+ago() {
+  local when=$(($(date +%s) - $1))
+  date -u -d "@$when" +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || date -u -r "$when" +%Y-%m-%dT%H:%M:%SZ
 }
 
 usage() { bash "$kit/template/sdd/bin/cockpit" usage "$repo" 1792749600 1792753200 | tr '\t' ' '; }
@@ -75,7 +88,7 @@ test_without_python_only_the_commit_msg_hook_stops() {
 
 test_opencode_child_session_is_the_reviewer() {
   mkdir -p "$XDG_DATA_HOME/opencode"
-  python3 - "$XDG_DATA_HOME/opencode/opencode.db" "$repo" <<'PY'
+  $python - "$XDG_DATA_HOME/opencode/opencode.db" "$repo" <<'PY'
 import json, sqlite3, sys
 db = sqlite3.connect(sys.argv[1])
 db.execute("create table session (id, parent_id, directory, title)")
@@ -93,6 +106,7 @@ writer glm-4.6 1 5 7 50 9'
 }
 
 test_report_weighs_roles_and_what_is_sent_along() {
+  real_repo
   {
     echo '{"type":"attachment","attachment":{"type":"skill_listing","content":"'"$(printf '%0350d' 0)"'"}}'
     printf '%s' '{"type":"assistant","timestamp":"2026-10-23T10:30:00Z","message":{"model":"claude-opus-5-5",' \
@@ -117,18 +131,21 @@ test_report_weighs_roles_and_what_is_sent_along() {
 # An agent batch of the dev's at time $1, or now.
 batch() { GIT_COMMITTER_DATE=${1:-} git commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'; }
 
-test_hints_say_what_to_cut_once_in_ten_batches() {
+# Its own repo, as Claude Code names the folder: from the real path, which macOS reaches through /private.
+real_repo() {
   git init -q "$repo" && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev
-  # As Claude Code names the folder: from the real path, which macOS reaches through /private.
   claude=$CLAUDE_CONFIG_DIR/projects/$(git rev-parse --show-toplevel | sed 's/[^A-Za-z0-9]/-/g')
-  mkdir -p "$claude"
+  mkdir -p "$claude/s1/subagents"
+}
+
+test_hints_say_what_to_cut_once_in_ten_batches() {
+  real_repo
   block=$(printf '%02000d' 0)
   # Two days ago, before the last ten batches of yesterday, a server that no hint names.
   {
     echo '{"attachment":{"type":"mcp_instructions_delta","addedNames":["old"],"addedBlocks":["'"$block"'"]}}'
-    old=$(python3 -c 'import time; print(time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() - 172800)))')
-    reply m0 "$old" claude-opus-5-5 0 10 0 100
+    reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100
   } > "$claude/s0.jsonl"
   for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -152,6 +169,36 @@ test_hints_say_what_to_cut_once_in_ten_batches() {
   fails "$(hints)" ''
   batch
   fails "$(hints | wc -l | tr -d ' ')" 2
+}
+
+test_report_reads_the_last_ten_batches_by_default() {
+  real_repo
+  reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100 > "$claude/s0.jsonl"
+  for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
+  reply m1 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
+  # From a folder below the root, as $PWD may differ from the real path.
+  mkdir sub && cd sub
+  bash "$kit/template/sdd/bin/cockpit" report "$PWD" | tr -s ' ' > "$tmp/out"
+  grep -q '^writer opus 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
+}
+
+# Anything else sent along at 5% or more, not below, and a context over 150k tokens. The long call makes most of the
+# cost: the hook weighs 6% of it, the memory file 4%.
+test_hints_name_what_else_is_sent_along_and_a_long_context() {
+  real_repo
+  batch
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  {
+    echo '{"attachment":{"type":"hook_additional_context","hookEvent":"SessionStart","content":"'\
+"$(printf '%02400d' 0)"'"}}'
+    echo '{"attachment":{"type":"nested_memory","content":"'"$(printf '%01400d' 0)"'"}}'
+    reply m1 "$now" claude-opus-5-5 0 10 0 100
+    reply m2 "$now" claude-opus-5-5 0 10 150001 0
+  } > "$claude/s1.jsonl"
+  bash "$kit/template/sdd/bin/cockpit" hints > "$tmp/out"
+  grep -q '^HINT Hook SessionStart cost .* tokens a batch (.*%), sent again with every later call\.$' "$tmp/out"
+  grep -q '^HINT A log reached 150\.0k tokens of context, read again with each call' "$tmp/out"
+  fails "$(wc -l < "$tmp/out" | tr -d ' ')" 2
 }
 
 test_hints_name_a_module_whose_quiz_is_flagged_twice() {
@@ -179,13 +226,19 @@ test_hints_name_a_module_whose_quiz_is_flagged_twice() {
   fails "$(hints)" "HINT Quiz answers in import $text 2 times: propose the rule you would write.
 HINT Quiz answers in search $text 4 times: propose the rule you would write."
   fails "$(hints)" ''
+  # Nor in another worktree of the clone, until ten batches there, though its branch has fewer.
+  git worktree add -q --detach "$tmp/other" HEAD~5 && cd "$tmp/other"
+  fails "$(hints)" ''
+  for i in 1 2 3 4 5 6 7 8 9 10; do batch; done
+  fails "$(hints | wc -l | tr -d ' ')" 2
 }
 
 # The dev's address as git writes it, through the mailmap, with a plus and in another case.
 test_hints_find_a_dev_with_a_plus_or_a_mailmap() {
   git init -q "$repo" && cd "$repo"
-  git config user.email Dev+sdd@example.test && git config user.name Dev
-  echo '<dev+sdd@example.test> <old@example.test>' > .mailmap
+  git config user.email older@example.test && git config user.name Dev
+  # The batch's address and the one the dev commits with now map to the same, in two cases.
+  printf '%s\n' '<Dev+sdd@example.test> <old@example.test>' '<dev+sdd@example.test> <older@example.test>' > .mailmap
   git -c user.email=old@example.test commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'
   mkdir -p .git/sdd
   printf 'v2\t%s\tsearch\tunclear\t%s\t-\n' "$(date +%s)" One "$(date +%s)" Two > .git/sdd/quiz-journal

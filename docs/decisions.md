@@ -354,3 +354,15 @@ Apple's (3.9 with the Command Line Tools) needs a newer one, from python.org or 
 _Rejected:_ the hook passing silently without Python (an agent batch would go in unchecked); a Python found once at
 install and written into the hooks (a dev who installs Python later would have to run `install-hook` again); bash
 kept for the checks with Python for the rest (two languages to read, and the awk decision 40 left).
+
+## 45. Only a tool's reader knows the tool (2026-11-04)
+
+The cockpit's report and hints were written for Claude Code: they named it, took its price ratios and its log walk
+from its reader, and matched MCP servers to tools by its `mcp__<server>__<tool>` names, through labels whose prefixes
+they parsed back. Now a reader that can weigh its calls has `NAME`, `PRICES` and `calls`, which yields each reply as a
+`Call` and fills a `Sent`: the cost of each source sent along, a kind and a name, and which MCP servers and plugins were
+called. Both live in `fabrik/logs/__init__.py`. The cockpit only sums calls and reads `Sent`, for every reader that
+has `calls`, so that Kilo Code or Copilot is a module in `fabrik/logs/` and nothing else.
+_Rejected:_ a base class for readers (two readers, one with `calls`: a module with three names says as much); the
+reader computing the whole report (each tool would write its own hints, worded differently); keeping one tool in the
+cockpit until a second can weigh its calls (the next one would have to untangle it first).
