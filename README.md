@@ -185,9 +185,19 @@ You were asked to deploy SDD-Fabrik in the current repository. Do this:
 4. Replace `<source>` and `<tag>` on the first line of `sdd/README.md` with the URL and the tag you deployed from.
 5. Run `bash sdd/bin/sdd install-hook`. If it declines because another hook is in place, show the human the lines it
    printed.
-6. If your tool has a permission deny list, add `git commit`, `git push` and `--no-verify` to it. If it commits on its
-   own (Aider does by default, without hooks), turn that off. Tell the human that for their other agents these rules
-   are instructions only.
+6. Deny `git commit`, `git push` and `--no-verify` in your tool's project settings, merged into what is there, so that
+   every dev of the repo gets them:
+   - Claude Code, `.claude/settings.json`: `"permissions": {"deny": ["Bash(git commit:*)", "Bash(git push:*)"]}`;
+   - opencode, `opencode.json`, and Kilo Code, `kilo.jsonc` (its VS Code extension reads it too), at the end of the
+     `bash` object since the last matching rule wins:
+     `"permission": {"bash": {"git commit*": "deny", "git push*": "deny", "*--no-verify*": "deny"}}`;
+   - Copilot in VS Code, `.vscode/settings.json`:
+     `"chat.tools.terminal.autoApprove": {"/^git (commit|push)\\b/": false, "/--no-verify/": false}`. Copilot then
+     asks the dev before such a command but cannot refuse it: tell the human.
+
+   For another tool, write only a format its documentation gives, else write nothing and tell the human. If the tool
+   commits on its own (Aider does by default, without hooks), turn that off. Tell the human that for their other
+   agents these rules are instructions only.
 7. Delete `<tmp>`. Report the files added and merged, the dependencies, and a proposed commit message with
    `Large-Batch: deploys SDD-Fabrik` (the scripts alone are over the size limit) and without `Agent-Assisted` or an
    agent's `Co-Authored-By` (the files come from the kit, not from you). The human commits.

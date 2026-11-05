@@ -398,3 +398,23 @@ the next batch. These files change what git tracks, not what the product does, a
 _Rejected:_ every dotfile (`.github/workflows/`, `.eslintrc` and `.env.example` carry behavior); a level judged on
 "no hunk of code" as the coverage counts it (a lock file alone would ask nothing, and a dependency bump deserves a
 question); a list the project sets (one more setting, for three files nobody debates).
+
+## 49. The human skips a quiz with a reason (2026-11-05)
+
+`Bypass-Quiz: <reason>` in the message lets a commit pass the hook without a quiz; drift and size still apply, the
+reason is required, and the trailer stays in the history. The owner asked for it: a dev with a good reason (a batch
+redone after a passed quiz, an urgent fix) should not have to hide it. Today they can drop `Agent-Assisted` or use
+`--no-verify`, and nothing says why.
+_Rejected:_ a reason that is optional (the trace is the point); a bypass that also lifts drift and size
+(`Large-Batch` and `Spec-Unchanged` already say what they lift); refusing it on a `risk: high` module (the human owns
+the commit, the trailer shows the choice).
+
+## 50. The script leads a batch, not the prose (2026-11-05)
+
+`sdd next` reads the batch's state in git (contract, staging, message, audit, quiz) and prints the one step left, with
+its number in COMPILE. A light model on Kilo Code (2026-11-05) dropped steps 4 to 7 after some 60 tool calls; the next
+one may drop others. Whatever step was skipped, the state shows it, and one rule in `AGENTS.md` replaces remembering
+seven steps. Strong and light models get the same guidance.
+_Rejected:_ a reminder of the last steps in `AGENTS.md` (covers the steps it names, not the next one skipped);
+guidance by model (a catalogue goes stale in a month, and no tool says how able its model is); a reviewer agent
+written for each tool at setup (a model that skips the audit skips the reviewer too).
