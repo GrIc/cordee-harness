@@ -2,8 +2,8 @@
 
 - `template/` is what lands in user repos. Edit it; never copy it elsewhere in the kit.
 - The kit follows its own rules and runs its own harness: `template/AGENTS.md`, `template/sdd/WORKFLOW.md` and
-  `template/sdd/coding-style.md` apply here, `sdd/bin/sdd` runs the template's script, and its contract is
-  `sdd/modules/checks.md`.
+  `template/sdd/coding-style.md` apply here, `sdd/bin/sdd` runs the template's script, and its contracts are
+  `sdd/modules/checks.md` and the modules it links.
 - Rules the coding style leaves to settle, for the kit: no formatter or linter, two-space indents (PEP 8 in Python),
   120 columns, snake_case functions, an error says what to do next, the command dispatch last (bash defines before it
   calls).

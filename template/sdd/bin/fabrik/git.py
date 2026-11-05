@@ -58,7 +58,9 @@ def is_agent(message):
 
 
 def agent_log(*args, cwd=None, env=None):
-    """git log of the agent commits, marked as the hook marks them."""
+    """git log of the agent commits, marked as the hook marks them; none before the first commit."""
+    if try_git("rev-parse", "-q", "--verify", "HEAD", cwd=cwd) is None:
+        return ""
     return git("log", "--no-merges", "-i", "-E", "--grep=^Agent-Assisted:[[:space:]]*yes[[:space:]]*$",
                f"--grep=^Co-Authored-By:.*<({AGENT_EMAILS})>", *args, cwd=cwd, env=env)
 
