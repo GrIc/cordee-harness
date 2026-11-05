@@ -4,7 +4,6 @@ import os
 import signal
 import subprocess
 import sys
-import time
 
 # Run as a folder, Python puts the folder itself on the path: its parent holds the package.
 sys.path[0] = os.path.dirname(os.path.abspath(sys.path[0]))
@@ -84,10 +83,8 @@ def ledger_command(args):
 def cockpit_command(args):
     if args[:1] == ["usage"] and len(args) == 4:
         cockpit.usage(args[1], int(args[2]), int(args[3]))
-    elif args[:1] == ["report"] and len(args) == 2:
-        cockpit.report(args[1], cockpit.window(cockpit.batches(args[1]))[0], int(time.time()))
-    elif args[:1] == ["report"] and len(args) == 4:
-        cockpit.report(args[1], int(args[2]), int(args[3]))
+    elif args[:1] == ["report"] and len(args) in (2, 4):
+        cockpit.report(args[1], *map(int, args[2:]))
     elif args == ["hints"]:
         cockpit.hints()
     else:

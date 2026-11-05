@@ -9,7 +9,7 @@ from collections import defaultdict
 from types import SimpleNamespace
 
 from fabrik import journal
-from fabrik.git import agent_log, git, lines, me
+from fabrik.git import agent_log, git, lines, me, shared_path
 from fabrik.logs import MCP, READERS, SKILLS, Sent, label
 
 FIELDS = ["input", "output", "cache_read", "cache_write"]
@@ -40,8 +40,14 @@ def family(model):
     return match.group() if match else model
 
 
-def report(repo, start, end):
-    """Where the tokens went, for the dev to cut: a part per tool that can weigh its calls."""
+def report(repo, start=None, end=None):
+    """Where the tokens went, for the dev to cut: a part per tool that can weigh its calls. By default, over the dev's
+    last BATCHES batches."""
+    # The agents name their logs from the repo's real path, which $PWD may not be: a symlink, macOS's /private, a
+    # folder below the root.
+    repo = git("-C", repo, "rev-parse", "--show-toplevel")
+    if start is None:
+        start, end = window(batches(repo))[0], int(time.time())
     weighed = [seen for seen in measures(repo, start, end) if seen.total]
     if not weighed:
         sys.exit(f"No agent log of {repo} that the cockpit can weigh in that window.")
@@ -87,7 +93,8 @@ def measure(reader, repo, start, end):
 
 def hints():
     """What the last batches show to cut or to write down, for the agent to put to the dev as a question. Silent before
-    the first batch and when nothing is new: a hint shown comes back BATCHES batches later at the earliest."""
+    the first batch and when nothing is new: a hint shown comes back BATCHES batches later at the earliest, in any of
+    the clone's worktrees. It notes when it was shown by its last batch's time, which every branch reads alike."""
     repo = git("rev-parse", "--show-toplevel")
     times = batches(repo)
     if not times:
@@ -100,18 +107,18 @@ def hints():
         if flags >= 2:
             found["quiz " + module] = (f"Quiz answers in {module} were flagged unclear or not what you wanted {flags}"
                                        f" times: propose the rule you would write.")
-    state = git("rev-parse", "--git-path", "sdd/hints")
+    state = shared_path("hints")
     shown = {}
     if os.path.exists(state):
         with open(state, encoding="utf-8") as file:
-            shown = {key: int(batch) for key, batch in (line.rstrip("\n").split("\t") for line in file)}
+            shown = {key: int(when) for key, when in (line.rstrip("\n").split("\t") for line in file)}
     for key, text in found.items():
-        if len(times) - shown.get(key, -BATCHES) >= BATCHES:
+        if key not in shown or sum(when > shown[key] for when in times) >= BATCHES:
             print("HINT " + text)
-            shown[key] = len(times)
+            shown[key] = times[0]
     os.makedirs(os.path.dirname(state), exist_ok=True)
     with open(state, "w", encoding="utf-8", newline="") as file:
-        file.writelines(f"{key}\t{batch}\n" for key, batch in shown.items())
+        file.writelines(f"{key}\t{when}\n" for key, when in shown.items())
 
 
 def batches(repo):

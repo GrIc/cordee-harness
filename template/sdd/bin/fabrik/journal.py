@@ -7,7 +7,7 @@ import time
 from collections import Counter
 
 from fabrik.drift import touched
-from fabrik.git import commit_or, git
+from fabrik.git import commit_or, git, shared_path
 from fabrik.quiz import QUIZ, fingerprint, key_path, read_lines
 
 CAUSES = ["not-understood", "unclear", "not-wanted"]
@@ -60,7 +60,7 @@ def write(modules):
 
 
 def path():
-    return os.path.join(git("rev-parse", "--git-common-dir"), "sdd", "quiz-journal")
+    return shared_path("quiz-journal")
 
 
 def flagged(start):
