@@ -11,13 +11,14 @@ setup() {
   repo=$tmp/repo
   mkdir "$repo"
   export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
-  # The folder from the path as Python reads it: Git Bash hands it the C:/ form.
-  claude=$CLAUDE_CONFIG_DIR/projects/$(cd "$repo" && { pwd -W 2> /dev/null || pwd; } | sed 's/[^A-Za-z0-9]/-/g')
-  mkdir -p "$claude/s1/subagents"
   # The Python the launchers find, for the fixtures.
   for python in python3 python 'py -3'; do
     $python -c 'import sys; sys.exit(sys.version_info < (3, 10))' > /dev/null 2>&1 && break
   done
+  # The folder from the path as Python reads it, which Git Bash rewrites on the way. No newline: Windows would add \r.
+  name='import re, sys; sys.stdout.write(re.sub(r"[^A-Za-z0-9]", "-", sys.argv[1]))'
+  claude=$CLAUDE_CONFIG_DIR/projects/$($python -c "$name" "$repo")
+  mkdir -p "$claude/s1/subagents"
 }
 
 # The UTC timestamp $1 seconds ago, by GNU date or BSD date.
