@@ -10,9 +10,6 @@ behavior, so they come after the move to Python, which changes none, each in its
 - cockpit: `report "$PWD"` (AGENTS.md, `guide/tokens.md`) misses the logs when `$PWD` is not the real path (macOS
   `/private`, symlinks, Git Bash's `/c/...`); `git rev-parse --show-toplevel` gives it.
 - checks: `governs` written as a YAML scalar or block list spills into the next keys (`risk`, `high` become paths).
-- ledger: a key holding different notes on two clones leaves `git notes merge` stuck, and every later sync fails while
-  its NOTE says the next push retries. Keys are random, so it should never happen.
-- ledger: `record` floors each module's share, so a one-call batch split over two modules notes 0 calls.
 - checks: `checks.md` is over the 50-line rule; moving the quiz into its own module would bring both under it.
 - checks: a `governs` entry outside the repo (`../shared/`) stops every audit and commit with git's bare `fatal`, and
   `cockpit hints` or `sdd touched` in a repo with no commit exit 128. The bash version printed the same `fatal`, then
