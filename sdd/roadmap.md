@@ -1,12 +1,14 @@
 # Roadmap
 
-- What [the review of 2026-11-02 left open](issues/review-leftovers.md), one batch each.
 - A project config the kit never overwrites, written by the setup: the roles present, the quiz type each role gets
-  and when, who answers for a missing role, the default checkpoint (commit or merge request), the batch size. The
-  harness reads its settings there, not from constants. Today's settings stay the default, for a dev alone.
-- The module contract says its risk in three values (low: drift only, normal: quiz, high: every part cited), the
-  levels it touches and its checkpoint when it differs from the project's. A batch of tests or docs only asks less,
+  and when, who answers for a missing role, the default checkpoint (commit or merge request), the default risk, the
+  batch size. The harness reads its settings there, not from constants. Today's settings stay the default, for a dev
+  alone.
+- The module contract says its risk in four values (low: drift only; intent: a quiz only when a batch moves the
+  contract or a boundary, [the issue](issues/quiz-on-intent-only.md); normal: quiz; high: every part cited), the levels
+  it touches and its checkpoint, each only when it differs from the project's. A batch of tests or docs only asks less,
   never more than its module.
+- One to three questions, fewer than three only when they cite every hunk: [the issue](issues/fewer-questions.md).
 - The CI on GitLab, as on GitHub.
 - Control at the merge request, architecture level: agents commit on their branch with the audit alone, a merge
   request carries one story, a fresh reviewer writes the quiz on the whole request, the configured role answers it,

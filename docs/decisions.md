@@ -376,3 +376,14 @@ counted such findings; the evidence is Anthropic's write-up on Scion (October 20
 an over-defensive adversarial review that added complexity.
 _Rejected:_ a reviewer told to skip such findings (a gap at a real boundary is one to fix); the rule in the coding
 style alone (it is there already, and the findings are fixed in step 6, not against the style).
+
+## 47. An intent step on the risk ladder (2026-11-05)
+
+A team or a module that wants no question on code gets the step `intent`, between `low` and `normal`: a batch asks a
+quiz only when it moves the module's intent (a contract added, or its text changed) or a boundary (`depends`,
+`governs`, `sdd/architecture.md`, a second module); a fix under `Spec-Unchanged` asks none. The project file sets the
+step for the repo and a contract overrides it, like the checkpoint. The owner asked for it after the comparison with
+Scion (decision 46), whose review reads the intent of a change rather than every line.
+_Rejected:_ a setting of its own for the levels a quiz asks (code, architecture, functional, run): one more knob to
+explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
+even when the intent moves).
