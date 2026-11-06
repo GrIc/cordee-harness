@@ -887,6 +887,22 @@ test_the_config_sets_the_risk_a_contract_overrides() {
   says 'NOTE import: high risk'
 }
 
+test_a_risk_is_one_of_four_values() {
+  printf -- '---\ngoverns: [src/search/]\nrisk: High\n---\n# search\n' > sdd/modules/search.md
+  git add -A
+  fails git commit -qm 'Search is risky'
+  says 'ERROR sdd/modules/search.md: risk is High. Write low, intent, normal or high.'
+  git commit -q --no-verify -m 'Search is risky'
+  printf -- '---\ngoverns: [src/search/]\nrisk: intent\n---\n# search\n' > sdd/modules/search.md
+  git add -A
+  succeeds git commit -qm 'Search moves by its intent'
+  printf 'risk: medium\n' > sdd/config.yml
+  echo two >> src/import/a.py
+  git add -A
+  fails git commit -qm 'Change import'
+  says 'ERROR sdd/config.yml: risk is medium. Write low, intent, normal or high.'
+}
+
 test_a_markdown_only_batch_needs_no_quiz() {
   echo 'How to run it.' > README.md
   git add -A

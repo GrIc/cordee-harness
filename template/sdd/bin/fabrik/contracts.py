@@ -40,21 +40,33 @@ def front_matter(text):
     return found
 
 
-def risky(revision):
-    """Whether the contract at a revision path is at high risk, by its own front matter or sdd/config.yml."""
+RISKS = ("low", "intent", "normal", "high")
+
+
+def risk(revision, checked):
+    """The risk of the contract at a revision path: its own, else that of sdd/config.yml at the same revision, else
+    normal; None when the contract is not there. Another value stops the command when checked (the tree), and counts as
+    normal otherwise (the base), so that the commit fixing it passes."""
     text = try_git("show", revision)
-    return text is not None and setting(front_matter(text), revision.split(":", 1)[0], "risk") == "high"
+    if text is None:
+        return None
+    tree, contract = revision.split(":", 1)
+    own = value(front_matter(text), "risk")
+    found = own or config(tree, "risk") or "normal"
+    if found in RISKS:
+        return found
+    if checked:
+        sys.exit(f"ERROR {contract if own else 'sdd/config.yml'}: risk is {found}. Write low, intent, normal or high.")
+    return "normal"
+
+
+def risky(revision, checked):
+    return risk(revision, checked) == "high"
 
 
 def own_setting(revision, key):
     """A setting the contract at a revision path states itself, None when it does not or is not there."""
     return value(front_matter(try_git("show", revision) or ""), key)
-
-
-def setting(contract_lines, tree, key):
-    """A module's setting: its contract's front matter, else sdd/config.yml of the tree, else None. Both hold flat
-    key: value lines."""
-    return value(contract_lines, key) or config(tree, key)
 
 
 def config(tree, key):

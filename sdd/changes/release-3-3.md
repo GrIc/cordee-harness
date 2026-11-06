@@ -7,15 +7,6 @@ wants no question on code has only `low`, which asks none even when the intent m
 quiz, and nothing lets a module at low risk keep one file under a quiz. A batch of tests alone asks today what a batch
 of code asks. Teams on GitLab replay drift and size only by hand.
 
-## A module's risk in four values (contracts)
-
-- `contracts.risk(revision, checked)` gives a contract's risk: its own, else that of `sdd/config.yml` at the same
-  revision, else `normal`. It takes `low`, `intent`, `normal` or `high`, in lower case; another value stops the commit
-  with an ERROR that lists the four when `checked` (the tree), and counts as `normal` otherwise (the base), so that
-  the commit fixing it passes. `risky` becomes `risk(...) == "high"`, for its callers.
-- The commented `risk` line of `sdd/config.yml`, the Contracts section of the workflow and the setting GENESIS and
-  ADOPT ask name the four values and what each asks.
-
 ## Low risk asks no quiz (checks)
 
 - A batch is judged at the highest risk, in the order low, intent, normal, high, of the modules it changes, in the

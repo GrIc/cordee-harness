@@ -21,5 +21,8 @@ How the script reads a contract, written as the workflow's Contracts section say
   flat `key: value` lines, with quotes and comments allowed. `risk: high` in `sdd/config.yml` puts every module that
   does not say otherwise at high risk, and a contract's `risk: normal` keeps it at normal risk; without the file, the
   harness behaves as before: [test_the_config_sets_the_risk_a_contract_overrides](/test/run).
+- `risk` takes `low`, `intent`, `normal` or `high`, in lower case. Another value stops the commit with an ERROR that
+  names its file and lists the four; in the base it counts as `normal`, so that the commit fixing it passes:
+  [test_a_risk_is_one_of_four_values](/test/run).
 
 Constraints: as [checks](checks.md).

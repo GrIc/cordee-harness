@@ -30,7 +30,7 @@ def drift(batch, base, tree, message):
         if path or contract in batch.changed:
             batch.hit.append(name)
             # The batch that drops risk: high is still judged at high risk.
-            if risky(f"{tree}:{contract}") or risky(f"{base}:{contract}"):
+            if risky(f"{tree}:{contract}", True) or risky(f"{base}:{contract}", False):
                 batch.high.append(name)
         if not path or re.search(rf"^Spec-Unchanged\({re.escape(name)}\):[^\S\n]*\S", message, re.M):
             continue
