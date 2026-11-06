@@ -789,6 +789,27 @@ test_a_high_risk_quiz_covers_every_hunk() {
   git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 0/1'
 }
 
+test_the_config_sets_the_risk_a_contract_overrides() {
+  printf '# Every module handles money.\nrisk: "high"  # until the audit\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Put the repo at high risk'
+  batch
+  echo two >> src/import/a.py
+  git add -A
+  printf 'Change both\n\nAgent-Assisted: yes\nSpec-Unchanged(import): renames only\nLarge-Batch: one rename\n' > "$msg"
+  succeeds bash sdd/bin/sdd audit --message "$msg"
+  says 'NOTE import, search: high risk'
+  printf -- '---\ngoverns: [src/search/]\nrisk: normal\n---\n# search\n' > sdd/modules/search.md
+  git add -A
+  git commit -q --no-verify -m 'Keep search at normal risk'
+  echo three >> src/search/a.py
+  echo three >> src/import/a.py
+  echo 'More.' >> sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd audit --message "$msg"
+  says 'NOTE import: high risk'
+}
+
 test_a_markdown_only_batch_needs_no_quiz() {
   echo 'How to run it.' > README.md
   git add -A

@@ -17,5 +17,9 @@ How the script reads a contract, written as the workflow's Contracts section say
   [test_a_link_to_a_missing_test_name_is_drift](/test/run),
   [test_audit_accepts_links_to_names_groups_and_files](/test/run), also in a worktree's hook:
   [test_a_worktree_hook_reads_relative_links](/test/run).
+- A setting is read from the contract's front matter, else from `sdd/config.yml`, else the kit's default; both hold
+  flat `key: value` lines, with quotes and comments allowed. `risk: high` in `sdd/config.yml` puts every module that
+  does not say otherwise at high risk, and a contract's `risk: normal` keeps it at normal risk; without the file, the
+  harness behaves as before: [test_the_config_sets_the_risk_a_contract_overrides](/test/run).
 
 Constraints: as [checks](checks.md).

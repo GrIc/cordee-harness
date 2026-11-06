@@ -8,14 +8,6 @@ instead of editing the kit's scripts, which an upgrade replaces. On a first try 
 the audit or calling a reviewer; light models are what the teams will run. A dev with a good reason to skip the quiz
 can only do it today by leaving out the agent's trailer or `--no-verify`, which leaves no trace of why.
 
-## A contract or sdd/config.yml sets a module's risk (contracts)
-
-- `sdd/config.yml` holds flat `key: value` lines, comments allowed, the same as a contract's front matter; without it,
-  the harness behaves as today.
-- A setting is read from the contract's front matter, else from `sdd/config.yml`, else the kit's default.
-- `risk: high` in `sdd/config.yml` puts every module that does not say otherwise at high risk; a contract's
-  `risk: normal` keeps it at normal risk.
-
 ## sdd/config.yml sets the batch size of the repo (checks)
 
 - `batch-lines` in `sdd/config.yml` sets the lines of code and tests an agent batch may change, 200 without it; the

@@ -148,7 +148,9 @@ JSON formats). A criterion is a plain sentence, then links to the tests that pro
 whole file with its name or path as the link text, relative to the contract or from the repo root. Several criteria
 may share a test; a criterion without a link is checked by hand, as its sentence says. No checkboxes, no status.
 `depends` names the modules this one builds on; check their tests pass before you do. `risk: high`, for a module where
-a mistake costs much (an API contract, security, personal data, money), asks for a stricter quiz.
+a mistake costs much (an API contract, security, personal data, money), asks for a stricter quiz. `sdd/config.yml`
+sets the same keys for the whole repo, as flat `key: value` lines with comments allowed; a contract's own value wins,
+so `risk: normal` keeps its module at normal risk in a repo at `risk: high`.
 
 ## Decisions
 

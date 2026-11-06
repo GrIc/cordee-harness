@@ -1,4 +1,4 @@
-"""What a contract says: the paths it governs, its risk, its links to tests."""
+"""What a contract says: the paths it governs, its settings, its links to tests."""
 import posixpath
 import re
 import sys
@@ -41,9 +41,24 @@ def front_matter(text):
 
 
 def risky(revision):
-    """Whether the contract at a revision path declares risk: high."""
+    """Whether the contract at a revision path is at high risk, by its own front matter or sdd/config.yml."""
     text = try_git("show", revision)
-    return text is not None and any(re.match(r"risk:\s*high\s*$", line) for line in front_matter(text))
+    return text is not None and setting(front_matter(text), revision.split(":", 1)[0], "risk") == "high"
+
+
+def setting(contract_lines, tree, key):
+    """A module's setting: its contract's front matter, else sdd/config.yml of the tree, else None. Both hold flat
+    key: value lines."""
+    return value(contract_lines, key) or value(lines(try_git("show", f"{tree}:sdd/config.yml") or ""), key)
+
+
+def value(text_lines, key):
+    """The value of a flat key: value line, without its quotes or its comment."""
+    for line in text_lines:
+        found = re.match(rf"{re.escape(key)}:(.*)", re.sub(r"(^|\s)#.*", "", line))
+        if found:
+            return found.group(1).strip().strip("\"'")
+    return None
 
 
 def contracts(tree):
