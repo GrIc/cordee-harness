@@ -75,7 +75,13 @@ def check(base, tree, message):
     # their diff.
     if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
         risks += [risk(tree, None, True), risk(base, None, False)]
-    batch.level = {"low": "low", "high": "high"}.get(highest(risks or ["low"]), "normal")
+    level = highest(risks or ["low"])
+    # At intent, only a contract that moves asks a quiz. A boundary moves with one: governs and depends are in it, and
+    # code of a second module that no Spec-Unchanged spares is drift until its contract changes too.
+    if level == "intent":
+        moved = any(batch.risks[name] == "intent" and f"sdd/modules/{name}.md" in batch.changed for name in batch.hit)
+        level = "normal" if moved else "low"
+    batch.level = {"low": "low", "high": "high"}.get(level, "normal")
     return batch
 
 

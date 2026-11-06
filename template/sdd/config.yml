@@ -4,7 +4,7 @@
 # Lines of code and tests an agent batch may change.
 # batch-lines: 200
 
-# low: no quiz on code. intent: a quiz only when a contract or a boundary between modules moves. normal: one to
+# low: no quiz on code. intent: a quiz only when the contract moves, with its governs and depends. normal: one to
 # three questions. high, where a mistake costs much (an API contract, security, personal data, money): three or more,
 # citing every hunk of code, and a second human's reading is recommended.
 # risk: normal

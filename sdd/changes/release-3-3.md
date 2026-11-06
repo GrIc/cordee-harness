@@ -7,13 +7,6 @@ wants no question on code has only `low`, which asks none even when the intent m
 quiz, and nothing lets a module at low risk keep one file under a quiz. A batch of tests alone asks today what a batch
 of code asks. Teams on GitLab replay drift and size only by hand.
 
-## Intent risk asks a quiz when the intent or a boundary moves (checks)
-
-- At intent risk an agent batch asks a quiz only when it adds, deletes or changes a contract, or changes code of a
-  second module that no `Spec-Unchanged` spares; otherwise it passes as at low risk, at level `low`.
-- The Quiz section of the workflow says so; a decision supersedes the triggers of 47 (`governs` and `depends` are in
-  the contract; `sdd/architecture.md` goes to the sensitive files, next section).
-
 ## A sensitive file always asks a quiz (contracts and checks, Large-Batch)
 
 The setting and its only reader land together, since the tests reach the script through its commands alone; the

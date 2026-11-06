@@ -928,6 +928,27 @@ test_low_risk_asks_no_quiz() {
   says 'No quiz for this agent-assisted batch'
 }
 
+test_intent_risk_asks_a_quiz_when_a_contract_moves() {
+  printf 'risk: intent\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Put the repo at intent risk'
+  echo two >> src/search/a.py
+  echo two > tools.py
+  git add -A
+  succeeds git commit -q -m 'Fix search' -m 'Agent-Assisted: yes' -m 'Spec-Unchanged(search): a fix'
+  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
+  echo three >> src/search/a.py
+  echo 'More intent.' >> sdd/modules/search.md
+  git add -A
+  fails agent_commit 'Change search'
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  contract tags src/tags/
+  git add -A
+  fails agent_commit 'Plan tags'
+  says 'No quiz for this agent-assisted batch'
+}
+
 test_a_markdown_only_batch_needs_no_quiz() {
   echo 'How to run it.' > README.md
   git add -A

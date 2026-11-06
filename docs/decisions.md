@@ -377,16 +377,7 @@ an over-defensive adversarial review that added complexity.
 _Rejected:_ a reviewer told to skip such findings (a gap at a real boundary is one to fix); the rule in the coding
 style alone (it is there already, and the findings are fixed in step 6, not against the style).
 
-## 47. An intent step on the risk ladder (2026-11-05)
-
-A team or a module that wants no question on code gets the step `intent`, between `low` and `normal`: a batch asks a
-quiz only when it moves the module's intent (a contract added, or its text changed) or a boundary (`depends`,
-`governs`, `sdd/architecture.md`, a second module); a fix under `Spec-Unchanged` asks none. The project file sets the
-step for the repo and a contract overrides it, like the checkpoint. The owner asked for it after the comparison with
-Scion (decision 46), whose review reads the intent of a change rather than every line.
-_Rejected:_ a setting of its own for the levels a quiz asks (code, architecture, functional, run): one more knob to
-explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
-even when the intent moves).
+## 47. Superseded by 55.
 
 ## 48. Git's own files ask no quiz, like Markdown (2026-11-05)
 
@@ -466,3 +457,16 @@ _Rejected:_ code outside every module always at `normal` (a repo at `low` would 
 which are most of a young project); always at `low` (unowned code at a `high` repo would pass with no quiz, the
 opposite of what the setting says); a risk of its own for code outside every module (one more key, for what a
 contract governing those files already sets).
+
+## 55. At intent risk, a quiz when a contract moves (2026-11-06)
+
+A team or a module that wants no question on code gets the step `intent`, between `low` and `normal`: a batch asks a
+quiz only when it adds, deletes or changes the contract of a module at `intent`, and a fix under `Spec-Unchanged` asks
+none. The owner asked for it after the comparison with Scion (decision 46), whose review reads the intent of a change
+rather than every line. Decision 47 also named `governs`, `depends`, `sdd/architecture.md` and a second module: the
+first two are in the contract, a second module's code that no `Spec-Unchanged` spares is drift until its contract
+changes too, and `sdd/architecture.md` goes to the sensitive files, which ask a quiz at any risk.
+_Rejected:_ a setting of its own for the levels a quiz asks (code, architecture, functional, run): one more knob to
+explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
+even when the intent moves); any contract that moves (a contract of a module at `low`, in the same batch, asks
+nothing on its own).

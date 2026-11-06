@@ -72,11 +72,12 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 
 A quiz has one to three questions, as many as what the batch changes calls for. A batch is judged at the highest risk
 of the modules it changes, in the parent or in the batch; code outside every module takes the repo's. At `low` it
-needs no quiz, nor does a batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or `.gitkeep` that
-no contract is and no module governs (one written is still graded). A batch that changes or deletes a module at
-`risk: high` (an API contract, security, personal data, money) has three or more, and its `See` lines cite every hunk
-of code: `audit` fails until they do, the hook never checks it. The handoff then recommends a second human's reading;
-nothing requires one, so a dev alone uses the whole harness.
+needs no quiz; at `intent`, only when it adds, deletes or changes the contract of a module at `intent`, which also
+holds its `governs` and `depends`. A batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or
+`.gitkeep` that no contract is and no module governs needs none either (one written is still graded). A batch that
+changes or deletes a module at `risk: high` (an API contract, security, personal data, money) has three or more, and
+its `See` lines cite every hunk of code: `audit` fails until they do, the hook never checks it. The handoff then
+recommends a second human's reading; nothing requires one, so a dev alone uses the whole harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 
@@ -151,8 +152,8 @@ JSON formats). A criterion is a plain sentence, then links to the tests that pro
 whole file with its name or path as the link text, relative to the contract or from the repo root. Several criteria
 may share a test; a criterion without a link is checked by hand, as its sentence says. No checkboxes, no status.
 `depends` names the modules this one builds on; check their tests pass before you do. `risk` is `low` (no quiz on
-code), `intent` (a quiz only when a contract or a boundary between modules moves), `normal` (the default) or `high`,
-for a module where a mistake costs much (an API contract, security, personal data, money): a stricter quiz.
+code), `intent` (a quiz only when the contract moves, with its `governs` and `depends`), `normal` (the default) or
+`high`, for a module where a mistake costs much (an API contract, security, personal data, money): a stricter quiz.
 `sdd/config.yml` sets the repo's `risk` and `batch-lines` (200 lines of code and tests by default), as flat
 `key: value` lines with comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal
 risk in a repo at `risk: high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's
