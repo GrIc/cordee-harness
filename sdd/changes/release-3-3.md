@@ -7,16 +7,6 @@ wants no question on code has only `low`, which asks none even when the intent m
 quiz, and nothing lets a module at low risk keep one file under a quiz. A batch of tests alone asks today what a batch
 of code asks. Teams on GitLab replay drift and size only by hand.
 
-## Low risk asks no quiz (checks)
-
-- A batch is judged at the highest risk, in the order low, intent, normal, high, of the modules it changes, in the
-  base or the tree as `high` is today. Code outside every module takes the repo's risk; Markdown and git's own files
-  outside every module stay at low (decision 48).
-- At low risk an agent batch passes the hook without a quiz, and `sdd next` says to hand off, since its level is
-  `low` as for Markdown today; drift and size still apply. A quiz written is graded and gets its trailer.
-- `risky` goes from `contracts`, under `Spec-Unchanged(contracts)`.
-- The Quiz section of the workflow says so; a decision says why code outside every module takes the repo's risk.
-
 ## Intent risk asks a quiz when the intent or a boundary moves (checks)
 
 - At intent risk an agent batch asks a quiz only when it adds, deletes or changes a contract, or changes code of a

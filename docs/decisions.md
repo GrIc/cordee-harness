@@ -454,3 +454,15 @@ says how many hunks the questions cite. The note on a right answer always in the
 _Rejected:_ fewer than three questions only when they cite every hunk (a rule of reach on every module, which is what
 `risk: high` is for); one question for a batch without a hunk of code (the reviewer judges what a contract change
 calls for).
+
+## 54. Code outside every module takes the repo's risk (2026-11-06)
+
+A batch is judged at the highest risk of the modules it changes, and code that no module governs counts at the risk of
+`sdd/config.yml`; Markdown and git's own files outside every module still ask no quiz (decision 48). A repo set to
+`risk: low` says it wants no quiz on code, and its scripts, build and CI files at the root are code of the repo like
+any other; one set to `high` says a mistake costs much anywhere. The batch that lowers a risk is judged at the risk it
+had, as one dropping `risk: high` already was.
+_Rejected:_ code outside every module always at `normal` (a repo at `low` would still be quizzed on its root files,
+which are most of a young project); always at `low` (unowned code at a `high` repo would pass with no quiz, the
+opposite of what the setting says); a risk of its own for code outside every module (one more key, for what a
+contract governing those files already sets).

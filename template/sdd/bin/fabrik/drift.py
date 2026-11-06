@@ -2,18 +2,19 @@
 import re
 import sys
 
-from fabrik.contracts import contracts, governs, links, module, modules, risky
+from fabrik.contracts import contracts, governs, highest, links, module, modules, risk
 from fabrik.git import commit_or, empty_tree, exists, git, lines
 
 
 def drift(batch, base, tree, message):
-    """Notes in batch the modules whose code or contract changed from base to tree (hit), those of them at high risk,
-    the contracts whose code changed (coded), and how many changed code that no Spec-Unchanged spares (touched)."""
+    """Notes in batch the modules whose code or contract changed from base to tree (hit), the risk of each (risks),
+    the contracts whose code changed (coded), the changed paths they govern (governed), and how many changed code that
+    no Spec-Unchanged spares (touched)."""
     for line in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):", message, re.M):
         for name in line.split():
             if not exists(f"{tree}:sdd/modules/{name}.md"):
                 batch.errors += f"ERROR Spec-Unchanged({name}): no such module. Modules: {modules(tree)}.\n"
-    # The base's contracts too: a batch that deletes a high-risk contract is one to read twice.
+    # The base's contracts too: a batch that deletes a contract is judged at its risk.
     for contract in dict.fromkeys(contracts(tree) + contracts(base)):
         name, path = module(contract), None
         if exists(f"{tree}:{contract}"):
@@ -24,14 +25,16 @@ def drift(batch, base, tree, message):
             broken = links(tree, contract)
             if broken:
                 batch.findings += "\n".join(broken) + "\n      Fix the link, or the name of the test it points to.\n"
-            path = next(iter(lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))), None)
+            governed = lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))
+            batch.governed.update(governed)
+            path = next(iter(governed), None)
         if path:
             batch.coded.append(contract)
         if path or contract in batch.changed:
             batch.hit.append(name)
-            # The batch that drops risk: high is still judged at high risk.
-            if risky(f"{tree}:{contract}", True) or risky(f"{base}:{contract}", False):
-                batch.high.append(name)
+            # The batch that lowers a module's risk is still judged at the risk it had.
+            batch.risks[name] = highest(found for found in (risk(tree, contract, True), risk(base, contract, False))
+                                        if found)
         if not path or re.search(rf"^Spec-Unchanged\({re.escape(name)}\):[^\S\n]*\S", message, re.M):
             continue
         batch.touched += 1

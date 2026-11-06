@@ -70,12 +70,13 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 
 ## Quiz
 
-A quiz has one to three questions, as many as what the batch changes calls for. A batch whose changed files are all
-Markdown, `.gitignore`, `.gitattributes` or `.gitkeep` that no contract is and no module governs needs none (one
-written is still graded). A batch that changes or deletes a module declaring `risk: high` (an API contract, security,
-personal data, money) has three or more, and its `See` lines cite every hunk of code: `audit` fails until they do, the
-hook never checks it. The handoff then recommends a second human's reading; nothing requires one, so a dev alone uses
-the whole harness.
+A quiz has one to three questions, as many as what the batch changes calls for. A batch is judged at the highest risk
+of the modules it changes, in the parent or in the batch; code outside every module takes the repo's. At `low` it
+needs no quiz, nor does a batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or `.gitkeep` that
+no contract is and no module governs (one written is still graded). A batch that changes or deletes a module at
+`risk: high` (an API contract, security, personal data, money) has three or more, and its `See` lines cite every hunk
+of code: `audit` fails until they do, the hook never checks it. The handoff then recommends a second human's reading;
+nothing requires one, so a dev alone uses the whole harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 

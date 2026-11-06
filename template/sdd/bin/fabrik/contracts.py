@@ -43,15 +43,16 @@ def front_matter(text):
 RISKS = ("low", "intent", "normal", "high")
 
 
-def risk(revision, checked):
-    """The risk of the contract at a revision path: its own, else that of sdd/config.yml at the same revision, else
-    normal; None when the contract is not there. Another value stops the command when checked (the tree), and counts as
-    normal otherwise (the base), so that the commit fixing it passes."""
-    text = try_git("show", revision)
-    if text is None:
-        return None
-    tree, contract = revision.split(":", 1)
-    own = value(front_matter(text), "risk")
+def risk(tree, contract, checked):
+    """The risk of a contract in a tree: its own, else that of sdd/config.yml in the same tree, else normal; the repo's
+    alone without a contract, None when the contract is not there. Another value stops the command when checked (the
+    tree), and counts as normal otherwise (the base), so that the commit fixing it passes."""
+    own = None
+    if contract:
+        text = try_git("show", f"{tree}:{contract}")
+        if text is None:
+            return None
+        own = value(front_matter(text), "risk")
     found = own or config(tree, "risk") or "normal"
     if found in RISKS:
         return found
@@ -60,8 +61,8 @@ def risk(revision, checked):
     return "normal"
 
 
-def risky(revision, checked):
-    return risk(revision, checked) == "high"
+def highest(risks):
+    return max(risks, key=RISKS.index)
 
 
 def own_setting(revision, key):

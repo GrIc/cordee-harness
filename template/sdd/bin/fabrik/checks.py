@@ -4,7 +4,7 @@ import sys
 from types import SimpleNamespace
 
 from fabrik import quiz
-from fabrik.contracts import governs
+from fabrik.contracts import governs, highest, risk
 from fabrik.drift import drift
 from fabrik.git import commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from fabrik.journal import committed
@@ -66,16 +66,16 @@ def check(base, tree, message):
     files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
     notes."""
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
-                            findings="", notes="", hit=[], high=[], coded=[], touched=0)
+                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), touched=0)
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
-    # Markdown and git's own files that no contract is and no module governs ask little of a quiz: the human reads
+    batch.high = [name for name in batch.hit if batch.risks[name] == "high"]
+    risks = list(batch.risks.values())
+    # Code outside every module takes the repo's risk. Markdown and git's own files there ask no quiz: the human reads
     # their diff.
-    batch.level = "normal"
-    if batch.high:
-        batch.level = "high"
-    elif batch.changed and not batch.hit and all(PROSE_OR_GIT.search(path) for path in batch.changed):
-        batch.level = "low"
+    if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
+        risks += [risk(tree, None, True), risk(base, None, False)]
+    batch.level = {"low": "low", "high": "high"}.get(highest(risks or ["low"]), "normal")
     return batch
 
 

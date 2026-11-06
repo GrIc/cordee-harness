@@ -18,6 +18,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_bypass_quiz_with_a_reason_skips_the_quiz](/test/run), [test_bypass_quiz_holds_at_high_risk](/test/run),
   [test_bypass_quiz_still_checks_drift](/test/run), [test_bypass_quiz_still_checks_size](/test/run),
   [test_bypass_quiz_without_a_reason_asks_the_quiz](/test/run).
+- A batch is judged at the highest risk, in the order `low`, `intent`, `normal`, `high`, of the modules it changes, in
+  the parent or in the batch; code outside every module takes the repo's. At `low` an agent batch asks no quiz and
+  `sdd next` says to hand off; drift and size still apply: [test_low_risk_asks_no_quiz](/test/run).
 - Drift: a commit that changes a module's governed paths changes its contract too, or names the module in
   `Spec-Unchanged(<module>): <reason>`, which also leaves it out of the one-module limit. A `Spec-Unchanged` naming no
   contract, or a contract with an empty `governs`, stops every commit:

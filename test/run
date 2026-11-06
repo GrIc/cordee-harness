@@ -903,6 +903,31 @@ test_a_risk_is_one_of_four_values() {
   says 'ERROR sdd/config.yml: risk is medium. Write low, intent, normal or high.'
 }
 
+test_low_risk_asks_no_quiz() {
+  printf 'risk: low\n' > sdd/config.yml
+  printf -- '---\ngoverns: [src/import/]\nrisk: normal\n---\n# import\n' > sdd/modules/import.md
+  git add -A
+  git commit -qm 'Put the repo at low risk, import at normal'
+  echo two >> src/search/a.py
+  echo two > tools.py
+  git add -A
+  printf 'Fix search\n\nAgent-Assisted: yes\nSpec-Unchanged(search): a fix\n' > .git/sdd/message
+  succeeds bash sdd/bin/sdd next
+  says 'step 7: hand off, then the human commits'
+  succeeds git commit -q -F .git/sdd/message
+  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
+  echo three >> src/search/a.py
+  git add -A
+  fails agent_commit 'Change search'
+  says 'DRIFT sdd/modules/search.md'
+  git reset -q --hard
+  # The batch that lowers a module's risk is judged at the risk it had.
+  contract import src/import/
+  git add -A
+  fails agent_commit 'Put import at low risk'
+  says 'No quiz for this agent-assisted batch'
+}
+
 test_a_markdown_only_batch_needs_no_quiz() {
   echo 'How to run it.' > README.md
   git add -A
