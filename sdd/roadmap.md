@@ -1,8 +1,7 @@
 # Roadmap
 
-- [3.2: what the first field use broke, a batch the script leads, and settings in one place](changes/release-3-2.md)
-- A project config the kit never overwrites, after [3.2](changes/release-3-2.md): the roles present, the quiz
-  type each role gets and when, who answers for a missing role, the default checkpoint (commit or merge request).
+- More settings in `sdd/config.yml`: the roles present, the quiz type each role gets and when, who answers for a
+  missing role, the default checkpoint (commit or merge request).
 - The module contract says its risk in four values (low: drift only; intent: a quiz only when a batch moves the
   contract or a boundary, [the issue](issues/quiz-on-intent-only.md); normal: quiz; high: every part cited), the levels
   it touches and its checkpoint, each only when it differs from the project's. A batch of tests or docs only asks less,

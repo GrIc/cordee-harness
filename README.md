@@ -57,8 +57,8 @@ production breaks. A team that merges faster than it understands builds comprehe
 
 | Capability | How it works |
 |---|---|
-| Module contracts & drift check | Each `sdd/modules/<module>.md` (`<= 50` lines) declares `governs` pathspecs, optional `depends` and `risk: high`, and plain-sentence criteria linked to real tests (or checked by hand when unlinked). Touching governed code without updating its contract, or stating `Spec-Unchanged(<module>): <reason>`, refuses an agent commit; links to missing files or renamed tests fail as drift too. |
-| Small, single-module batches | Refuses agent commits above 200 changed lines of code and tests (with a 5% note margin so agents never trim tests or names to fit) or spanning a second unspared module, unless the human writes `Large-Batch: <reason>` (`Spec-Unchanged` spares its module from the one-module limit, not the line count). |
+| Module contracts & drift check | Each `sdd/modules/<module>.md` (`<= 50` lines) declares `governs` pathspecs, optional `depends`, `risk: high` and `batch-lines`, and plain-sentence criteria linked to real tests (or checked by hand when unlinked). Touching governed code without updating its contract, or stating `Spec-Unchanged(<module>): <reason>`, refuses an agent commit; links to missing files or renamed tests fail as drift too. |
+| Small, single-module batches | Refuses agent commits above `batch-lines` changed lines of code and tests, 200 by default and set for the repo in `sdd/config.yml` or for a module in its contract (with a 5% note margin so agents never trim tests or names to fit) or spanning a second unspared module, unless the human writes `Large-Batch: <reason>` (`Spec-Unchanged` spares its module from the one-module limit, not the line count). |
 | Fresh review & risk-scaled quiz | A fresh agent context reviews the staged diff against the contract and coding style, then writes `QUIZ.md` and a hidden key in `.git/sdd/`: 3 predictive questions, each citing one to three places of the diff; when `risk: high`, more if needed, citing every hunk of code (recommending a second human's reading); 0 for Markdown-only changes outside the contracts and what modules govern. Passing stamps `Quiz: 3/3, covers 5/7` on the commit: how many hunks of code the questions cite. |
 | Quiz feedback loop | Questions the developer flags are logged locally in `quiz-journal` when the quiz passes. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
 | Pace & module onboarding (`sdd brief`) | Before a batch, surfaces unanswered `QUIZ.md` files in sibling worktrees and remote branches waiting for review past `REVIEW_WAIT_HOURS` (4h by default), and spots a developer's first batch in a module to offer discovery mode and name the three teammates who delivered there most. |
@@ -100,6 +100,7 @@ AGENTS.md, CLAUDE.md       agent instructions + the SDD-Fabrik block (@AGENTS.md
 sdd/
   README.md                your system map and module table (first line tracks source URL and tag)
   coding-style.md          your settled code, test and command conventions
+  config.yml               your settings: batch size and risk, for the repo (never replaced on upgrade)
   WORKFLOW.md, guide/      kit-owned batch loop and on-demand guides (start, plan, tokens, upgrade)
   bin/{sdd,ledger,cockpit}  kit-owned launchers, which find Python
   bin/fabrik/              kit-owned Python package they run, one module per topic

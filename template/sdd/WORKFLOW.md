@@ -21,6 +21,7 @@ A file is created when first needed.
 | Why, for whom, success, non-goals | `sdd/product.md` |
 | Look, accessibility, voice | `sdd/design.md` |
 | Code, tests, docs and commit conventions, project commands | `sdd/coding-style.md` |
+| The repo's settings: batch size, risk | `sdd/config.yml`, shipped with the defaults as comments |
 | System design, data, deployment | `sdd/architecture.md` |
 | Decisions, with what was rejected | `sdd/decisions.md` |
 | Order of the work, someday | `sdd/roadmap.md`: one line and link per change, and nowhere else |
@@ -153,7 +154,7 @@ sets the repo's `risk` and `batch-lines` (200 lines of code and tests by default
 comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal risk in a repo at
 `risk: high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's code, higher or
 lower. A batch that changes a `batch-lines` is judged on its new value, with a note for the human, and SIZE says
-where the limit is set.
+where the limit is set. A contract states a setting only where it differs from the repo's.
 
 ## Decisions
 

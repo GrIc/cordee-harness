@@ -1,0 +1,9 @@
+# This repo's settings for SDD-Fabrik, read at each commit. The kit never replaces this file. A contract's front
+# matter sets the same keys for its module. Uncomment a line to change its default.
+
+# Lines of code and tests an agent batch may change.
+# batch-lines: 200
+
+# normal, or high where a mistake costs much (an API contract, security, personal data, money): the quiz then cites
+# every hunk of code and a second human's reading is recommended.
+# risk: normal

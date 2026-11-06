@@ -433,3 +433,14 @@ _Rejected:_ a module that only lowers the repo's limit (a module of generated co
 quiz to raise a limit, for a guard no stronger than the note); a new value without a note (nothing would show an agent
 raising it); the limit applied to each module's own lines in a batch of several (such a batch needs
 `Large-Batch` already).
+
+## 52. The repo's settings live in sdd/config.yml (2026-11-06)
+
+The kit ships `sdd/config.yml` with its defaults as comments, and an upgrade never replaces it; it holds the repo's
+`batch-lines` and `risk` as flat `key: value` lines, the format of a contract's front matter, and a contract sets the
+same keys for its module. GENESIS and ADOPT ask the batch size and the risk and write only what differs; a contract
+does the same against the repo. Teams starting with Kilo Code and Copilot asked to set both at setup, and the only way
+was to edit `size.py` or every contract, which an upgrade replaces or forgets.
+_Rejected:_ real YAML (a parser outside the standard library, for two keys); settings in `AGENTS.md` (the agent reads
+them, the script does not); `git config` (one clone's, not the repo's, and never reviewed in a diff); keeping
+`MAX_LINES` in `size.py` as the project's knob (an upgrade replaces the file).
