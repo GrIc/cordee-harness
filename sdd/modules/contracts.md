@@ -28,6 +28,8 @@ How the script reads a contract, written as the workflow's Contracts section say
   with `/`, or a regular expression between slashes. Unset in `sdd/config.yml`, it is the kit's list; a contract's
   adds to it. A list in brackets other than `[]`, or an expression that does not compile, stops the commit with an
   ERROR that says what to write; in the base it is left out:
-  [test_sensitive_takes_files_folders_and_expressions](/test/run).
+  [test_sensitive_takes_files_folders_and_expressions](/test/run). The kit's list holds what steers the agents too:
+  `AGENTS.md` and `CLAUDE.md` at any depth and in any case, the CI workflows and the settings where the kit denies
+  commits: [test_the_kit_lists_what_steers_agents](/test/run).
 
 Constraints: as [checks](checks.md).

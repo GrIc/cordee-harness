@@ -85,8 +85,9 @@ def value(text_lines, key):
 
 
 # The files that steer the project or the harness, when sdd/config.yml lists none.
-SENSITIVE = ["sdd/bin/", "sdd/WORKFLOW.md", "sdd/guide/", "sdd/config.yml", "AGENTS.md", "CLAUDE.md",
-             "sdd/architecture.md", "sdd/coding-style.md", "sdd/product.md", "sdd/modules/"]
+SENSITIVE = ["sdd/bin/", "sdd/WORKFLOW.md", "sdd/guide/", "sdd/config.yml", "/(?i)(^|/)(agents|claude)\\.md$/",
+             "sdd/architecture.md", "sdd/coding-style.md", "sdd/product.md", "sdd/modules/", ".github/workflows/",
+             ".claude/", "opencode.json", "kilo.jsonc", ".vscode/settings.json"]
 
 
 def sensitive(tree, checked):

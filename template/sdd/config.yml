@@ -17,9 +17,13 @@
 #   - sdd/WORKFLOW.md
 #   - sdd/guide/
 #   - sdd/config.yml
-#   - AGENTS.md
-#   - CLAUDE.md
+#   - /(?i)(^|/)(agents|claude)\.md$/
 #   - sdd/architecture.md
 #   - sdd/coding-style.md
 #   - sdd/product.md
 #   - sdd/modules/
+#   - .github/workflows/
+#   - .claude/
+#   - opencode.json
+#   - kilo.jsonc
+#   - .vscode/settings.json

@@ -1040,6 +1040,20 @@ test_a_sensitive_file_always_asks_a_quiz() {
   says 'No quiz for this agent-assisted batch'
 }
 
+test_the_kit_lists_what_steers_agents() {
+  printf 'risk: low\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Put the repo at low risk'
+  for file in src/AGENTS.md docs/claude.md .claude/settings.json .github/workflows/ci.yml kilo.jsonc; do
+    mkdir -p "$(dirname "$file")"
+    echo '{}' > "$file"
+    git add -A
+    fails agent_commit "Write $file"
+    says 'No quiz for this agent-assisted batch'
+    git reset -q --hard
+  done
+}
+
 test_sensitive_takes_files_folders_and_expressions() {
   printf 'risk: low\nsensitive: tools  # a file, not the folder\n' > sdd/config.yml
   mkdir tools

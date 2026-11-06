@@ -500,3 +500,15 @@ _Rejected:_ test files found by name (`test_*`, `*_spec.*`, `tests/`: every lang
 fixture or a helper there changes what every test checks); no quiz at all for tests (a test that asserts the wrong thing
 locks a bug in, and at `high` the human still reads one to three questions); the base's links too (a batch that drops
 a test and its link weakens the proof, and should ask what it asked before).
+
+## 58. The kit's sensitive list holds what steers the agents (2026-11-06)
+
+The kit's list adds the CI workflows (`.github/workflows/`, which replay drift and size), `.claude/` and the files
+where the deploy denies `git commit` (`opencode.json`, `kilo.jsonc`, `.vscode/settings.json`), and it reads `AGENTS.md`
+and `CLAUDE.md` at any depth and in any case, as one expression, since Codex and Claude Code read nested ones and a
+case-insensitive disk reads `claude.md`. An agent batch at `low` could otherwise lift the deny rules, change what
+steers the next agents or turn off the CI check, with no question asked (security review of affbcb0, 2026-11-06).
+The list stays one a project replaces in `sdd/config.yml` (56): it grows from ten entries to fourteen.
+_Rejected:_ `.github/` whole (issue templates and dependabot would ask a quiz for nothing that steers an agent); every
+tool's rules folder (`.cursor/`, `.github/copilot-instructions.md`, `GEMINI.md`: a catalogue that goes stale, for tools
+that also read `AGENTS.md`); `.gitlab-ci.yml` now (it comes with the GitLab CI of 3.3).
