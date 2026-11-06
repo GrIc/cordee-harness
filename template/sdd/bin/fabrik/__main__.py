@@ -61,11 +61,13 @@ def sdd_command(args):
             print(f"{module}\t{lines}")
     elif command == "brief":
         brief.brief(args[1] if len(args) > 1 else "")
+    elif command == "next":
+        brief.next_step()
     elif command == "quiet":
         return quiet(args[1:])
     else:
         return misuse("usage: bash sdd/bin/sdd hook <message-file> | audit [--message <file> | --range <base>..<tip>]\n"
-                      "       bash sdd/bin/sdd fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
+                      "       bash sdd/bin/sdd fingerprint | install-hook | touched [<commit>] | brief [<module>] | next\n"
                       "       bash sdd/bin/sdd quiet <command>...")
 
 

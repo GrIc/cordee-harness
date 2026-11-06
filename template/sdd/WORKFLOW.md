@@ -45,7 +45,8 @@ A file is created when first needed.
    request, comes with a new decision that supersedes the old one. A batch from a plan moves its criteria into its
    module's contract, in place of what they restate, and deletes its section; a batch without a module drops them.
    Otherwise propose `Spec-Unchanged(<module>): <reason>`.
-4. Read the whole diff against the coding style and delete what does not earn its place.
+4. Read the whole diff against the coding style and delete what does not earn its place. From here,
+   `bash sdd/bin/sdd next` says which step is left, from the state of the batch in git.
 5. Stage the batch, write the proposed message with `Agent-Assisted: yes` to `.git/sdd/message`, and run
    `bash sdd/bin/sdd audit --message .git/sdd/message`.
 6. Review: spawn a fresh reviewer, a new context that did not write the batch, and tell it the language the human writes

@@ -26,13 +26,9 @@ def audit_staged(message_file=None):
     # The reviewer checks its quiz here, so that a malformed one never reaches the human.
     if os.path.isfile(quiz.QUIZ):
         try:
-            quiz.form(batch)
+            quiz_form(batch)
             if batch.ranks == batch.ranks[0] * len(batch.ranks):
                 print(f"NOTE QUIZ.md: the right answer is box {batch.ranks[0]} every time, vary it.", file=sys.stderr)
-            covered, total, missed = batch.coverage
-            if batch.level == "high" and covered != total:
-                sys.exit(f"QUIZ.md cites {covered} of {total} hunks of code; at high risk, its See lines cite them all."
-                         f" Missed: {', '.join(missed)}.")
         except SystemExit as refused:
             if isinstance(refused.code, str):
                 print(refused.code, file=sys.stderr)
@@ -81,6 +77,15 @@ def check(base, tree, message):
     elif batch.changed and not batch.hit and all(PROSE_OR_GIT.search(path) for path in batch.changed):
         batch.level = "low"
     return batch
+
+
+def quiz_form(batch):
+    """The quiz as audit wants it: its form, and at high risk See lines that cite every hunk of code."""
+    quiz.form(batch)
+    covered, total, missed = batch.coverage
+    if batch.level == "high" and covered != total:
+        sys.exit(f"QUIZ.md cites {covered} of {total} hunks of code; at high risk, its See lines cite them all."
+                 f" Missed: {', '.join(missed)}.")
 
 
 def report(batch, message):

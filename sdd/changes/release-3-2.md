@@ -8,24 +8,6 @@ instead of editing the kit's scripts, which an upgrade replaces. On a first try 
 the audit or calling a reviewer; light models are what the teams will run. A dev with a good reason to skip the quiz
 can only do it today by leaving out the agent's trailer or `--no-verify`, which leaves no trace of why.
 
-## The script says the next step of a batch (brief)
-
-The command's line in `__main__.py` and its tests in `test/run` belong to checks: the batch carries
-`Spec-Unchanged(checks)`.
-
-- `bash sdd/bin/sdd next` prints `step <n>: <what to do>` from the state of the batch in git, the first that
-  applies, and always exits 0:
-  - nothing changed and nothing staged: nothing to propose;
-  - tracked files changed but not staged, or no message at `$(git rev-parse --git-path sdd/message)`, or one older
-    than the last commit: step 5;
-  - the audit's findings, the drift ones as step 3, the others as step 5;
-  - a batch that asks a quiz, without `Bypass-Quiz`, whose `QUIZ.md` is missing, malformed or older than the batch:
-    step 6, a fresh reviewer, or the same one after a fix;
-  - else: step 7, the handoff.
-- Untracked files never block: `next` lists them, for the agent to stage those that belong to the batch.
-- The kit block of `AGENTS.md` asks the agent, once the code and tests are written, to read the diff (step 4) and
-  then run `next` and do what it says until the handoff; COMPILE names it too.
-
 ## A contract or sdd/config.yml sets a module's risk (contracts)
 
 - `sdd/config.yml` holds flat `key: value` lines, comments allowed, the same as a contract's front matter; without it,

@@ -5,7 +5,8 @@
 
 This repo uses [SDD-Fabrik](https://github.com/GrIc/sdd-fabrik). Read [sdd/README.md](sdd/README.md) (this project),
 [sdd/WORKFLOW.md](sdd/WORKFLOW.md) (how a change is made) and [sdd/coding-style.md](sdd/coding-style.md) first.
-Intent governs purpose; code and tests establish facts.
+Intent governs purpose; code and tests establish facts. Once the code and its tests are written, read the whole diff
+(step 4 of COMPILE), then run `bash sdd/bin/sdd next` and do what it says, again and again, until it says to hand off.
 
 What the harness gives you, besides the checks the workflow runs:
 

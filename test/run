@@ -552,6 +552,66 @@ test_bypass_quiz_without_a_reason_asks_the_quiz() {
   says 'No quiz for this agent-assisted batch'
 }
 
+# The message the agent proposes at step 5, one line per argument.
+propose() {
+  mkdir -p "$(dirname "$(git rev-parse --git-path sdd/message)")"
+  printf '%s\n' "$@" > "$(git rev-parse --git-path sdd/message)"
+}
+
+test_next_leads_a_batch_to_its_quiz() {
+  succeeds bash sdd/bin/sdd next
+  [ "$(cat "$out")" = 'Nothing to propose: no tracked file changed.' ]
+  touch notes.txt
+  echo two >> src/search/a.py
+  succeeds bash sdd/bin/sdd next
+  says 'step 5: stage the batch, these files changed and are not staged: src/search/a.py.'
+  says 'Untracked, stage those of the batch: notes.txt.'
+  git add src/search/a.py
+  succeeds bash sdd/bin/sdd next
+  says 'step 5: write the proposed message, with Agent-Assisted: yes, to .git/sdd/message.'
+  propose 'Change search' '' 'Agent-Assisted: yes'
+  succeeds bash sdd/bin/sdd next
+  says 'step 3: fix what the audit finds.'
+  says 'DRIFT sdd/modules/search.md'
+  echo 'More intent.' >> sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd next
+  says 'step 6: a fresh reviewer'
+  write_quiz README.md 'A B C'
+  succeeds bash sdd/bin/sdd next
+  says 'step 6: the reviewer fixes its quiz. Question 1 needs a See line'
+  write_quiz src/search/a.py 'A B C'
+  succeeds bash sdd/bin/sdd next
+  says 'step 7: hand off, then the human answers QUIZ.md and commits with git commit -F .git/sdd/message.'
+  echo three >> src/search/a.py
+  git add -A
+  succeeds bash sdd/bin/sdd next
+  says 'step 6: the batch changed since the quiz'
+}
+
+test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked() {
+  echo 'More intent.' >> sdd/modules/search.md
+  seq 1 300 > src/search/a.py
+  git add -A
+  propose 'Change search' '' 'Agent-Assisted: yes'
+  succeeds bash sdd/bin/sdd next
+  says 'step 5: fix what the audit finds.'
+  says 'SIZE 301 changed lines of code and tests'
+  propose 'Change search' '' 'Agent-Assisted: yes' 'Large-Batch: generated' 'Bypass-Quiz: redone after a passed quiz'
+  succeeds bash sdd/bin/sdd next
+  says 'step 7: hand off, then the human commits with'
+  git commit -q -F .git/sdd/message 2> /dev/null
+  echo 'Notes.' > NOTES.md
+  git add -A
+  # The message of the last commit, left behind.
+  touch -t 200001010000 .git/sdd/message
+  succeeds bash sdd/bin/sdd next
+  says 'step 5: write the proposed message'
+  propose 'Add notes' '' 'Agent-Assisted: yes'
+  succeeds bash sdd/bin/sdd next
+  says 'step 7: hand off, then the human commits with'
+}
+
 test_quiz_passed_adds_the_trailer_and_cleans_up() {
   batch
   write_quiz src/search/a.py 'A B C'
