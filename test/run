@@ -171,6 +171,35 @@ test_up_to_five_percent_over_only_notes() {
   says 'NOTE 210 changed lines of code and tests, over 200 but within 5%.'
 }
 
+test_the_config_sets_the_batch_lines_a_batch_cannot_raise() {
+  echo 'batch-lines: 100  # small steps' > sdd/config.yml
+  git add -A
+  git commit -qm 'Keep batches small'
+  echo 'More intent.' >> sdd/modules/search.md
+  seq 1 105 > src/search/big.py
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  says 'NOTE 105 changed lines of code and tests, over 100 but within 5%.'
+  seq 1 300 > src/search/big.py
+  echo 'batch-lines: 500' > sdd/config.yml
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says 'SIZE 302 changed lines of code and tests, over 100 by more than 5%.'
+  git commit -q --no-verify -m 'Add a big search, allow bigger batches'
+  seq 1 600 > src/search/big.py
+  echo 'More.' >> sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  echo 'batch-lines: lots' > sdd/config.yml
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says 'ERROR sdd/config.yml: batch-lines is lots. Write a number of lines, such as 200.'
+  git commit -q --no-verify -m 'Allow lots'
+  echo 'batch-lines: 150' > sdd/config.yml
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+}
+
 test_markdown_git_files_and_lockfiles_do_not_count() {
   echo 'More intent.' >> sdd/modules/search.md
   echo two >> src/search/a.py

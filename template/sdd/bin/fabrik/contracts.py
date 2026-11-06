@@ -49,7 +49,12 @@ def risky(revision):
 def setting(contract_lines, tree, key):
     """A module's setting: its contract's front matter, else sdd/config.yml of the tree, else None. Both hold flat
     key: value lines."""
-    return value(contract_lines, key) or value(lines(try_git("show", f"{tree}:sdd/config.yml") or ""), key)
+    return value(contract_lines, key) or config(tree, key)
+
+
+def config(tree, key):
+    """A setting of the repo in sdd/config.yml of the tree, None without one."""
+    return value(lines(try_git("show", f"{tree}:sdd/config.yml") or ""), key)
 
 
 def value(text_lines, key):

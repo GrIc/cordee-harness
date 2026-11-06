@@ -149,8 +149,9 @@ whole file with its name or path as the link text, relative to the contract or f
 may share a test; a criterion without a link is checked by hand, as its sentence says. No checkboxes, no status.
 `depends` names the modules this one builds on; check their tests pass before you do. `risk: high`, for a module where
 a mistake costs much (an API contract, security, personal data, money), asks for a stricter quiz. `sdd/config.yml`
-sets the same keys for the whole repo, as flat `key: value` lines with comments allowed; a contract's own value wins,
-so `risk: normal` keeps its module at normal risk in a repo at `risk: high`.
+sets the repo's `risk` and `batch-lines` (200 lines of code and tests by default), as flat `key: value` lines with
+comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal risk in a repo at
+`risk: high`. A batch is judged on the smaller of its parent's `batch-lines` and its own.
 
 ## Decisions
 
@@ -164,13 +165,13 @@ keeps its text.
 |---|---|---|
 | `Agent-Assisted: yes` | the agent, in its proposed message | drift and size block, the quiz is required |
 | `Spec-Unchanged(<module>): <reason>` | the author | spares that module from the drift check and the one-module limit |
-| `Large-Batch: <reason>` | the human | lifts the size limits (`MAX_LINES` in `sdd/bin/fabrik/size.py`, one module) |
+| `Large-Batch: <reason>` | the human | lifts the size limits (`batch-lines` in `sdd/config.yml`, one module) |
 | `Bypass-Quiz: <reason>` | the human, never the agent | the hook asks no quiz; drift and size still apply |
 | `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
 A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`; any other
 commit is the human's own. The script prints ERROR when every commit must stop; DRIFT (code against its contract, or a
-contract link to a missing test or file) and SIZE (more than 5% over `MAX_LINES`, or a second module), which refuse an
+contract link to a missing test or file) and SIZE (more than 5% over `batch-lines`, or a second module), which refuse an
 agent batch and only warn on the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every
 pushed commit, never the quiz. Everything here can be bypassed: it is there to help, not to lock.
 

@@ -8,11 +8,6 @@ instead of editing the kit's scripts, which an upgrade replaces. On a first try 
 the audit or calling a reviewer; light models are what the teams will run. A dev with a good reason to skip the quiz
 can only do it today by leaving out the agent's trailer or `--no-verify`, which leaves no trace of why.
 
-## sdd/config.yml sets the batch size of the repo (checks)
-
-- `batch-lines` in `sdd/config.yml` sets the lines of code and tests an agent batch may change, 200 without it; the
-  5% margin follows it. A batch is judged on the smaller of its parent's value and its own.
-
 ## A contract sets the batch size of its module (checks)
 
 - A contract's `batch-lines` sets the limit of a batch that changes that module's code, the smaller of the
