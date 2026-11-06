@@ -67,8 +67,8 @@ def sdd_command(args):
         return quiet(args[1:])
     else:
         return misuse("usage: bash sdd/bin/sdd hook <message-file> | audit [--message <file> | --range <base>..<tip>]\n"
-                      "       bash sdd/bin/sdd fingerprint | install-hook | touched [<commit>] | brief [<module>] | next\n"
-                      "       bash sdd/bin/sdd quiet <command>...")
+                      "       bash sdd/bin/sdd fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
+                      "       bash sdd/bin/sdd next | quiet <command>...")
 
 
 def ledger_command(args):

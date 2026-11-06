@@ -46,6 +46,11 @@ def risky(revision):
     return text is not None and setting(front_matter(text), revision.split(":", 1)[0], "risk") == "high"
 
 
+def own_setting(revision, key):
+    """A setting the contract at a revision path states itself, None when it does not or is not there."""
+    return value(front_matter(try_git("show", revision) or ""), key)
+
+
 def setting(contract_lines, tree, key):
     """A module's setting: its contract's front matter, else sdd/config.yml of the tree, else None. Both hold flat
     key: value lines."""

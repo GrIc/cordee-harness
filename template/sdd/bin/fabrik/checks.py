@@ -66,7 +66,7 @@ def check(base, tree, message):
     files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
     notes."""
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
-                            findings="", notes="", hit=[], high=[], touched=0)
+                            findings="", notes="", hit=[], high=[], coded=[], touched=0)
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
     # Markdown and git's own files that no contract is and no module governs ask little of a quiz: the human reads

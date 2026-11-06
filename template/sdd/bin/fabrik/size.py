@@ -2,7 +2,7 @@
 import re
 import sys
 
-from fabrik.contracts import config
+from fabrik.contracts import config, own_setting
 from fabrik.git import git, lines
 
 # The lines of code and tests an agent batch may change when sdd/config.yml sets no batch-lines. Up to 5% over only
@@ -23,29 +23,44 @@ def size(batch, base, tree, message):
         added, deleted, path = line.split("\t", 2)
         if added != "-" and not NOT_CODE.search(path):
             count += int(added) + int(deleted)
-    limit = batch_lines(base, tree)
+    limit, where = batch_lines(batch, base, tree)
     if re.search(r"^Large-Batch:[^\S\n]*\S", message, re.M):
         if count > limit:
-            batch.notes += f"NOTE {count} changed lines of code and tests, over {limit}: Large-Batch lifts it.\n"
+            batch.notes += (f"NOTE {count} changed lines of code and tests, over {limit} ({where}): Large-Batch lifts"
+                            " it.\n")
         if batch.touched > 1:
             batch.notes += f"NOTE the batch changes code of {batch.touched} modules: Large-Batch lifts it.\n"
         return
     if count > limit * 105 // 100:
-        batch.findings += (f"SIZE {count} changed lines of code and tests, over {limit} by more than 5%.\n"
+        batch.findings += (f"SIZE {count} changed lines of code and tests, over {limit} ({where}) by more than 5%.\n"
                            "      Split the batch, or the human adds 'Large-Batch: <reason>' to the message.\n")
     elif count > limit:
-        batch.notes += f"NOTE {count} changed lines of code and tests, over {limit} but within 5%.\n"
+        batch.notes += f"NOTE {count} changed lines of code and tests, over {limit} ({where}) but within 5%.\n"
     if batch.touched > 1:
         batch.findings += (f"SIZE the batch changes code of {batch.touched} modules.\n"
                            "      Split it by module, or the human adds 'Large-Batch: <reason>' to the message.\n")
 
 
-def batch_lines(base, tree):
-    """The repo's limit, the smaller of the parent's and the batch's own: a batch cannot raise the limit it is judged
-    on."""
-    own = config(tree, "batch-lines") or str(MAX_LINES)
-    if not re.fullmatch(r"[0-9]+", own):
-        sys.exit(f"ERROR sdd/config.yml: batch-lines is {own}. Write a number of lines, such as 200.")
-    # A parent committed past the hook with a wrong value counts as the default, so that the batch fixing it passes.
-    parent = config(base, "batch-lines") or ""
-    return min(int(own), int(parent) if re.fullmatch(r"[0-9]+", parent) else MAX_LINES)
+def batch_lines(batch, base, tree):
+    """The limit of the batch and where it is set: the contract of a module whose code it changes, else
+    sdd/config.yml, else the kit's default. Every contract of the batch is judged, for its note."""
+    repo = judged(batch, "sdd/config.yml", config(tree, "batch-lines"), config(base, "batch-lines"),
+                  (MAX_LINES, "the kit's default"))
+    modules = {}
+    for contract in (f"sdd/modules/{name}.md" for name in batch.hit):
+        modules[contract] = judged(batch, contract, own_setting(f"{tree}:{contract}", "batch-lines"),
+                                   own_setting(f"{base}:{contract}", "batch-lines"), repo)
+    return min([modules[contract] for contract in batch.coded] or [repo])
+
+
+def judged(batch, path, own, parent, default):
+    """The limit a file sets, as (lines, where), the default when unset. A value the batch changes holds at once, and
+    gets a note in batch, so that the human sees an agent giving itself more room."""
+    if own and not re.fullmatch(r"[0-9]+", own):
+        sys.exit(f"ERROR {path}: batch-lines is {own}. Write a number of lines, such as 200.")
+    limit = (int(own), f"batch-lines in {path}") if own else default
+    # A parent committed past the hook with a wrong value counts as the default.
+    before = int(parent) if parent and re.fullmatch(r"[0-9]+", parent) else default[0]
+    if before != limit[0]:
+        batch.notes += f"NOTE {path}: batch-lines goes from {before} to {limit[0]} in this batch.\n"
+    return limit

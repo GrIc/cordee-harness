@@ -158,7 +158,7 @@ test_over_max_lines_blocks_an_agent_warns_a_human() {
   seq 1 211 > src/search/big.py
   git add -A
   fails bash sdd/bin/sdd audit
-  says 'SIZE 211 changed lines of code and tests, over 200 by more than 5%.'
+  says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
   succeeds git commit -qm 'Add a big search'
   says 'Warnings only'
 }
@@ -168,28 +168,29 @@ test_up_to_five_percent_over_only_notes() {
   seq 1 210 > src/search/big.py
   git add -A
   succeeds bash sdd/bin/sdd audit
-  says 'NOTE 210 changed lines of code and tests, over 200 but within 5%.'
+  says "NOTE 210 changed lines of code and tests, over 200 (the kit's default) but within 5%."
 }
 
-test_the_config_sets_the_batch_lines_a_batch_cannot_raise() {
+test_the_config_sets_the_batch_lines_of_the_repo() {
   echo 'batch-lines: 100  # small steps' > sdd/config.yml
   git add -A
-  git commit -qm 'Keep batches small'
+  git commit -qm 'Keep batches small' 2> /dev/null
   echo 'More intent.' >> sdd/modules/search.md
   seq 1 105 > src/search/big.py
   git add -A
   succeeds bash sdd/bin/sdd audit
-  says 'NOTE 105 changed lines of code and tests, over 100 but within 5%.'
+  says 'NOTE 105 changed lines of code and tests, over 100 (batch-lines in sdd/config.yml) but within 5%.'
   seq 1 300 > src/search/big.py
   echo 'batch-lines: 500' > sdd/config.yml
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'SIZE 302 changed lines of code and tests, over 100 by more than 5%.'
+  succeeds bash sdd/bin/sdd audit
+  says 'NOTE sdd/config.yml: batch-lines goes from 100 to 500 in this batch.'
   git commit -q --no-verify -m 'Add a big search, allow bigger batches'
   seq 1 600 > src/search/big.py
   echo 'More.' >> sdd/modules/search.md
   git add -A
   succeeds bash sdd/bin/sdd audit
+  lacks 'batch-lines goes from'
   echo 'batch-lines: lots' > sdd/config.yml
   git add -A
   fails bash sdd/bin/sdd audit
@@ -198,6 +199,40 @@ test_the_config_sets_the_batch_lines_a_batch_cannot_raise() {
   echo 'batch-lines: 150' > sdd/config.yml
   git add -A
   succeeds bash sdd/bin/sdd audit
+  says 'NOTE sdd/config.yml: batch-lines goes from 200 to 150 in this batch.'
+}
+
+test_a_contract_sets_the_batch_lines_of_its_module() {
+  echo 'batch-lines: 300' > sdd/config.yml
+  printf -- '---\ngoverns: [src/search/]\nbatch-lines: 50\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/import]\nbatch-lines: 400\n---\n# import\n' > sdd/modules/import.md
+  git add -A
+  git commit -qm 'Set the batch size of each module' 2> /dev/null
+  echo 'More intent.' >> sdd/modules/import.md
+  seq 1 350 > src/import/big.py
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  git reset -q --hard
+  git clean -qfd
+  echo 'More intent.' >> sdd/modules/search.md
+  seq 1 60 > src/search/big.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says 'SIZE 60 changed lines of code and tests, over 50 (batch-lines in sdd/modules/search.md) by more than 5%.'
+  # Raised in the batch itself, it holds at once, with a note for the human.
+  sed 's/batch-lines: 50/batch-lines: 100/' sdd/modules/search.md > sdd/modules/search.tmp
+  mv sdd/modules/search.tmp sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  says 'NOTE sdd/modules/search.md: batch-lines goes from 50 to 100 in this batch.'
+  # Raised alone, it gets the note too.
+  git reset -q --hard
+  git clean -qfd
+  sed 's/batch-lines: 50/batch-lines: 1000/' sdd/modules/search.md > sdd/modules/search.tmp
+  mv sdd/modules/search.tmp sdd/modules/search.md
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  says 'NOTE sdd/modules/search.md: batch-lines goes from 50 to 1000 in this batch.'
 }
 
 test_markdown_git_files_and_lockfiles_do_not_count() {
@@ -228,7 +263,7 @@ test_large_batch_lifts_both_limits() {
   git add -A
   printf 'Big\n\nAgent-Assisted: yes\nLarge-Batch: one rename across both modules\n' > "$msg"
   succeeds bash sdd/bin/sdd audit --message "$msg"
-  says 'NOTE 212 changed lines of code and tests, over 200: Large-Batch lifts it.'
+  says "NOTE 212 changed lines of code and tests, over 200 (the kit's default): Large-Batch lifts it."
   says 'NOTE the batch changes code of 2 modules: Large-Batch lifts it.'
 }
 

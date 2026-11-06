@@ -151,7 +151,9 @@ may share a test; a criterion without a link is checked by hand, as its sentence
 a mistake costs much (an API contract, security, personal data, money), asks for a stricter quiz. `sdd/config.yml`
 sets the repo's `risk` and `batch-lines` (200 lines of code and tests by default), as flat `key: value` lines with
 comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal risk in a repo at
-`risk: high`. A batch is judged on the smaller of its parent's `batch-lines` and its own.
+`risk: high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's code, higher or
+lower. A batch that changes a `batch-lines` is judged on its new value, with a note for the human, and SIZE says
+where the limit is set.
 
 ## Decisions
 

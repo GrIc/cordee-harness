@@ -25,9 +25,11 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_a_spared_module_does_not_count_toward_the_module_limit](/test/run),
   [test_errors_stop_even_a_human_commit](/test/run).
 - Size: at most `batch-lines` changed lines of code and tests, and one module, unless `Large-Batch: <reason>`, which
-  still notes what it lifts. `batch-lines` comes from `sdd/config.yml`, `MAX_LINES` without it, and a batch is judged
-  on the smaller of its parent's value and its own; only its own value stops a commit when it is not a number:
-  [test_the_config_sets_the_batch_lines_a_batch_cannot_raise](/test/run). Markdown, `.gitignore`, `.gitattributes`,
+  still notes what it lifts. `batch-lines` comes from `sdd/config.yml`, `MAX_LINES` without it. A batch that changes the
+  value is judged on its own, and gets a note saying so; only its own value stops a commit when it is not a number:
+  [test_the_config_sets_the_batch_lines_of_the_repo](/test/run). A contract's `batch-lines` replaces it for a
+  batch that changes that module's code, higher or lower, under the same rules; SIZE names the file that sets the
+  limit: [test_a_contract_sets_the_batch_lines_of_its_module](/test/run). Markdown, `.gitignore`, `.gitattributes`,
   `.gitkeep` and lock files do not count:
   [test_markdown_git_files_and_lockfiles_do_not_count](/test/run). Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run),

@@ -8,11 +8,6 @@ instead of editing the kit's scripts, which an upgrade replaces. On a first try 
 the audit or calling a reviewer; light models are what the teams will run. A dev with a good reason to skip the quiz
 can only do it today by leaving out the agent's trailer or `--no-verify`, which leaves no trace of why.
 
-## A contract sets the batch size of its module (checks)
-
-- A contract's `batch-lines` sets the limit of a batch that changes that module's code, the smaller of the
-  module's and the repo's value.
-
 ## Settings are asked at setup and at a module's birth (no module)
 
 - The deploy copies a `sdd/config.yml` with the defaults written as comments; GENESIS and ADOPT ask the human for

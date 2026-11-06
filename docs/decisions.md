@@ -418,3 +418,18 @@ seven steps. Strong and light models get the same guidance.
 _Rejected:_ a reminder of the last steps in `AGENTS.md` (covers the steps it names, not the next one skipped);
 guidance by model (a catalogue goes stale in a month, and no tool says how able its model is); a reviewer agent
 written for each tool at setup (a model that skips the audit skips the reviewer too).
+
+## 51. A module sets its own batch size, higher or lower (2026-11-06)
+
+A contract's `batch-lines` replaces the repo's for a batch that changes that module's code, and a SIZE line names the
+file that sets the limit, so that a dev sees it comes from their module and not from the repo. The plan of 3.2 had a
+module only lower it; the owner asked for both ways, seeing no reason to forbid more lines where a module needs them.
+A batch that changes a `batch-lines`, in a contract or in `sdd/config.yml`, is judged on its new value at once, and
+gets `NOTE <file>: batch-lines goes from <old> to <new> in this batch.`, so that the human sees an agent giving itself
+room, as they see a `Large-Batch` trailer. The owner flagged the first version in the quiz ("not what I wanted"): a
+module that needs more lines had to commit its contract first, with a quiz of its own.
+_Rejected:_ a module that only lowers the repo's limit (a module of generated code or migrations would need
+`Large-Batch` at every batch); judging a batch on the smaller of its parent's value and its own (one more commit and
+quiz to raise a limit, for a guard no stronger than the note); a new value without a note (nothing would show an agent
+raising it); the limit applied to each module's own lines in a batch of several (such a batch needs
+`Large-Batch` already).
