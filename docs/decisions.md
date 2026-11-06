@@ -444,3 +444,13 @@ was to edit `size.py` or every contract, which an upgrade replaces or forgets.
 _Rejected:_ real YAML (a parser outside the standard library, for two keys); settings in `AGENTS.md` (the agent reads
 them, the script does not); `git config` (one clone's, not the repo's, and never reviewed in a diff); keeping
 `MAX_LINES` in `size.py` as the project's knob (an upgrade replaces the file).
+
+## 53. One to three questions below high risk (2026-11-06)
+
+Below high risk a quiz has one to three questions, as many as what the batch changes calls for; high risk keeps three
+or more, each citing every hunk of code. Three questions on a one-line fix taught nothing the first did not (asked by
+the owner on 2026-11-05). What the quiz must reach is the module's risk's business, not a count: the trailer already
+says how many hunks the questions cite. The note on a right answer always in the same place needs two questions.
+_Rejected:_ fewer than three questions only when they cite every hunk (a rule of reach on every module, which is what
+`risk: high` is for); one question for a batch without a hunk of code (the reviewer judges what a contract change
+calls for).

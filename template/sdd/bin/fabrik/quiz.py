@@ -44,8 +44,8 @@ def form(batch):
     batch.count = sum(line.startswith("## ") for line in read_lines(QUIZ))
     if batch.level == "high" and batch.count < 3:
         sys.exit('QUIZ.md needs 3 questions or more, each under a "## " heading.')
-    if batch.level != "high" and batch.count != 3:
-        sys.exit('QUIZ.md needs 3 questions, each under a "## " heading.')
+    if batch.level != "high" and not 1 <= batch.count <= 3:
+        sys.exit('QUIZ.md needs 1 to 3 questions, each under a "## " heading.')
     batch.questions, batch.ranks, cites = questions(), "", []
     for question in batch.questions:
         places = question.see.split(", ")

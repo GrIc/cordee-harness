@@ -1,13 +1,9 @@
 # Roadmap
 
+- [3.3: a quiz that asks what the module's risk calls for, and the CI on GitLab](changes/release-3-3.md)
 - More settings in `sdd/config.yml`: the roles present, the quiz type each role gets and when, who answers for a
-  missing role, the default checkpoint (commit or merge request).
-- The module contract says its risk in four values (low: drift only; intent: a quiz only when a batch moves the
-  contract or a boundary, [the issue](issues/quiz-on-intent-only.md); normal: quiz; high: every part cited), the levels
-  it touches and its checkpoint, each only when it differs from the project's. A batch of tests or docs only asks less,
-  never more than its module.
-- One to three questions, fewer than three only when they cite every hunk: [the issue](issues/fewer-questions.md).
-- The CI on GitLab, as on GitHub.
+  missing role, the default checkpoint (commit or merge request); a contract states the levels it touches and its
+  checkpoint only where they differ from the project's.
 - Control at the merge request, architecture level: agents commit on their branch with the audit alone, a merge
   request carries one story, a fresh reviewer writes the quiz on the whole request, the configured role answers it,
   the merge commit carries the stamp and the CI checks it is there.

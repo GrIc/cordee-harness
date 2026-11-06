@@ -27,7 +27,7 @@ def audit_staged(message_file=None):
     if os.path.isfile(quiz.QUIZ):
         try:
             quiz_form(batch)
-            if batch.ranks == batch.ranks[0] * len(batch.ranks):
+            if len(batch.ranks) > 1 and batch.ranks == batch.ranks[0] * len(batch.ranks):
                 print(f"NOTE QUIZ.md: the right answer is box {batch.ranks[0]} every time, vary it.", file=sys.stderr)
         except SystemExit as refused:
             if isinstance(refused.code, str):
