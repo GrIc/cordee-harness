@@ -388,7 +388,8 @@ reviewer wrote no quiz, as the human expected, and the hook refused the commit. 
 the next batch. These files change what git tracks, not what the product does, and the human reads them in the diff.
 _Rejected:_ every dotfile (`.github/workflows/`, `.eslintrc` and `.env.example` carry behavior); a level judged on
 "no hunk of code" as the coverage counts it (a lock file alone would ask nothing, and a dependency bump deserves a
-question); a list the project sets (one more setting, for three files nobody debates).
+question); a list the project sets (one more setting, for three files nobody debates). Decision 56 asks a quiz of
+the files a `sensitive` list matches.
 
 ## 49. The human skips a quiz with a reason (2026-11-05)
 
@@ -470,3 +471,17 @@ _Rejected:_ a setting of its own for the levels a quiz asks (code, architecture,
 explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
 even when the intent moves); any contract that moves (a contract of a module at `low`, in the same batch, asks
 nothing on its own).
+
+## 56. A sensitive file asks a quiz at any risk (2026-11-06)
+
+Some files steer the project or the harness whatever their module's risk: the workflow, the script, the guides,
+`sdd/config.yml`, `AGENTS.md`, `CLAUDE.md`, the architecture, the coding style, the product and the contracts. A
+batch that changes or deletes one is judged at `normal` at least, so a repo at `low` or `intent` still reads what it
+hands the agents; this supersedes 48 for those files, Markdown or not. The kit's list holds until `sdd/config.yml` sets `sensitive`,
+which replaces it, and a contract's list adds to the repo's, so a module at `low` keeps its schema under a quiz. Both
+lists are read in the parent and in the batch, so the batch that empties a list is judged by the old one. An entry is
+a path, a folder ending with `/` or a regular expression between slashes, never split, so a path may hold a comma.
+_Rejected:_ git pathspecs as in `governs` (a glob cannot say "any `.sql`, at any depth" as plainly, and `:!` reads
+badly in a list meant to grow); a list in brackets (`[a, b]` splits a path with a comma; it stops the commit and shows
+the `- ` form instead); a contract's list for its own files only (a module that cares about a file outside it would
+have to govern it); `high` for a sensitive file (three or more questions on a one-line fix of the workflow).

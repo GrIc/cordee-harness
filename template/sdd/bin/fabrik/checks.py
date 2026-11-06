@@ -4,7 +4,7 @@ import sys
 from types import SimpleNamespace
 
 from fabrik import quiz
-from fabrik.contracts import governs, highest, risk
+from fabrik.contracts import governs, highest, matches, risk, sensitive
 from fabrik.drift import drift
 from fabrik.git import commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from fabrik.journal import committed
@@ -75,6 +75,11 @@ def check(base, tree, message):
     # their diff.
     if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
         risks += [risk(tree, None, True), risk(base, None, False)]
+    # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch
+    # emptying the list is judged by it.
+    listed = sensitive(tree, True) + sensitive(base, False)
+    if any(matches(entry, path) for path in batch.changed for entry in listed):
+        risks.append("normal")
     level = highest(risks or ["low"])
     # At intent, only a contract that moves asks a quiz. A boundary moves with one: governs and depends are in it, and
     # code of a second module that no Spec-Unchanged spares is drift until its contract changes too.

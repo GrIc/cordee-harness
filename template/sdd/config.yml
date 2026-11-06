@@ -8,3 +8,18 @@
 # three questions. high, where a mistake costs much (an API contract, security, personal data, money): three or more,
 # citing every hunk of code, and a second human's reading is recommended.
 # risk: normal
+
+# Files a batch asks a quiz on at any risk: a path, a folder ending with /, or /a regular expression/ found in the
+# path, one on the key's line or one per "- " line. A contract's list adds to this one. Set, even empty, it replaces
+# the kit's list below; sensitive: [] lists none.
+# sensitive:
+#   - sdd/bin/
+#   - sdd/WORKFLOW.md
+#   - sdd/guide/
+#   - sdd/config.yml
+#   - AGENTS.md
+#   - CLAUDE.md
+#   - sdd/architecture.md
+#   - sdd/coding-style.md
+#   - sdd/product.md
+#   - sdd/modules/

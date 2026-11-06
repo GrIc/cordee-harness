@@ -22,7 +22,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   the parent or in the batch; code outside every module takes the repo's. At `low` an agent batch asks no quiz and
   `sdd next` says to hand off; drift and size still apply: [test_low_risk_asks_no_quiz](/test/run). At `intent` it
   asks one only when it adds, deletes or changes the contract of a module at `intent`:
-  [test_intent_risk_asks_a_quiz_when_a_contract_moves](/test/run).
+  [test_intent_risk_asks_a_quiz_when_a_contract_moves](/test/run). A batch that changes or deletes a file a
+  `sensitive` list of the parent or of the batch matches is judged at `normal` at least:
+  [test_a_sensitive_file_always_asks_a_quiz](/test/run).
 - Drift: a commit that changes a module's governed paths changes its contract too, or names the module in
   `Spec-Unchanged(<module>): <reason>`, which also leaves it out of the one-module limit. A `Spec-Unchanged` naming no
   contract, or a contract with an empty `governs`, stops every commit:

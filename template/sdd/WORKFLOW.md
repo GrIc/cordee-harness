@@ -73,11 +73,13 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 A quiz has one to three questions, as many as what the batch changes calls for. A batch is judged at the highest risk
 of the modules it changes, in the parent or in the batch; code outside every module takes the repo's. At `low` it
 needs no quiz; at `intent`, only when it adds, deletes or changes the contract of a module at `intent`, which also
-holds its `governs` and `depends`. A batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or
-`.gitkeep` that no contract is and no module governs needs none either (one written is still graded). A batch that
-changes or deletes a module at `risk: high` (an API contract, security, personal data, money) has three or more, and
-its `See` lines cite every hunk of code: `audit` fails until they do, the hook never checks it. The handoff then
-recommends a second human's reading; nothing requires one, so a dev alone uses the whole harness.
+holds its `governs` and `depends`. A batch that changes or deletes a sensitive file (see Contracts), in the parent's
+list or its own, asks one to three questions even at `low` or `intent`. A batch whose changed files are all Markdown,
+`.gitignore`, `.gitattributes` or `.gitkeep` that no contract is, no module governs and no `sensitive` list matches
+needs none either (one written is still graded). A batch that changes or deletes a module at `risk: high` (an API
+contract, security, personal data, money) has three or more, and its `See` lines cite every hunk of code: `audit`
+fails until they do, the hook never checks it. The handoff then recommends a second human's reading; nothing requires
+one, so a dev alone uses the whole harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 
@@ -158,7 +160,11 @@ code), `intent` (a quiz only when the contract moves, with its `governs` and `de
 `key: value` lines with comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal
 risk in a repo at `risk: high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's
 code, higher or lower. A batch that changes a `batch-lines` is judged on its new value, with a note for the human, and
-SIZE says where the limit is set. A contract states a setting only where it differs from the repo's.
+SIZE says where the limit is set. `sensitive` lists the files that steer the project or the harness, which ask a quiz
+at any risk: one entry on the key's line or one per `- ` line below it, never split, as a path from the repo root, a
+folder ending with `/`, or a regular expression between slashes, found anywhere in the path. Unset in
+`sdd/config.yml`, it is the kit's list, shown there; set, it replaces it, and `sensitive: []` lists none. A contract's
+list adds to the repo's, for any file of a batch. A contract states a setting only where it differs from the repo's.
 
 ## Decisions
 

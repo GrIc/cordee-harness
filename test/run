@@ -998,6 +998,86 @@ test_a_deleted_high_risk_contract_is_high_risk() {
   says 'NOTE search: high risk'
 }
 
+test_a_sensitive_file_always_asks_a_quiz() {
+  printf 'risk: low\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Put the repo at low risk'
+  echo 'Layers.' > sdd/architecture.md
+  git add -A
+  fails agent_commit 'Draw the layers'
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  # The batch that empties the list is judged by the base's.
+  printf 'risk: low\nsensitive: []\n' > sdd/config.yml
+  git add -A
+  fails agent_commit 'List no sensitive file'
+  says 'No quiz for this agent-assisted batch'
+  git commit -qm 'List no sensitive file'
+  echo 'Layers.' > sdd/architecture.md
+  git add -A
+  succeeds agent_commit 'Draw the layers'
+  # A contract's list adds to the repo's, for any file of the batch.
+  printf -- '---\ngoverns: [src/import/]\nsensitive:\n  - "db/"  # the schema\n- /\\.sql$/\n---\n# import\n' \
+    > sdd/modules/import.md
+  git add -A
+  git commit -qm 'Keep the schema and the queries under a quiz'
+  mkdir db
+  echo 'create' > db/schema.txt
+  git add -A
+  fails agent_commit 'Write the schema'
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  echo 'select' > tools.sql
+  git add -A
+  fails agent_commit 'Write a query'
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  # The batch's own list counts too.
+  printf -- '---\ngoverns: [src/import/]\nsensitive: notes.txt\n---\n# import\n' > sdd/modules/import.md
+  echo 'Why.' > notes.txt
+  git add -A
+  fails agent_commit 'Keep the notes under a quiz'
+  says 'No quiz for this agent-assisted batch'
+}
+
+test_sensitive_takes_files_folders_and_expressions() {
+  printf 'risk: low\nsensitive: tools  # a file, not the folder\n' > sdd/config.yml
+  mkdir tools
+  echo one > tools/a.sh
+  git add -A
+  git commit -qm 'Settings'
+  echo two >> tools/a.sh
+  git add -A
+  succeeds agent_commit 'Change a tool'
+  printf 'risk: low\nsensitive: [tools/, db/]\n' > sdd/config.yml
+  git add -A
+  fails git commit -qm 'Settings'
+  says 'ERROR sdd/config.yml: sensitive is [tools/, db/]. Write one entry per line below the key, as "  - tools/".'
+  printf 'risk: low\nsensitive:\n  - /(/\n' > sdd/config.yml
+  git add -A
+  fails git commit -qm 'Settings'
+  says 'ERROR sdd/config.yml: sensitive lists /(/, a regular expression that does not compile'
+  git commit -q --no-verify -m 'Settings'
+  # In the base it is left out, so that the commit fixing it passes.
+  printf 'risk: low\nsensitive:\n  - tools/, db/\n' > sdd/config.yml
+  git add -A
+  succeeds git commit -qm 'Fix the settings'
+  echo three >> tools/a.sh
+  git add -A
+  succeeds agent_commit 'Change a tool'
+  printf 'risk: low\nsensitive:\n  - tools/\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Settings'
+  echo four >> tools/a.sh
+  git add -A
+  fails agent_commit 'Change a tool'
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  git rm -q tools/a.sh
+  fails agent_commit 'Drop a tool'
+  says 'No quiz for this agent-assisted batch'
+}
+
 test_a_worktree_hook_reads_relative_links() {
   mkdir tests
   echo 'def test_x(): pass' > tests/test_search.py

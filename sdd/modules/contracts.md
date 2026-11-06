@@ -24,5 +24,10 @@ How the script reads a contract, written as the workflow's Contracts section say
 - `risk` takes `low`, `intent`, `normal` or `high`, in lower case. Another value stops the commit with an ERROR that
   names its file and lists the four; in the base it counts as `normal`, so that the commit fixing it passes:
   [test_a_risk_is_one_of_four_values](/test/run).
+- `sensitive` takes one entry on the key's line or one per `- ` line below it, never split: a path, a folder ending
+  with `/`, or a regular expression between slashes. Unset in `sdd/config.yml`, it is the kit's list; a contract's
+  adds to it. A list in brackets other than `[]`, or an expression that does not compile, stops the commit with an
+  ERROR that says what to write; in the base it is left out:
+  [test_sensitive_takes_files_folders_and_expressions](/test/run).
 
 Constraints: as [checks](checks.md).
