@@ -8,8 +8,8 @@ from fabrik.git import commit_or, empty_tree, exists, git, lines
 
 def drift(batch, base, tree, message):
     """Notes in batch the modules whose code or contract changed from base to tree (hit), the risk of each (risks),
-    the contracts whose code changed (coded), the changed paths they govern (governed), and how many changed code that
-    no Spec-Unchanged spares (touched)."""
+    the contracts whose code changed (coded), the changed paths they govern (governed), the files the contracts of the
+    tree link to (linked), and how many changed code that no Spec-Unchanged spares (touched)."""
     for line in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):", message, re.M):
         for name in line.split():
             if not exists(f"{tree}:sdd/modules/{name}.md"):
@@ -22,7 +22,8 @@ def drift(batch, base, tree, message):
             if not paths:
                 batch.errors += f"ERROR {contract}: governs is empty. List the paths this module owns.\n"
                 continue
-            broken = links(tree, contract)
+            linked, broken = links(tree, contract)
+            batch.linked.update(linked)
             if broken:
                 batch.findings += "\n".join(broken) + "\n      Fix the link, or the name of the test it points to.\n"
             governed = lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))

@@ -485,3 +485,18 @@ _Rejected:_ git pathspecs as in `governs` (a glob cannot say "any `.sql`, at any
 badly in a list meant to grow); a list in brackets (`[a, b]` splits a path with a comma; it stops the commit and shows
 the `- ` form instead); a contract's list for its own files only (a module that cares about a file outside it would
 have to govern it); `high` for a sensitive file (three or more questions on a one-line fix of the workflow).
+
+## 57. A batch of tests alone asks one step less (2026-11-06)
+
+Three questions on a batch that only adds tests cost the human what a change of behavior costs, while the tests leave
+what the product does as it was and the human reads them in the diff. A batch whose changed files are files a contract
+links to, with only Markdown and git's own files that no module governs and no `sensitive` list matches beside them,
+is judged one step lower: `high` gives `normal`, `normal` gives `intent`, `intent` gives `low`. The links are the
+contract's own word for which files prove it, read in the batch: a test deleted with its link, or one no contract
+links to yet, is code like any other. A contract may move with its tests, since a new test needs its link: at
+`intent` such a batch then asks nothing, unless the contracts are sensitive, as the kit's list has them. A sensitive
+file keeps its quiz at any step (56).
+_Rejected:_ test files found by name (`test_*`, `*_spec.*`, `tests/`: every language names them its own way, and a
+fixture or a helper there changes what every test checks); no quiz at all for tests (a test that asserts the wrong thing
+locks a bug in, and at `high` the human still reads one to three questions); the base's links too (a batch that drops
+a test and its link weakens the proof, and should ask what it asked before).

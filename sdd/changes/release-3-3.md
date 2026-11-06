@@ -7,15 +7,6 @@ wants no question on code has only `low`, which asks none even when the intent m
 quiz, and nothing lets a module at low risk keep one file under a quiz. A batch of tests alone asks today what a batch
 of code asks. Teams on GitLab replay drift and size only by hand.
 
-## A batch of tests alone asks one step less (checks)
-
-- A batch whose changed files are all files a contract links to, other than Markdown and folders, along with
-  Markdown and git's own files that no module governs and no `sensitive` list matches, is judged one step lower: high
-  gives normal, normal gives intent, intent gives low.
-- The list of linked files comes out of `contracts.links`, a refactor that keeps its findings, under
-  `Spec-Unchanged(contracts)`.
-- The Quiz section of the workflow says so, and a decision says why, and what was rejected.
-
 ## The CI on GitLab (checks)
 
 - `template/.gitlab-ci.yml`, governed by checks, replays drift and size on each new commit of a merge request

@@ -4,7 +4,7 @@ import sys
 from types import SimpleNamespace
 
 from fabrik import quiz
-from fabrik.contracts import governs, highest, matches, risk, sensitive
+from fabrik.contracts import RISKS, governs, highest, matches, risk, sensitive
 from fabrik.drift import drift
 from fabrik.git import commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from fabrik.journal import committed
@@ -66,28 +66,39 @@ def check(base, tree, message):
     files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
     notes."""
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
-                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), touched=0)
+                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(), touched=0)
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
-    batch.high = [name for name in batch.hit if batch.risks[name] == "high"]
-    risks = list(batch.risks.values())
-    # Code outside every module takes the repo's risk. Markdown and git's own files there ask no quiz: the human reads
-    # their diff.
-    if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
-        risks += [risk(tree, None, True), risk(base, None, False)]
     # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch
     # emptying the list is judged by it.
     listed = sensitive(tree, True) + sensitive(base, False)
-    if any(matches(entry, path) for path in batch.changed for entry in listed):
-        risks.append("normal")
+    flagged = [path for path in batch.changed if any(matches(entry, path) for entry in listed)]
+    # Tests a contract links to, alone or with prose the human reads, ask one step less: they prove the intent and leave
+    # what the product does as it was.
+    step = 1 if batch.linked.intersection(batch.changed) and all(
+        path in batch.linked or (PROSE_OR_GIT.search(path) and path not in batch.governed and path not in flagged)
+        for path in batch.changed) else 0
+    judged = {name: lower(found, step) for name, found in batch.risks.items()}
+    risks = list(judged.values())
+    # Code outside every module takes the repo's risk. Markdown and git's own files there ask no quiz: the human reads
+    # their diff.
+    if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
+        risks += [lower(risk(tree, None, True), step), lower(risk(base, None, False), step)]
     level = highest(risks or ["low"])
     # At intent, only a contract that moves asks a quiz. A boundary moves with one: governs and depends are in it, and
     # code of a second module that no Spec-Unchanged spares is drift until its contract changes too.
     if level == "intent":
-        moved = any(batch.risks[name] == "intent" and f"sdd/modules/{name}.md" in batch.changed for name in batch.hit)
+        moved = any(judged[name] == "intent" and f"sdd/modules/{name}.md" in batch.changed for name in batch.hit)
         level = "normal" if moved else "low"
+    if flagged:
+        level = highest([level, "normal"])
     batch.level = {"low": "low", "high": "high"}.get(level, "normal")
+    batch.high = [name for name in batch.hit if batch.risks[name] == "high"] if batch.level == "high" else []
     return batch
+
+
+def lower(found, step):
+    return RISKS[max(RISKS.index(found) - step, 0)]
 
 
 def quiz_form(batch):

@@ -1078,6 +1078,61 @@ test_sensitive_takes_files_folders_and_expressions() {
   says 'No quiz for this agent-assisted batch'
 }
 
+# A contract for search at risk $1, governing its tests and linking to one.
+tested_contract() {
+  printf -- '---\ngoverns: [src/search/, tests/]\nrisk: %s\n---\n# search\n\n- X: [test_x](%s).\n' \
+    "$1" /tests/test_search.py > sdd/modules/search.md
+}
+
+test_a_batch_of_tests_alone_asks_one_step_less() {
+  mkdir tests
+  echo 'def test_x(): pass' > tests/test_search.py
+  tested_contract high
+  git add -A
+  git commit -qm 'Search is at high risk'
+  echo 'def test_y(): pass' >> tests/test_search.py
+  echo 'How to test.' > README.md
+  git add -A
+  printf 'Test more\n\nAgent-Assisted: yes\nSpec-Unchanged(search): tests only\n' > "$msg"
+  write_quiz tests/test_search.py 'A B'
+  succeeds bash sdd/bin/sdd audit --message "$msg"
+  lacks 'high risk'
+  # Code beside the tests keeps the module's risk.
+  echo two >> src/search/a.py
+  git add -A
+  fails bash sdd/bin/sdd audit --message "$msg"
+  says 'QUIZ.md needs 3 questions or more'
+  git reset -q --hard
+  rm QUIZ.md
+  tested_contract normal
+  git commit -qam 'Search is at normal risk'
+  echo 'def test_z(): pass' >> tests/test_search.py
+  git add -A
+  succeeds git commit -q -F "$msg"
+  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
+  # A test no contract links to is code like any other.
+  echo 'def test_w(): pass' > tests/test_more.py
+  git add -A
+  fails git commit -q -F "$msg"
+  says 'No quiz for this agent-assisted batch'
+  git reset -q --hard
+  # At intent, a contract that moves with its tests asks nothing; a sensitive test still asks a quiz.
+  printf 'sensitive: []\n' > sdd/config.yml
+  tested_contract intent
+  git add -A
+  git commit -qm 'Search moves by its intent'
+  echo 'def test_v(): pass' >> tests/test_search.py
+  echo 'More intent.' >> sdd/modules/search.md
+  git add -A
+  succeeds agent_commit 'Test more'
+  printf 'sensitive:\n  - tests/\n' > sdd/config.yml
+  git commit -qam 'Keep the tests under a quiz'
+  echo 'def test_u(): pass' >> tests/test_search.py
+  git add -A
+  fails git commit -q -F "$msg"
+  says 'No quiz for this agent-assisted batch'
+}
+
 test_a_worktree_hook_reads_relative_links() {
   mkdir tests
   echo 'def test_x(): pass' > tests/test_search.py

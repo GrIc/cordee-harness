@@ -159,8 +159,9 @@ def modules(tree):
 
 
 def links(tree, contract):
-    """Drift between a contract and the tests it links: a linked file the tree lacks, or a name the file lacks."""
-    found = []
+    """The files a contract links to in a tree, other than Markdown and folders, and the drift between the contract and
+    them: a linked file the tree lacks, or a name the file lacks."""
+    files, found = [], []
     text = re.sub(" +", " ", re.sub("[\r\n]", " ", git("show", f"{tree}:{contract}")))
     for link in re.findall(r"\[[^]]*\]\([^)]*\)", text):
         name, target = link[1:].split("](", 1)
@@ -173,11 +174,13 @@ def links(tree, contract):
         file = path and try_git("ls-tree", "--name-only", tree, "--", path)
         if not file:
             found.append(f'DRIFT {contract}: links "{name}" to {target}, a file the commit does not have.')
-        # The name as whole words, as grep -w finds it.
-        elif (git("cat-file", "-t", f"{tree}:{file}") == "blob" and name not in (posixpath.basename(file), file)
-              and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)", git("show", f"{tree}:{file}"))):
-            found.append(f'DRIFT {contract}: links "{name}", not found in {file}.')
-    return found
+        elif git("cat-file", "-t", f"{tree}:{file}") == "blob":
+            files.append(file)
+            # The name as whole words, as grep -w finds it.
+            if name not in (posixpath.basename(file), file) and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)",
+                                                                              git("show", f"{tree}:{file}")):
+                found.append(f'DRIFT {contract}: links "{name}", not found in {file}.')
+    return files, found
 
 
 def resolve(folder, target):
