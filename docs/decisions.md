@@ -523,7 +523,9 @@ pilot the kit works on GitLab (2026-11-04). The job runs in branch pipelines, wh
 project whose jobs run in merge request pipelines gives it their rules: the base is zeros there too. "CI for other
 forges" leaves the contract's non-goals for "forges other than GitHub and GitLab". The control at the merge request,
 on the roadmap, will need merge request pipelines for every job of the project that chooses it: a setting of the
-project then, not a default of this job.
+project then, not a default of this job. The kit's `sensitive` list holds `.gitlab-ci.yml` beside
+`.github/workflows/`, for the reason of decision 58: a batch at `low` could otherwise turn the CI check off with no
+question asked.
 _Rejected:_ merge request pipelines from `CI_MERGE_REQUEST_DIFF_BASE_SHA`, as planned (a job that asks for one makes
 GitLab create a pipeline holding that job alone, since jobs without rules never run there; it becomes the merge
 request's pipeline, and "Pipelines must succeed" stops waiting for the project's tests: fresh review of this batch);

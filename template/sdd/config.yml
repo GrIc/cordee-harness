@@ -23,6 +23,7 @@
 #   - sdd/product.md
 #   - sdd/modules/
 #   - .github/workflows/
+#   - .gitlab-ci.yml
 #   - .claude/
 #   - opencode.json
 #   - kilo.jsonc

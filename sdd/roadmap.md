@@ -1,6 +1,5 @@
 # Roadmap
 
-- [3.3: a quiz that asks what the module's risk calls for, and the CI on GitLab](changes/release-3-3.md)
 - More settings in `sdd/config.yml`: the roles present, the quiz type each role gets and when, who answers for a
   missing role, the default checkpoint (commit or merge request); a contract states the levels it touches and its
   checkpoint only where they differ from the project's.

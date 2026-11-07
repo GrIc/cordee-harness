@@ -1044,7 +1044,8 @@ test_the_kit_lists_what_steers_agents() {
   printf 'risk: low\n' > sdd/config.yml
   git add -A
   git commit -qm 'Put the repo at low risk'
-  for file in src/AGENTS.md docs/claude.md .claude/settings.json .github/workflows/ci.yml kilo.jsonc; do
+  for file in src/AGENTS.md docs/claude.md .claude/settings.json .github/workflows/ci.yml .gitlab-ci.yml \
+    kilo.jsonc; do
     mkdir -p "$(dirname "$file")"
     echo '{}' > "$file"
     git add -A
