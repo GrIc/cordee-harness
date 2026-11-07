@@ -549,3 +549,15 @@ moving with its tests of 57.
 _Rejected:_ refusing as drift a link to a file the contract does not govern (an end-to-end test proves several modules,
 and the module that governs it keeps its risk anyway); keeping the moving contract as 57 had it, since the kit's list
 makes it sensitive (a project that replaces the list loses that, and nothing says so).
+
+## 61. A quiz written for the batch marks it as an agent's (2026-11-07)
+
+The hook told an agent batch only by `Agent-Assisted: yes` or an agent's co-author address, both in a message the human
+may retype: a dev committing from the IDE's message box sent an agent batch in as their own, with no quiz and two
+warnings, and nothing said so (review of 2026-11-07). A quiz key whose first line is the fingerprint of the staged batch
+is a reviewer's proof that the batch was quizzed: the hook treats it as an agent batch and adds `Agent-Assisted: yes`
+to the message, so that CI, the ledger and the history count it too. A key written for an earlier state of the batch
+marks nothing, as the fingerprint already says.
+_Rejected:_ asking for `QUIZ.md` as well (deleting it would skip the quiz again, silently); refusing a commit without
+the trailer when a key exists (the human would have to retype what the hook can write); a trailer added by `sdd next`
+or the agent (the message the human commits is not the one the agent wrote).

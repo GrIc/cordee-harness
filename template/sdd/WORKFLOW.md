@@ -186,11 +186,12 @@ keeps its text.
 | `Bypass-Quiz: <reason>` | the human, never the agent | the hook asks no quiz; drift and size still apply |
 | `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
-A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`; any other
-commit is the human's own. The script prints ERROR when every commit must stop; DRIFT (code against its contract, or a
-contract link to a missing test or file) and SIZE (more than 5% over `batch-lines`, or a second module), which refuse an
-agent batch and only warn on the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every
-pushed commit, never the quiz. Everything here can be bypassed: it is there to help, not to lock.
+A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`, and so does
+a batch whose quiz key holds its fingerprint: the hook then adds the trailer. Any other commit is the human's own. The
+script prints ERROR when every commit must stop; DRIFT (code against its contract, or a contract link to a missing test
+or file) and SIZE (more than 5% over `batch-lines`, or a second module), which refuse an agent batch and only warn on
+the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every pushed commit, never the
+quiz. Everything here can be bypassed: it is there to help, not to lock.
 
 The hook compares the batch with HEAD: to amend an agent batch that changes files, run `git reset --soft HEAD^` and
 commit again. It checks nothing when it finishes a merge or a cherry-pick. Merge pull requests with a merge commit or

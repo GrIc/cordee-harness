@@ -1409,6 +1409,27 @@ test_an_agent_co_author_marks_an_agent_batch() {
   says 'Refused, agent-assisted batch'
 }
 
+test_a_quiz_written_for_the_batch_marks_an_agent_batch() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  fails git commit -qm 'Change search'
+  says 'Agent-Assisted: yes is added to the message'
+  says 'Tick exactly one box for question 1'
+  answer A B C
+  succeeds git commit -qm 'Change search'
+  git log -1 --format=%B | grep -qx 'Agent-Assisted: yes'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
+  # A key written for an earlier state of the batch marks nothing: the human's own commit.
+  echo three >> src/search/a.py
+  echo 'Even more intent.' >> sdd/modules/search.md
+  git add -A
+  write_quiz src/search/a.py 'A'
+  echo four >> src/search/a.py
+  git add -A
+  succeeds git commit -qm 'Change search again'
+  lacks 'Agent-Assisted: yes is added'
+}
+
 test_a_human_co_author_named_claude_is_human() {
   echo two >> src/search/a.py
   git add -A

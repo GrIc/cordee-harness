@@ -14,8 +14,14 @@ def hook(message_file):
     if any(os.path.isfile(git("rev-parse", "--git-path", head)) for head in ("MERGE_HEAD", "CHERRY_PICK_HEAD")):
         return
     committed()
-    with open(message_file, encoding="utf-8", errors="replace", newline="") as file:
-        message = "".join(line for line in file if not line.startswith("#"))
+    message = read_message(message_file)
+    # A quiz key written for this very batch says a reviewer quizzed it: an agent batch, whatever message the human
+    # typed in their IDE. The trailer goes in, so that CI, the ledger and the history see it too.
+    key = quiz.key_path()
+    if not is_agent(message) and os.path.isfile(key) and quiz.read_lines(key)[:1] == [quiz.staged()]:
+        git("interpret-trailers", "--in-place", "--trailer", "Agent-Assisted: yes", message_file)
+        message = read_message(message_file)
+        print("NOTE a quiz was written for this batch: Agent-Assisted: yes is added to the message.", file=sys.stderr)
     batch = check(commit_or("HEAD", empty_tree()), git("write-tree"), message)
     if not report(batch, message):
         sys.exit(1)
@@ -32,6 +38,12 @@ def hook(message_file):
     if total:
         trailer += f", covers {covered}/{total}"
     git("interpret-trailers", "--in-place", "--trailer", trailer, message_file)
+
+
+def read_message(message_file):
+    """The commit message, without git's comment lines."""
+    with open(message_file, encoding="utf-8", errors="replace", newline="") as file:
+        return "".join(line for line in file if not line.startswith("#"))
 
 
 def install():

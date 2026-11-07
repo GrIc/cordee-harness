@@ -12,7 +12,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
 - An agent batch (`Agent-Assisted: yes`, or a co-author address in `AGENT_EMAILS`) is refused on drift, on size or on a
   wrong quiz. The human's own commits only get warnings on drift and size: [test_agent_drift_blocks](/test/run),
   [test_an_agent_co_author_marks_an_agent_batch](/test/run), [test_human_drift_warns_and_commits](/test/run),
-  [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run).
+  [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run). A batch whose quiz key holds its fingerprint is an
+  agent batch too, whatever the message says, and the hook adds `Agent-Assisted: yes` to it:
+  [test_a_quiz_written_for_the_batch_marks_an_agent_batch](/test/run).
 - `Bypass-Quiz: <reason>` lets an agent batch pass without a quiz, at high risk too, and the trailer stays as the
   trace; drift and size still apply. Without a reason it lifts nothing, and the hook says to write one:
   [test_bypass_quiz_with_a_reason_skips_the_quiz](/test/run), [test_bypass_quiz_holds_at_high_risk](/test/run),
