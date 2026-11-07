@@ -7,12 +7,7 @@ wants no question on code has only `low`, which asks none even when the intent m
 quiz, and nothing lets a module at low risk keep one file under a quiz. A batch of tests alone asks today what a batch
 of code asks. Teams on GitLab replay drift and size only by hand.
 
-## The CI on GitLab (checks)
+## The GitLab CI file is sensitive (contracts)
 
-- `template/.gitlab-ci.yml`, governed by checks, replays drift and size on each new commit of a merge request
-  (from `CI_MERGE_REQUEST_DIFF_BASE_SHA`) or of a push to a branch without an open merge request (from
-  `CI_COMMIT_BEFORE_SHA`), with the full history; a new branch, whose base is zeros, audits its tip. Checked by hand
-  on a GitLab project.
-- The deploy copies the CI file of the repo's forge, read from its remote or asked of the human, merges its job into
-  an existing `.gitlab-ci.yml`, and the README, the upgrade guide and the uninstall name it.
-- The contract drops "CI for other forges" from its non-goals; a decision says why.
+- The kit's `sensitive` list holds `.gitlab-ci.yml`, as decision 58 left for this release: a batch at `low` could
+  otherwise turn the CI check off with no question asked.

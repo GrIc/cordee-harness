@@ -77,8 +77,8 @@ production breaks. A team that merges faster than it understands builds comprehe
 - Wrap or orchestrate agents. No custom CLI wrapper, daemon, SDK, database, or API proxy, and no LLM call at commit
   time: the git hook grades `QUIZ.md` offline.
 - Manage your git forge. No pull-request automation, reviewer assignment, merge queue, or preview environments. A
-  GitHub Actions workflow is included to replay drift and size in CI; any other forge runs the same
-  `bash sdd/bin/sdd audit --range <base>..<tip>` command on a full-history checkout.
+  GitHub Actions workflow and a GitLab CI job are included to replay drift and size in CI; any other forge runs the
+  same `bash sdd/bin/sdd audit --range <base>..<tip>` command on a full-history checkout.
 - Sandbox agents or filter sensitive data. `AGENTS.md` sets house rules and deployment configures tool deny lists
   where supported, but preventing access to secrets or real data belongs to your environment.
 - Monitor or rank developers. No per-person token chart, velocity metric, or quiz score.
@@ -96,7 +96,8 @@ on upgrade. Everything else belongs to your project:
 ```
 AGENTS.md, CLAUDE.md       agent instructions + the SDD-Fabrik block (@AGENTS.md import for Claude Code)
 .gitattributes             keeps sdd/bin/* LF on Windows checkouts
-.github/workflows/sdd.yml  replays drift and size on pushed commits
+.github/workflows/sdd.yml  on GitHub, replays drift and size on pushed commits
+.gitlab-ci.yml             on GitLab, an sdd-audit job that does the same
 sdd/
   README.md                your system map and module table (first line tracks source URL and tag)
   coding-style.md          your settled code, test and command conventions
@@ -177,11 +178,15 @@ You were asked to deploy SDD-Fabrik in the current repository. Do this:
    git ls-remote --tags --refs <source>
    git clone --depth 1 --branch <tag> <source> <tmp>
    ```
-3. Copy `<tmp>/template/` into the repository root without overwriting anything. Where a file already exists:
+3. Copy `<tmp>/template/` into the repository root without overwriting anything, and with only the CI file of the
+   repo's forge: `.github/workflows/sdd.yml` for GitHub, `.gitlab-ci.yml` for GitLab. Read the forge from the host of
+   `git remote get-url origin`; when it names neither, ask the human. Where a file already exists:
    - `AGENTS.md`: append the block between `<!-- sdd-fabrik -->` and `<!-- /sdd-fabrik -->`;
    - `CLAUDE.md`: add a line `@AGENTS.md`;
    - `.gitattributes`: append its line, which keeps the scripts' line ends LF on Windows;
    - a CI workflow: add its step and `fetch-depth: 0` from `.github/workflows/sdd.yml` to it, or keep both;
+   - `.gitlab-ci.yml`: add its `sdd-audit` job, with the `rules` of the other jobs when they run in merge request
+     pipelines, and `test` to `stages` if the file lists them without it;
    - anything else: stop and ask the human.
 4. Replace `<source>` and `<tag>` on the first line of `sdd/README.md` with the URL and the tag you deployed from.
 5. Run `bash sdd/bin/sdd install-hook`. If it declines because another hook is in place, show the human the lines it

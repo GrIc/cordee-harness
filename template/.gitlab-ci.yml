@@ -1,0 +1,16 @@
+sdd-audit:
+  # Has git and bash; the harness needs Python 3.10 or later.
+  image: python:3.12
+  variables:
+    GIT_DEPTH: "0"
+  rules:
+    - if: $CI_COMMIT_BRANCH
+  script:
+    - BASE=$CI_COMMIT_BEFORE_SHA
+    # A new branch's base is zeros: its commits are those the default branch lacks.
+    - |
+      if [ "$BASE" = 0000000000000000000000000000000000000000 ]; then
+        git fetch -q origin "$CI_DEFAULT_BRANCH"
+        BASE=FETCH_HEAD
+      fi
+    - bash sdd/bin/sdd audit --range "$BASE..$CI_COMMIT_SHA"

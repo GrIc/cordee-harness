@@ -512,3 +512,23 @@ The list stays one a project replaces in `sdd/config.yml` (56): it grows from te
 _Rejected:_ `.github/` whole (issue templates and dependabot would ask a quiz for nothing that steers an agent); every
 tool's rules folder (`.cursor/`, `.github/copilot-instructions.md`, `GEMINI.md`: a catalogue that goes stale, for tools
 that also read `AGENTS.md`); `.gitlab-ci.yml` now (it comes with the GitLab CI of 3.3).
+
+## 59. The kit ships a GitLab CI job (2026-11-06)
+
+The template carries `.gitlab-ci.yml` beside the GitHub workflow, and the deploy copies the one of the repo's forge,
+read from its remote or asked of the human. Teams on GitLab replayed drift and size only by hand, and the first team to
+pilot the kit works on GitLab (2026-11-04). The job runs in branch pipelines, where jobs without rules run, from
+`CI_COMMIT_BEFORE_SHA`; a new branch's base is zeros, so it audits the commits the default branch lacks. It takes the
+`python:3.12` image, which has git and bash, and leaves the `workflow:` and `stages:` of the file it joins alone. A
+project whose jobs run in merge request pipelines gives it their rules: the base is zeros there too. "CI for other
+forges" leaves the contract's non-goals for "forges other than GitHub and GitLab". The control at the merge request,
+on the roadmap, will need merge request pipelines for every job of the project that chooses it: a setting of the
+project then, not a default of this job.
+_Rejected:_ merge request pipelines from `CI_MERGE_REQUEST_DIFF_BASE_SHA`, as planned (a job that asks for one makes
+GitLab create a pipeline holding that job alone, since jobs without rules never run there; it becomes the merge
+request's pipeline, and "Pipelines must succeed" stops waiting for the project's tests: fresh review of this batch);
+the tip alone for a new branch (a first push of five commits would replay one); a `workflow: rules` block (it changes
+every job of a project's pipeline); a file to `include:` (one more file for a dozen lines; a remote include of the kit
+runs whatever its main holds); a slim or Alpine image (no git, and an install step that runners behind a proxy fail);
+both CI files in every repo (a workflow that never runs looks like a check); every forge (no team asked, and they run
+the same command).

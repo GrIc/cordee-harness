@@ -2,7 +2,7 @@
 governs: [template/sdd/bin/sdd, template/sdd/bin/fabrik/__init__.py, template/sdd/bin/fabrik/__main__.py,
   template/sdd/bin/fabrik/git.py, template/sdd/bin/fabrik/drift.py,
   template/sdd/bin/fabrik/size.py, template/sdd/bin/fabrik/checks.py, template/sdd/bin/fabrik/hooks.py,
-  template/.github/workflows/sdd.yml, test/run]
+  template/.github/workflows/sdd.yml, template/.gitlab-ci.yml, test/run]
 ---
 # checks
 
@@ -55,9 +55,10 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
-- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). The hook
-  checks nothing when it finishes a merge or a cherry-pick, whose commits were checked when first made:
-  [test_a_cherry_pick_asks_no_new_quiz](/test/run).
+- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). On
+  GitLab, those of each push, and for a new branch those the default branch lacks: checked by hand on a GitLab
+  project. The hook checks nothing when it finishes a merge or a cherry-pick, whose commits were checked
+  when first made: [test_a_cherry_pick_asks_no_new_quiz](/test/run).
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
   workflow and guides, and governs paths that match nothing: [test_audit_notes_the_markdown_ratio](/test/run),
   [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),
@@ -66,6 +67,7 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
 Constraints: Python 3.10, standard library only, behind a `sh` launcher, and git, on Linux, macOS and Windows (Git
 Bash). Without it, `install-hook` and the hook say what to install, and `--no-verify` still commits:
 [test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
-Non-goals: locks, an LLM at commit time, drift below the file level, CI for other forges (they run the same command).
+Non-goals: locks, an LLM at commit time, drift below the file level, CI for forges other than GitHub and GitLab
+(they run the same command).
 Formats and usage: [WORKFLOW.md](../../template/sdd/WORKFLOW.md). The script's other parts: [contracts](contracts.md),
 [quiz](quiz.md), [brief](brief.md).
