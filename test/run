@@ -350,12 +350,33 @@ test_brief_shows_branches_waiting_for_review_with_their_author() {
   push_branch late Carl 4
   push_branch mine Dev 10
   push_branch stale 'Bob Roy' 72
+  # Abandoned past 14 days, or a bot's: neither waits for anyone.
+  push_branch abandoned Carl 337
+  push_branch deps 'dependabot[bot]' 10
+  push_branch renovate 'Renovate Bot' 10
   succeeds bash sdd/bin/sdd brief
   [ ! -s "$out" ]
   git remote set-head origin main
   succeeds bash sdd/bin/sdd brief
   [ "$(cat "$out")" = 'origin/stale waits for a review for 3 days, see Bob Roy.
 origin/late waits for a review for 4 hours, see Carl.' ]
+}
+
+test_the_config_sets_how_long_a_branch_waits() {
+  remote
+  git remote set-head origin main
+  push_branch fresh Carl 3
+  push_branch stale 'Bob Roy' 72
+  printf 'review-wait-hours: 2\nabandoned-days: 2  # a two-day sprint\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Wait less' 2> /dev/null
+  succeeds bash sdd/bin/sdd brief
+  [ "$(cat "$out")" = 'origin/fresh waits for a review for 3 hours, see Carl.' ]
+  echo 'abandoned-days: two' > sdd/config.yml
+  git add -A
+  git commit -qm 'Mistype the setting' 2> /dev/null
+  fails bash sdd/bin/sdd brief
+  says 'ERROR sdd/config.yml: abandoned-days is two. Write a whole number, such as 14.'
 }
 
 test_brief_says_three_lines_at_most() {

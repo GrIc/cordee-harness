@@ -21,7 +21,7 @@ A file is created when first needed.
 | Why, for whom, success, non-goals | `sdd/product.md` |
 | Look, accessibility, voice | `sdd/design.md` |
 | Code, tests, docs and commit conventions, project commands | `sdd/coding-style.md` |
-| The repo's settings: batch size, risk | `sdd/config.yml`, shipped with the defaults as comments |
+| The repo's settings: batch size, risk, sensitive files, waits | `sdd/config.yml`, shipped with the defaults as comments |
 | System design, data, deployment | `sdd/architecture.md` |
 | Decisions, with what was rejected | `sdd/decisions.md` |
 | Order of the work, someday | `sdd/roadmap.md`: one line and link per change, and nowhere else |

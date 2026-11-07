@@ -28,3 +28,8 @@
 #   - opencode.json
 #   - kilo.jsonc
 #   - .vscode/settings.json
+
+# sdd brief: a pushed branch waits for a review once its last commit is this many hours old, and is left out as
+# abandoned once it is this many days old.
+# review-wait-hours: 4
+# abandoned-days: 14

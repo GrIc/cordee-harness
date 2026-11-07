@@ -561,3 +561,25 @@ marks nothing, as the fingerprint already says.
 _Rejected:_ asking for `QUIZ.md` as well (deleting it would skip the quiz again, silently); refusing a commit without
 the trailer when a key exists (the human would have to retype what the hook can write); a trailer added by `sdd next`
 or the agent (the message the human commits is not the one the agent wrote).
+
+## 62. Brief leaves out abandoned branches and bots' (2026-11-07)
+
+`brief` showed the three oldest remote branches not merged, so in a repo that keeps abandoned branches it printed the
+same ones forever: with four branches of 2025 and one pushed five hours ago, it gave three of 600 days or more and never
+the fresh one (review of 2026-11-07). A branch whose last commit is 14 days old or more (`abandoned-days` in
+`sdd/config.yml`, decision 63) no longer waits, and neither does a bot's (a name ending in `[bot]` or holding the word
+bot), whose updates wait for no one in particular. The order of 34 stays: the oldest review still waiting comes first.
+Each branch out of the window costs no `git log`.
+_Rejected:_ newest first (the review that has waited longest is the one to finish, decision 34); a fetch to see which
+branches were deleted on the remote (34 never fetches); a list of bot names (each forge and tool names its own).
+
+## 63. Every setting of a project lives in sdd/config.yml (2026-11-07)
+
+The owner asked for every setting a project may change in `sdd/config.yml`, each named plainly, rather than in
+constants of kit files that an upgrade replaces and that the upgrade guide asked an agent to keep by hand (against
+52). `brief` reads `review-wait-hours` and `abandoned-days` there first, as whole numbers, with the kit's defaults shown
+as comments in the file; `NOT_CODE` and `AGENT_EMAILS` follow in batches of their own. What stays in the code is what a
+project does not tune: the kit's rules (the quiz's form, the risk levels), the facts of a tool (a provider's price
+ratios, the shape of its logs) and the names of the harness's own files.
+_Rejected:_ `sdd/config.yaml` (deployed repos already hold `sdd/config.yml`); settings in `git config` (one clone's,
+never reviewed, as 52 says); one batch moving them all (several modules, beyond the size the harness asks of agents).

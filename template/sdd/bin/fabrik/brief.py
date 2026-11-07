@@ -3,17 +3,21 @@ and never fetches."""
 import itertools
 import os
 import re
+import sys
 import time
 from collections import Counter
 
 from fabrik import quiz
 from fabrik.checks import check, quiz_form
-from fabrik.contracts import governs
+from fabrik.contracts import config, governs
 from fabrik.git import commit_or, empty_tree, exists, git, lines, me, try_git
 from fabrik.journal import committed
 
-# A pushed branch waits for a review once its last commit is this old.
-REVIEW_WAIT_HOURS = 4
+# The defaults of sdd/config.yml's review-wait-hours and abandoned-days: a pushed branch waits for a review once its
+# last commit is this many hours old, and counts as abandoned past this many days.
+REVIEW_WAIT_HOURS, ABANDONED_DAYS = 4, 14
+# A bot's branch, such as dependabot[bot]'s or Renovate Bot's, waits for no one in particular.
+BOT = re.compile(r"\bbot\b", re.I)
 
 
 def brief(module):
@@ -27,7 +31,8 @@ def brief(module):
 
 
 def waiting(address):
-    """A quiz in another worktree of the clone, then the remote branches not merged by another dev, oldest first."""
+    """A quiz in another worktree of the clone, then the remote branches not merged by another dev, oldest first,
+    neither abandoned nor a bot's."""
     top = git("rev-parse", "--show-toplevel")
     for line in lines(git("worktree", "list", "--porcelain")):
         path = line[len("worktree "):]
@@ -35,14 +40,29 @@ def waiting(address):
             yield f"A quiz waits for your answers in {path}."
     if try_git("rev-parse", "-q", "--verify", "refs/remotes/origin/HEAD") is None:
         return
-    refs = git("for-each-ref", "--no-merged=origin/HEAD", "--sort=committerdate", "--format=%(refname)",
-               "refs/remotes/origin")
-    for ref in lines(refs):
-        when, email, name = git("log", "-1", "--format=%ct%x09%aE%x09%aN", ref).split("\t", 2)
+    wait, abandoned = setting("review-wait-hours", REVIEW_WAIT_HOURS), setting("abandoned-days", ABANDONED_DAYS)
+    refs = git("for-each-ref", "--no-merged=origin/HEAD", "--sort=committerdate",
+               "--format=%(committerdate:unix) %(refname)", "refs/remotes/origin")
+    for line in lines(refs):
+        when, ref = line.split(" ", 1)
         hours = (int(time.time()) - int(when)) // 3600
-        if hours >= REVIEW_WAIT_HOURS and email.lower() != address.lower():
+        if hours >= abandoned * 24 or hours < wait:
+            continue
+        # The author through the mailmap, as git log gives it.
+        email, name = git("log", "-1", "--format=%aE%x09%aN", ref).split("\t", 1)
+        if email.lower() != address.lower() and not BOT.search(name):
             age = f"{hours} hours" if hours < 48 else f"{hours // 24} days"
             yield f"{ref[len('refs/remotes/'):]} waits for a review for {age}, see {name}."
+
+
+def setting(key, default):
+    """A whole number that sdd/config.yml sets at HEAD, else the default."""
+    found = config("HEAD", key)
+    if found is None:
+        return default
+    if not re.fullmatch(r"[0-9]+", found):
+        sys.exit(f"ERROR sdd/config.yml: {key} is {found}. Write a whole number, such as {default}.")
+    return int(found)
 
 
 def newcomer(address, module):
