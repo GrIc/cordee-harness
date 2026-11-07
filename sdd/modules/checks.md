@@ -24,8 +24,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   asks one only when it adds, deletes or changes the contract of a module at `intent`:
   [test_intent_risk_asks_a_quiz_when_a_contract_moves](/test/run). A batch that changes or deletes a file a
   `sensitive` list of the parent or of the batch matches is judged at `normal` at least:
-  [test_a_sensitive_file_always_asks_a_quiz](/test/run). A batch of files a contract links to, with only Markdown and
-  git's own files that no module governs and no `sensitive` list matches beside them, is judged one step lower:
+  [test_a_sensitive_file_always_asks_a_quiz](/test/run). A batch of files that contracts it leaves as they were link to,
+  with only Markdown and git's own files that no module governs and no `sensitive` list matches beside them, is judged
+  one step lower; a module only when its own contract links its changed files:
   [test_a_batch_of_tests_alone_asks_one_step_less](/test/run).
 - Drift: a commit that changes a module's governed paths changes its contract too, or names the module in
   `Spec-Unchanged(<module>): <reason>`, which also leaves it out of the one-module limit. A `Spec-Unchanged` naming no

@@ -76,12 +76,14 @@ needs no quiz; at `intent`, only when it adds, deletes or changes the contract o
 holds its `governs` and `depends`. A batch that changes or deletes a sensitive file (see Contracts), in the parent's
 list or its own, asks one to three questions even at `low` or `intent`. A batch whose changed files are all Markdown,
 `.gitignore`, `.gitattributes` or `.gitkeep` that no contract is, no module governs and no `sensitive` list matches
-needs none either (one written is still graded). A batch of tests alone is judged one step lower (`high` gives
-`normal`, `normal` gives `intent`, `intent` gives `low`): it changes files a contract links to, and beside them only
-Markdown and those git files that no module governs and no `sensitive` list matches. A batch that changes or deletes
-a module at `risk: high` (an API contract, security, personal data, money) has three or more, and its `See` lines cite
-every hunk of code: `audit` fails until they do, the hook never checks it. The handoff then recommends a second
-human's reading; nothing requires one, so a dev alone uses the whole harness.
+needs none either (one written is still graded). A batch of tests alone is judged one step lower (`high` gives `normal`,
+`normal` gives `intent`, `intent` gives `low`): it changes files that a contract the batch leaves as it was links to,
+and beside them only Markdown and those git files that no module governs and no `sensitive` list matches. A module takes
+the step only when its own contract links its changed files: a test linked from another module's contract keeps the risk
+of its module. A batch that changes or deletes a module at `risk: high` (an API contract, security, personal data,
+money) has three or more, and its `See` lines cite every hunk of code: `audit` fails until they do, the hook never
+checks it. The handoff then recommends a second human's reading; nothing requires one, so a dev alone uses the whole
+harness.
 
 `bash sdd/bin/sdd fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 

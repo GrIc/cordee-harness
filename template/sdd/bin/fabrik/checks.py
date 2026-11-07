@@ -66,7 +66,8 @@ def check(base, tree, message):
     files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
     notes."""
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
-                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(), touched=0)
+                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(),
+                            proven=set(), touched=0)
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
     # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch
@@ -74,11 +75,12 @@ def check(base, tree, message):
     listed = sensitive(tree, True) + sensitive(base, False)
     flagged = [path for path in batch.changed if any(matches(entry, path) for entry in listed)]
     # Tests a contract links to, alone or with prose the human reads, ask one step less: they prove the intent and leave
-    # what the product does as it was.
+    # what the product does as it was. A module takes the step only from its own contract: a test of one module linked
+    # from another's proves nothing of the first.
     step = 1 if batch.linked.intersection(batch.changed) and all(
         path in batch.linked or (PROSE_OR_GIT.search(path) and path not in batch.governed and path not in flagged)
         for path in batch.changed) else 0
-    judged = {name: lower(found, step) for name, found in batch.risks.items()}
+    judged = {name: lower(found, step if name in batch.proven else 0) for name, found in batch.risks.items()}
     risks = list(judged.values())
     # Code outside every module takes the repo's risk. Markdown and git's own files there ask no quiz: the human reads
     # their diff.

@@ -534,3 +534,18 @@ every job of a project's pipeline); a file to `include:` (one more file for a do
 runs whatever its main holds); a slim or Alpine image (no git, and an install step that runners behind a proxy fail);
 both CI files in every repo (a workflow that never runs looks like a check); every forge (no team asked, and they run
 the same command).
+
+## 60. Only the module its own contract proves takes the step (2026-11-07)
+
+The step of 57 counts only the links of the contracts the batch leaves as they were, and it lowers a module only when
+its own contract links the files of it that the batch changes. It was taken once for all the modules of the batch: a
+test governed by a module at `high` and linked from another module's contract took the batch to `normal`, one to three
+questions with no hunk cited, and a project whose `sensitive` list drops `sdd/modules/` let a contract at `intent` move
+with its tests and ask nothing (security review of 812a574, 2026-11-06). A contract that moves is the intent moving,
+which 57 meant to leave under its quiz; a new test and its link at `intent` now ask one, as they already did under the
+kit's list. A link the batch adds lowers nothing, not even code outside every module, which would otherwise take the
+repo's risk one step down by a line in a contract at `low` (fresh review of this batch). This supersedes the contract
+moving with its tests of 57.
+_Rejected:_ refusing as drift a link to a file the contract does not govern (an end-to-end test proves several modules,
+and the module that governs it keeps its risk anyway); keeping the moving contract as 57 had it, since the kit's list
+makes it sensitive (a project that replaces the list loses that, and nothing says so).
