@@ -15,18 +15,19 @@ def hook(message_file):
         return
     committed()
     message = read_message(message_file)
+    batch = check(commit_or("HEAD", empty_tree()), git("write-tree"), message)
     # A quiz key written for this very batch says a reviewer quizzed it: an agent batch, whatever message the human
     # typed in their IDE. The trailer goes in, so that CI, the ledger and the history see it too.
     key = quiz.key_path()
-    if not is_agent(message) and os.path.isfile(key) and quiz.read_lines(key)[:1] == [quiz.staged()]:
+    if not is_agent(message, batch.emails) and os.path.isfile(key) and quiz.read_lines(key)[:1] == [quiz.staged()]:
         git("interpret-trailers", "--in-place", "--trailer", "Agent-Assisted: yes", message_file)
         message = read_message(message_file)
         print("NOTE a quiz was written for this batch: Agent-Assisted: yes is added to the message.", file=sys.stderr)
-    batch = check(commit_or("HEAD", empty_tree()), git("write-tree"), message)
     if not report(batch, message):
         sys.exit(1)
     # A reword or an amend that changes no file leaves nothing to quiz on.
-    if not is_agent(message) or not batch.changed or (batch.level == "low" and not os.path.isfile(quiz.QUIZ)):
+    asked = batch.changed and (batch.level != "low" or os.path.isfile(quiz.QUIZ))
+    if not is_agent(message, batch.emails) or not asked:
         return
     if re.search(r"^Bypass-Quiz:[^\S\n]*\S", message, re.M):
         return

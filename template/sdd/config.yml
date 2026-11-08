@@ -33,3 +33,16 @@
 # abandoned once it is this many days old.
 # review-wait-hours: 4
 # abandoned-days: 14
+
+# The co-author addresses that mark a commit as an agent's, one per "- " line. Set, even empty, it replaces the kit's.
+# agent-emails:
+#   - noreply@anthropic.com
+#   - noreply@openai.com
+#   - aider@aider.chat
+
+# Files that count neither in the size of a batch nor in what its quiz covers, besides Markdown and git's own files,
+# written as sensitive is. Set, even empty, it replaces the kit's.
+# not-code:
+#   - /\.lock$/
+#   - /lock\.json$/
+#   - /lock\.yaml$/

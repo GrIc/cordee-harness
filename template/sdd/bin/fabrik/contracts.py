@@ -94,22 +94,27 @@ def sensitive(tree, checked):
     """The sensitive entries of a tree: those of sdd/config.yml, else the kit's, and those of every contract. A wrong
     entry stops the command when checked (the tree), and is left out otherwise (the base), so that the commit fixing it
     passes."""
-    found = entries(lines(try_git("show", f"{tree}:sdd/config.yml") or ""), "sdd/config.yml", checked)
-    found = list(SENSITIVE) if found is None else found
+    found = listed(tree, "sensitive", SENSITIVE, checked)
     for contract in contracts(tree):
         found += entries(front_matter(git("show", f"{tree}:{contract}")), contract, checked) or []
     return found
 
 
-def entries(text_lines, where, checked):
-    """The entries a file lists under sensitive, one on the key's line or one per "- " line below it, never split;
-    None when the key is not there."""
+def listed(tree, key, default, checked):
+    """The entries sdd/config.yml of a tree lists under a key, else the kit's default list."""
+    found = entries(lines(try_git("show", f"{tree}:sdd/config.yml") or ""), "sdd/config.yml", checked, key)
+    return list(default) if found is None else found
+
+
+def entries(text_lines, where, checked, key="sensitive"):
+    """The entries a file lists under a key, one on the key's line or one per "- " line below it, never split; None
+    when the key is not there."""
     found, inside = None, False
     for line in text_lines:
         line = re.sub(r"(^|\s)#.*", "", line)
         if re.match(r"[^\s-]", line):
-            inside = line.startswith("sensitive:")
-            entry = line[len("sensitive:"):] if inside else ""
+            inside = line.startswith(f"{key}:")
+            entry = line[len(key) + 1:] if inside else ""
             found = [] if inside else found
         else:
             item = re.match(r"\s*-\s(.*)", line)
@@ -120,7 +125,7 @@ def entries(text_lines, where, checked):
         if entry.startswith("["):
             if checked:
                 example = entry[1:].split(",")[0].strip(" ]") or "sdd/architecture.md"
-                sys.exit(f'ERROR {where}: sensitive is {entry}. Write one entry per line below the key, as'
+                sys.exit(f'ERROR {where}: {key} is {entry}. Write one entry per line below the key, as'
                          f' "  - {example}".')
             continue
         if re.fullmatch("/.+/", entry):
@@ -128,7 +133,7 @@ def entries(text_lines, where, checked):
                 re.compile(entry[1:-1])
             except re.error as error:
                 if checked:
-                    sys.exit(f"ERROR {where}: sensitive lists {entry}, a regular expression that does not compile"
+                    sys.exit(f"ERROR {where}: {key} lists {entry}, a regular expression that does not compile"
                              f" ({error}). Fix it, or write a path.")
                 continue
         found.append(entry)
@@ -136,8 +141,8 @@ def entries(text_lines, where, checked):
 
 
 def matches(entry, path):
-    """Whether a sensitive entry matches a path: a regular expression between slashes where it is found, a folder
-    every path under it, else the path itself."""
+    """Whether an entry of a list such as sensitive matches a path: a regular expression between slashes where it is
+    found, a folder every path under it, else the path itself."""
     if re.fullmatch("/.+/", entry):
         return re.search(entry[1:-1], path) is not None
     if entry.endswith("/") and not entry.startswith("/"):

@@ -2,7 +2,7 @@
 import re
 import sys
 
-from fabrik.contracts import config, own_setting
+from fabrik.contracts import config, listed, matches, own_setting
 from fabrik.git import git, lines
 
 # The lines of code and tests an agent batch may change when sdd/config.yml sets no batch-lines. Up to 5% over only
@@ -12,8 +12,17 @@ MAX_LINES = 200
 # Files that ask no quiz when a batch changes only them, outside every module: prose and the files git itself reads.
 PROSE_OR_GIT = re.compile(r"\.md$|(^|/)\.git(ignore|attributes|keep)$")
 
-# Files that count neither in the size nor in what the quiz covers: those, and lock files.
-NOT_CODE = re.compile(PROSE_OR_GIT.pattern + r"|\.lock$|lock\.json$|lock\.yaml$")
+# Files that count neither in the size nor in what the quiz covers, besides those, when sdd/config.yml lists none
+# under not-code: lock files.
+NOT_CODE = ["/\\.lock$/", "/lock\\.json$/", "/lock\\.yaml$/"]
+
+
+def not_code(base, tree):
+    """Whether a path counts neither in the size nor in what the quiz covers: prose, git's own files, and the files
+    not-code lists in both trees, so that a batch widening the list is judged by the old one."""
+    found = [listed(tree, "not-code", NOT_CODE, True), listed(base, "not-code", NOT_CODE, False)]
+    return lambda path: bool(PROSE_OR_GIT.search(path)) or all(
+        any(matches(entry, path) for entry in entries) for entries in found)
 
 
 def size(batch, base, tree, message):
@@ -21,7 +30,7 @@ def size(batch, base, tree, message):
     count = 0
     for line in lines(git("diff", "--numstat", "--no-renames", base, tree)):
         added, deleted, path = line.split("\t", 2)
-        if added != "-" and not NOT_CODE.search(path):
+        if added != "-" and not batch.not_code(path):
             count += int(added) + int(deleted)
     limit, where = batch_lines(batch, base, tree)
     if re.search(r"^Large-Batch:[^\S\n]*\S", message, re.M):

@@ -4,11 +4,11 @@ import re
 import subprocess
 import sys
 
-# Co-author addresses that mark an agent batch, as a regex that git's -E reads too. Names are not enough: Claude is
-# also a first name. Any agent can mark its batch with Agent-Assisted: yes.
-AGENT_EMAILS = r"noreply@anthropic\.com|noreply@openai\.com|aider@aider\.chat"
+# The co-author addresses that mark an agent batch when sdd/config.yml lists none under agent-emails. Names are not
+# enough: Claude is also a first name. Any agent can mark its batch with Agent-Assisted: yes.
+AGENT_EMAILS = ["noreply@anthropic.com", "noreply@openai.com", "aider@aider.chat"]
 
-AGENT = re.compile(rf"^(Agent-Assisted:[^\S\n]*yes[^\S\n]*$|Co-Authored-By:.*<({AGENT_EMAILS})>)", re.I | re.M)
+MARKED = re.compile(r"^Agent-Assisted:[^\S\n]*yes[^\S\n]*$", re.I | re.M)
 
 
 def git(*args, **options):
@@ -53,16 +53,26 @@ def shared_path(name):
     return os.path.join(git("rev-parse", "--git-common-dir"), "sdd", name)
 
 
-def is_agent(message):
-    return bool(AGENT.search(message))
+def is_agent(message, emails):
+    """Whether a message marks an agent batch: Agent-Assisted: yes, or a co-author at one of the addresses."""
+    return bool(MARKED.search(message)) or any(
+        re.search(rf"^Co-Authored-By:.*<{re.escape(email)}>", message, re.I | re.M) for email in emails)
 
 
 def agent_log(*args, cwd=None, env=None):
-    """git log of the agent commits, marked as the hook marks them; none before the first commit."""
+    """git log of the agent commits, marked as the hook marks them, with the addresses of sdd/config.yml at HEAD;
+    none before the first commit."""
+    # Imported here: contracts reads git through this module.
+    from fabrik.contracts import entries
     if try_git("rev-parse", "-q", "--verify", "HEAD", cwd=cwd) is None:
         return ""
-    return git("log", "--no-merges", "-i", "-E", "--grep=^Agent-Assisted:[[:space:]]*yes[[:space:]]*$",
-               f"--grep=^Co-Authored-By:.*<({AGENT_EMAILS})>", *args, cwd=cwd, env=env)
+    emails = entries(lines(try_git("show", "HEAD:sdd/config.yml", cwd=cwd) or ""), "sdd/config.yml", False,
+                     "agent-emails")
+    # Escaped for git's -E, which reads "." and "+" as a regex does.
+    pattern = "|".join(re.sub(r"[.+]", r"\\\g<0>", email) for email in (AGENT_EMAILS if emails is None else emails))
+    greps = [f"--grep=^Co-Authored-By:.*<({pattern})>"] if pattern else []
+    return git("log", "--no-merges", "-i", "-E", "--grep=^Agent-Assisted:[[:space:]]*yes[[:space:]]*$", *greps,
+               *args, cwd=cwd, env=env)
 
 
 def me(cwd=None, strict=False):

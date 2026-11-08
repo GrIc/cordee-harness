@@ -9,10 +9,10 @@
 3. Coming from a version without `sdd/bin/fabrik/`, check first that the human has Python 3.10 or later
    (`python3 --version`, or `python`, or `py -3`); if not, tell them how to install it for their system, and stop.
    Replace `sdd/WORKFLOW.md`, `sdd/guide/` and `sdd/bin/` with the new tag's, deleting what it no longer has, such as
-   `sdd/bin/cockpit.py`. Keep the project's changes to `NOT_CODE` (`sdd/bin/fabrik/size.py`) and `AGENT_EMAILS`
-   (`git.py`). `sdd/config.yml` is the project's and stays; coming from a version without it, copy the new tag's.
-   Write a project's change to `MAX_LINES` in it as `batch-lines`, and to `REVIEW_WAIT_HOURS` as `review-wait-hours`,
-   and append the new tag's commented settings that the project's file lacks. Replace the
+   `sdd/bin/cockpit.py`. `sdd/config.yml` is the project's and stays; coming from a version without it, copy the new
+   tag's. Write a project's change to `MAX_LINES` in it as `batch-lines`, to `REVIEW_WAIT_HOURS` as
+   `review-wait-hours`, to `AGENT_EMAILS` as `agent-emails` and to `NOT_CODE` as `not-code`, a list each, and append
+   the new tag's commented settings that the project's file lacks. Replace the
    block between `<!-- sdd-fabrik -->` and `<!-- /sdd-fabrik -->` in `AGENTS.md`. Apply the other template changes the
    diff shows with the human. A CI change goes only to the repo's forge: `.github/workflows/sdd.yml` on GitHub, the
    `sdd-audit` job of `.gitlab-ci.yml` on GitLab. A GitLab repo without that job gets it as the deploy adds it, and

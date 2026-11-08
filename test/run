@@ -1451,6 +1451,49 @@ test_a_quiz_written_for_the_batch_marks_an_agent_batch() {
   lacks 'Agent-Assisted: yes is added'
 }
 
+test_the_config_lists_the_agent_emails() {
+  printf 'agent-emails:\n  - agent+bot@example.test\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Name our agent' 2> /dev/null
+  echo two >> src/search/a.py
+  git add -A
+  fails git commit -qm 'Change search' -m 'Co-Authored-By: Our Agent <agent+bot@example.test>'
+  says 'Refused, agent-assisted batch'
+  # The list replaces the kit's: Claude Code's address is a human's here.
+  succeeds git commit -qm 'Change search' -m 'Co-Authored-By: Claude <noreply@anthropic.com>'
+  [ "$(git log -1 --format=%s)" = 'Change search' ]
+  # A batch that takes the address out is still judged by the list it had.
+  echo three >> src/search/a.py
+  echo 'agent-emails: []' > sdd/config.yml
+  git add -A
+  fails git commit -qm 'Forget our agent' -m 'Co-Authored-By: Our Agent <agent+bot@example.test>'
+  says 'Refused, agent-assisted batch'
+}
+
+test_the_config_lists_what_is_not_code() {
+  printf 'not-code:\n  - generated/\n' > sdd/config.yml
+  git add -A
+  git commit -qm 'Generated code is no code' 2> /dev/null
+  mkdir generated
+  seq 1 300 > generated/schema.py
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  lacks 'SIZE'
+  # The kit's lock files count again: the list replaces the kit's.
+  seq 1 300 > Gemfile.lock
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says 'SIZE 300 changed lines of code and tests'
+  # A batch that widens the list is judged by the list it had.
+  git rm -q --cached Gemfile.lock
+  printf 'not-code:\n  - generated/\n  - src/\n' > sdd/config.yml
+  seq 1 300 > src/search/big.py
+  echo 'More intent.' >> sdd/modules/search.md
+  git add sdd src
+  fails bash sdd/bin/sdd audit
+  says 'SIZE 301 changed lines of code and tests'
+}
+
 test_a_human_co_author_named_claude_is_human() {
   echo two >> src/search/a.py
   git add -A

@@ -5,7 +5,6 @@ import sys
 from types import SimpleNamespace
 
 from fabrik.git import commit_or, git, lines
-from fabrik.size import NOT_CODE
 
 QUIZ = "QUIZ.md"
 
@@ -63,7 +62,7 @@ def form(batch):
             sys.exit(f"Question {question.number} has no right box in the key: line {question.number + 1} starts with"
                      " its letter, A for the first box.")
         batch.ranks += question.right
-    batch.coverage = cover(cites)
+    batch.coverage = cover(cites, batch.not_code)
 
 
 def key_path():
@@ -111,10 +110,10 @@ def questions():
     return found
 
 
-def cover(cites):
+def cover(cites, not_code):
     """How much of the staged code the cited places meet: covered hunks, all hunks, and the missed ones as file:line.
-    cites holds (file, first, last). A hunk that only deletes is met at the line before it or the one after, so a
-    deleted file at its line 1."""
+    cites holds (file, first, last); not_code tells the paths that are no code. A hunk that only deletes is met at the
+    line before it or the one after, so a deleted file at its line 1."""
     covered, total, missed = 0, 0, []
     # Plain a/ and b/ paths and one hunk per change, whatever the dev's diff settings.
     diff = git("diff", "--cached", "-U0", "--inter-hunk-context=0", "--no-renames", "--no-color", "--no-ext-diff",
@@ -129,7 +128,7 @@ def cover(cites):
             if line != "+++ /dev/null":
                 path = line[6:]
             path = path.removesuffix("\t")
-            code, head = not NOT_CODE.search(path), False
+            code, head = not not_code(path), False
         elif code and line.startswith("@@ "):
             start, _, length = line.split(" ")[2][1:].partition(",")
             low = high = int(start)

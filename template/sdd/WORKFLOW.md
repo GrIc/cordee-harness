@@ -126,9 +126,9 @@ since the quiz was written, the hook only warns: ask for a new quiz when the cha
 a reason to skip the quiz writes `Bypass-Quiz: <reason>` in the message; the history keeps it.
 
 The trailer says how much of the batch the quiz covers: `Quiz: 3/3, covers 5/7` counts the hunks of
-`git diff --cached -U0` outside Markdown, those git files and lock files that a `See` range meets. A new file is one
-hunk; a hunk that only deletes is met at the line before it or the one after, so a deleted file at its line 1. Without
-a hunk of code, the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
+`git diff --cached -U0` outside Markdown, those git files and what `not-code` lists that a `See` range meets. A new
+file is one hunk; a hunk that only deletes is met at the line before it or the one after, so a deleted file at its
+line 1. Without a hunk of code, the trailer is `Quiz: 3/3`. It is a fact about the code, never about the dev.
 
 Once the commit of a passed quiz exists, each question the dev flagged or commented goes to
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one
@@ -168,7 +168,11 @@ SIZE says where the limit is set. `sensitive` lists the files that steer the pro
 at any risk: one entry on the key's line or one per `- ` line below it, never split, as a path from the repo root, a
 folder ending with `/`, or a regular expression between slashes, found anywhere in the path. Unset in
 `sdd/config.yml`, it is the kit's list, shown there; set, it replaces it, and `sensitive: []` lists none. A contract's
-list adds to the repo's, for any file of a batch. A contract states a setting only where it differs from the repo's.
+list adds to the repo's, for any file of a batch. `agent-emails`, the co-author addresses that mark an agent batch,
+and `not-code`, the files that count neither in the size nor in what a quiz covers besides Markdown and git's own
+files (lock files by default), are lists of `sdd/config.yml` written the same way, each replacing the kit's when set; a
+batch that changes one is judged by the stricter of its parent's and its own. A contract states a setting only where
+it differs from the repo's.
 
 ## Decisions
 
@@ -186,8 +190,8 @@ keeps its text.
 | `Bypass-Quiz: <reason>` | the human, never the agent | the hook asks no quiz; drift and size still apply |
 | `Quiz: 3/3, covers 5/7` | the hook | records the passed quiz, its questions and the hunks of code they cite |
 
-A co-author address listed in `AGENT_EMAILS` (in `sdd/bin/fabrik/git.py`) counts as `Agent-Assisted: yes`, and so does
-a batch whose quiz key holds its fingerprint: the hook then adds the trailer. Any other commit is the human's own. The
+A co-author address listed under `agent-emails` (see Contracts) counts as `Agent-Assisted: yes`, and so does a batch
+whose quiz key holds its fingerprint: the hook then adds the trailer. Any other commit is the human's own. The
 script prints ERROR when every commit must stop; DRIFT (code against its contract, or a contract link to a missing test
 or file) and SIZE (more than 5% over `batch-lines`, or a second module), which refuse an agent batch and only warn on
 the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every pushed commit, never the

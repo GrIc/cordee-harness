@@ -4,11 +4,11 @@ import sys
 from types import SimpleNamespace
 
 from fabrik import quiz
-from fabrik.contracts import RISKS, governs, highest, matches, risk, sensitive
+from fabrik.contracts import RISKS, governs, highest, listed, matches, risk, sensitive
 from fabrik.drift import drift
-from fabrik.git import commit_or, empty_tree, exists, git, is_agent, lines, try_git
+from fabrik.git import AGENT_EMAILS, commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from fabrik.journal import committed
-from fabrik.size import PROSE_OR_GIT, size
+from fabrik.size import PROSE_OR_GIT, not_code, size
 
 
 def audit_staged(message_file=None):
@@ -63,17 +63,19 @@ def audit_range(span):
 
 def check(base, tree, message):
     """Checks the change from base to tree (commits or trees) under a commit message. Returns the batch: its changed
-    files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only) and
-    notes."""
+    files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only),
+    notes, the addresses that mark an agent (emails) and what counts as no code (not_code)."""
+    # The base's addresses too, so that the batch removing one is still judged as an agent's.
+    emails = listed(tree, "agent-emails", AGENT_EMAILS, True) + listed(base, "agent-emails", AGENT_EMAILS, False)
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
                             findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(),
-                            proven=set(), touched=0)
+                            proven=set(), touched=0, emails=emails, not_code=not_code(base, tree))
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
     # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch
     # emptying the list is judged by it.
-    listed = sensitive(tree, True) + sensitive(base, False)
-    flagged = [path for path in batch.changed if any(matches(entry, path) for entry in listed)]
+    steering = sensitive(tree, True) + sensitive(base, False)
+    flagged = [path for path in batch.changed if any(matches(entry, path) for entry in steering)]
     # Tests a contract links to, alone or with prose the human reads, ask one step less: they prove the intent and leave
     # what the product does as it was. A module takes the step only from its own contract: a test of one module linked
     # from another's proves nothing of the first.
@@ -120,7 +122,7 @@ def report(batch, message):
         return False
     if not batch.findings:
         return True
-    if is_agent(message):
+    if is_agent(message, batch.emails):
         sys.stderr.write("Refused, agent-assisted batch:\n" + batch.findings)
         return False
     sys.stderr.write("Warnings only, this is your own commit:\n" + batch.findings)

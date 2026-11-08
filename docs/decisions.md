@@ -583,3 +583,19 @@ project does not tune: the kit's rules (the quiz's form, the risk levels), the f
 ratios, the shape of its logs) and the names of the harness's own files.
 _Rejected:_ `sdd/config.yaml` (deployed repos already hold `sdd/config.yml`); settings in `git config` (one clone's,
 never reviewed, as 52 says); one batch moving them all (several modules, beyond the size the harness asks of agents).
+
+## 64. agent-emails and not-code are lists of the config (2026-11-07)
+
+The two settings the upgrade guide still had an agent keep by hand in kit files, `AGENT_EMAILS` (`git.py`) and
+`NOT_CODE` (`size.py`), become `agent-emails` and `not-code` in `sdd/config.yml` (decision 63). Both are written as
+`sensitive` is, one entry per `- ` line, read by the same function, and each replaces the kit's list when set, the
+kit's shown in the file as comments. `agent-emails` holds plain addresses, matched without case. `not-code` holds
+paths, folders and expressions, lock files by default; Markdown and git's own files stay outside the code whatever it
+says, since 48 rejected a list for them. A batch that changes either is judged by the stricter of its parent's list and
+its own: one that drops an address is still an agent's, one that widens `not-code` still counts the lines it would
+hide. The ledger and the cockpit count agent commits with the addresses at HEAD. Both come in one `Large-Batch`, not
+the batches 63 announced: they share their reader in `contracts.py`, so each alone would span several modules
+anyway.
+_Rejected:_ the addresses as one regular expression, as the constant was (an address with a `+` or a `.` would need
+escaping); the batch's own list only (an agent could hide its lines or its mark in the commit that does it); the list
+adding to the kit's (a project could not stop counting an address that is a human's, such as a shared noreply).

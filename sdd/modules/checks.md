@@ -9,12 +9,14 @@ governs: [template/sdd/bin/sdd, template/sdd/bin/fabrik/__init__.py, template/sd
 The script a deployed project runs at each commit and in CI: it keeps each contract in step with its code, keeps agent
 batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never locks: every check can be bypassed.
 
-- An agent batch (`Agent-Assisted: yes`, or a co-author address in `AGENT_EMAILS`) is refused on drift, on size or on a
-  wrong quiz. The human's own commits only get warnings on drift and size: [test_agent_drift_blocks](/test/run),
+- An agent batch (`Agent-Assisted: yes`, or a co-author address `agent-emails` lists) is refused on drift, on size or
+  on a wrong quiz. The human's own commits only get warnings on drift and size: [test_agent_drift_blocks](/test/run),
   [test_an_agent_co_author_marks_an_agent_batch](/test/run), [test_human_drift_warns_and_commits](/test/run),
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run). A batch whose quiz key holds its fingerprint is an
   agent batch too, whatever the message says, and the hook adds `Agent-Assisted: yes` to it:
-  [test_a_quiz_written_for_the_batch_marks_an_agent_batch](/test/run).
+  [test_a_quiz_written_for_the_batch_marks_an_agent_batch](/test/run). `agent-emails` in `sdd/config.yml` replaces the
+  kit's addresses, and a batch that removes one is still judged by its parent's list:
+  [test_the_config_lists_the_agent_emails](/test/run).
 - `Bypass-Quiz: <reason>` lets an agent batch pass without a quiz, at high risk too, and the trailer stays as the
   trace; drift and size still apply. Without a reason it lifts nothing, and the hook says to write one:
   [test_bypass_quiz_with_a_reason_skips_the_quiz](/test/run), [test_bypass_quiz_holds_at_high_risk](/test/run),
@@ -43,7 +45,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   batch that changes that module's code, higher or lower, under the same rules; SIZE names the file that sets the
   limit: [test_a_contract_sets_the_batch_lines_of_its_module](/test/run). Markdown, `.gitignore`, `.gitattributes`,
   `.gitkeep` and lock files do not count:
-  [test_markdown_git_files_and_lockfiles_do_not_count](/test/run). Up to 5% over only gets a note:
+  [test_markdown_git_files_and_lockfiles_do_not_count](/test/run). `not-code` in `sdd/config.yml` replaces the lock
+  files, and a batch that widens it is judged by its parent's list: [test_the_config_lists_what_is_not_code](/test/run).
+  Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run),
   [test_up_to_five_percent_over_only_notes](/test/run), [test_two_modules_block_an_agent](/test/run),
   [test_large_batch_lifts_both_limits](/test/run).

@@ -32,6 +32,7 @@ The questions that make the human understand an agent batch before it is committ
   [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_cites_three_places_at_most](/test/run).
   It only notes a quiz older than its batch and, past one question, a right answer always in the same place:
   [test_a_quiz_older_than_the_batch_only_warns](/test/run).
-- The trailer says how many hunks of code the quiz cites: [test_the_trailer_says_how_much_the_quiz_covers](/test/run).
+- The trailer says how many hunks of code the quiz cites, outside what `not-code` lists:
+  [test_the_trailer_says_how_much_the_quiz_covers](/test/run).
 
 Constraints: as [checks](checks.md).

@@ -30,6 +30,8 @@ How the script reads a contract, written as the workflow's Contracts section say
   ERROR that says what to write; in the base it is left out:
   [test_sensitive_takes_files_folders_and_expressions](/test/run). The kit's list holds what steers the agents too:
   `AGENTS.md` and `CLAUDE.md` at any depth and in any case, the CI files of GitHub and GitLab and the settings where
-  the kit denies commits: [test_the_kit_lists_what_steers_agents](/test/run).
+  the kit denies commits: [test_the_kit_lists_what_steers_agents](/test/run). `agent-emails` and `not-code` in
+  `sdd/config.yml` are written and checked the same way, each replacing a list of the kit's when set:
+  [test_the_config_lists_the_agent_emails](/test/run), [test_the_config_lists_what_is_not_code](/test/run).
 
 Constraints: as [checks](checks.md).
