@@ -38,6 +38,9 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   Over the same batches, it reads the quiz journal and names a module whose answers were flagged unclear or not what
   the dev wanted twice or more, counted once per question title and cause:
   [test_hints_name_a_module_whose_quiz_is_flagged_twice](/test/cockpit), which also shows a hint once per clone.
+- A format the reader no longer reads gives no wrong figure without a word: `report` notes it and `hints` names it
+  when the logs with entries in the window hold no reply it finds, or replies without a token count it knows:
+  [test_report_and_hints_say_when_the_format_is_not_read](/test/cockpit).
 
 Constraints: as [checks](checks.md); a new tool is one reader in `fabrik/logs/`, which `usage` finds by itself,
 and `report` and `hints` too when it weighs its calls. Only that reader knows the tool's logs, names and prices.

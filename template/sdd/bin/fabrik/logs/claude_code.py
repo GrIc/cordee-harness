@@ -12,6 +12,8 @@ from fabrik.logs import MCP, REVIEW, SKILLS, Call
 # Anthropic's price ratios, in input tokens: a cache read costs a tenth, a cache write 1.25 (2 when kept an hour),
 # an output token 5.
 READ, WRITE, WRITE_HOUR, OUTPUT = 0.1, 1.25, 2, 5
+# The token counts of a reply's usage.
+TOKENS = {"input_tokens", "output_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"}
 # Text runs about 3.5 characters a token; an image about 1600 tokens.
 CHARS_PER_TOKEN, IMAGE = 3.5, 1600
 
@@ -62,8 +64,12 @@ def calls(repo, start, end, sent):
 def trace(path, role, start, end, sent, tools):
     """Each reply of a log in the window. Adds to sent.costs what each piece sent along costs: written once, then read
     again with every later call until a compaction drops it."""
-    live, pending, names, replies, rank = Counter(), Counter(), {}, set(), 0
+    live, pending, names, replies, rank, active = Counter(), Counter(), {}, set(), 0, False
     for entry in entries(path):
+        # A log with no entry in the window, empty or resumed without a prompt, owes the window no reply.
+        if not active and "timestamp" in entry and start < epoch(entry["timestamp"]) <= end:
+            active = True
+            sent.logs += 1
         if entry.get("subtype") == "compact_boundary":
             live.clear()
         message = entry.get("message") or {}
@@ -71,6 +77,8 @@ def trace(path, role, start, end, sent, tools):
             use = message["usage"]
             write = WRITE_HOUR if (use.get("cache_creation") or {}).get("ephemeral_1h_input_tokens") else WRITE
             if start < epoch(entry["timestamp"]) <= end:
+                if not TOKENS.intersection(use):
+                    sent.blank += 1
                 read = READ * use.get("cache_read_input_tokens", 0)
                 for source, size in live.items():
                     sent.costs[source] += READ * size

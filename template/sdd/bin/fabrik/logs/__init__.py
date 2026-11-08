@@ -6,7 +6,7 @@ included), cache_read and cache_write.
 
 A reader that can also weigh its calls, for the cockpit's report and hints, has NAME, PRICES (its provider's price
 ratios, in words) and calls(repo, start, end, sent): each reply in the window as a Call, adding to sent what the tool
-sends along with them. sent is complete once every call is read."""
+sends along with them, and what tells a format it no longer reads. sent is complete once every call is read."""
 import importlib
 import pkgutil
 import re
@@ -37,11 +37,14 @@ class Call(NamedTuple):
 @dataclass
 class Sent:
     """What a tool sends along with its calls besides the conversation. costs holds each source's cost, estimated from
-    its size; plugin_sizes, the largest size each plugin's skills had in the listing."""
+    its size; plugin_sizes, the largest size each plugin's skills had in the listing. logs counts the logs with an entry
+    in the window, blank the replies there without a token count the reader knows."""
     costs: Counter = field(default_factory=Counter)
     servers_called: set = field(default_factory=set)
     plugin_sizes: dict = field(default_factory=dict)
     plugins_called: set = field(default_factory=set)
+    logs: int = 0
+    blank: int = 0
 
 
 def label(source):

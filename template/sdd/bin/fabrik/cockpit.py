@@ -48,7 +48,11 @@ def report(repo, start=None, end=None):
     repo = git("-C", repo, "rev-parse", "--show-toplevel")
     if start is None:
         start, end = window(batches(repo))[0], int(time.time())
-    weighed = [seen for seen in measures(repo, start, end) if seen.total]
+    measured = measures(repo, start, end)
+    for seen in measured:
+        for text in unread(seen).values():
+            print("NOTE " + text)
+    weighed = [seen for seen in measured if seen.total]
     if not weighed:
         sys.exit(f"No agent log of {repo} that the cockpit can weigh in that window.")
     for seen in weighed:
@@ -102,6 +106,7 @@ def hints():
     start, count = window(times)
     found = {}
     for seen in measures(repo, start, int(time.time())):
+        found.update(unread(seen))
         found.update(cuts(seen, count))
     for module, flags in sorted(journal.flagged(start).items()):
         if flags >= 2:
@@ -138,6 +143,19 @@ def batches(repo):
 def window(times):
     """Where the last BATCHES batches start, the start of the logs when there are fewer, and how many they are."""
     return (times[BATCHES] if len(times) > BATCHES else 0), max(min(len(times), BATCHES), 1)
+
+
+def unread(seen):
+    """What tells a format the reader no longer reads, whose figures are then wrong without a word: logs with entries in
+    the window but no reply it finds, or replies without a token count it knows."""
+    found, name = {}, seen.reader.NAME
+    tell = "its format may have changed: send bash sdd/bin/sdd doctor's output in a bug report to the kit."
+    if seen.sent.logs and not seen.roles:
+        found["format " + name] = f"{name}'s logs with entries in this window hold no reply the cockpit reads: {tell}"
+    if seen.sent.blank:
+        found["tokens " + name] = (f"{seen.sent.blank} of {name}'s replies in this window hold no token count the"
+                                   f" cockpit reads, so its figures are too low: {tell}")
+    return found
 
 
 def cuts(seen, count):

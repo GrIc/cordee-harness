@@ -212,6 +212,34 @@ test_hints_name_what_else_is_sent_along_and_a_long_context() {
   fails "$(wc -l < "$tmp/out" | tr -d ' ')" 2
 }
 
+# Claude Code changes its log format: a reply the reader no longer finds, then token counts it no longer knows. Its
+# figures would be wrong without a word.
+test_report_and_hints_say_when_the_format_is_not_read() {
+  real_repo
+  batch
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  reply m1 "$now" claude-opus-5-5 0 10 0 100 | sed 's/"usage"/"tokenUsage"/' > "$claude/s1.jsonl"
+  # Nothing left to weigh: report fails, after the note.
+  if bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
+  grep -q "^NOTE Claude Code's logs with entries in this window hold no reply the cockpit reads: its format may" "$tmp/out"
+  bash "$kit/template/sdd/bin/cockpit" hints > "$tmp/out"
+  grep -q "^HINT Claude Code's logs with entries in this window hold no reply the cockpit reads" "$tmp/out"
+  reply m2 "$now" claude-opus-5-5 0 10 0 100 | sed 's/_tokens"/_count"/g' > "$claude/s1.jsonl"
+  if bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
+  grep -q "^NOTE 1 of Claude Code's replies in this window hold no token count the cockpit reads" "$tmp/out"
+  # A session closed before its first prompt, and one resumed without one, owe the last hour no reply.
+  : > "$claude/s1.jsonl"
+  reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100 > "$claude/s2.jsonl"
+  if bash "$kit/template/sdd/bin/cockpit" report "$repo" $(($(date +%s) - 3600)) "$(date +%s)" > "$tmp/out" 2>&1; then
+    return 1
+  fi
+  if grep -q '^NOTE' "$tmp/out"; then sed 's/^/    | /' "$tmp/out"; return 1; fi
+  # Well-formed logs say nothing of the kind.
+  reply m3 "$now" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
+  bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1
+  if grep -q '^NOTE' "$tmp/out"; then sed 's/^/    | /' "$tmp/out"; return 1; fi
+}
+
 test_hints_name_a_module_whose_quiz_is_flagged_twice() {
   git init -q "$repo" && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev

@@ -683,3 +683,16 @@ A hook out of date fails without a word: the quiz stays after its commit, or the
 naming the hooks that do not run a command of the kit, and sends to `doctor`, which says what to do with each.
 _Rejected:_ the full list of what to add (it would repeat at each `next`, `doctor` gives it once); the line in `audit`
 (CI runs it, where no hook runs); refusing the step (a check that locks, for a cause outside the batch).
+
+## 72. The cockpit says when it no longer reads a log format (2026-11-08)
+
+Claude Code changes its logs with each version, and a reader that stops finding replies or token counts gives figures
+too low, or none, without a word. Measured on 221 logs of this machine (versions 2.1.292 to 2.1.319): 25 entry types
+and 34 attachment types, of which the reader uses 6, new ones in each version; 6735 replies, none without a token
+count. `report` and `hints` now say so when the logs with an entry in the window hold no reply the reader finds, or
+when replies hold none of the token counts it knows, and send to `doctor` for a bug report. A log counts by its
+entries, not its mtime: in four real windows the logs touched held no reply, all of them empty (14 files of 221 are
+sessions closed before a prompt) or resumed without a prompt, with no entry dated in the window.
+_Rejected:_ counting the entry types the reader does not know (most of them it has no use for, so it would fire on
+every version); the logs' mtime (it gave those four false alarms); the same guard for opencode and Kilo Code (they
+have no report yet, and `doctor` shows their replies read).
