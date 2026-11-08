@@ -28,8 +28,8 @@
 
 ## Then
 
-- CI sums up a merge request from its commits' trailers (quizzed, bypassed with a reason, the human's own), with no
-  quiz of its own.
+- CI sums up a merge request from its commits' trailers (quizzed, bypassed with a reason, the human's own, an agent's
+  with neither quiz nor reason, as `--no-verify` leaves it), with no quiz of its own.
 - A relay quiz: the dev who takes over a module answers the quiz of its last batches.
 - [Hunks that only change comments count as code in the quiz](issues/comment-only-hunks.md).
 - A queue of slow decisions: a reversible one is taken as provisional with a review date, its age shown by `brief`.
