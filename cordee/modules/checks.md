@@ -49,28 +49,30 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_code_marked_binary_still_counts](/test/run). Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run), [test_up_to_five_percent_over_only_notes](/test/run),
   [test_two_modules_block_an_agent](/test/run), [test_large_batch_lifts_both_limits](/test/run).
-- `install-hook` writes the `commit-msg`, `post-commit` and `pre-push` hooks, or prints the line to add to a hook it did
-  not write; each line passes in a repo without the harness. It says how to turn the ledger off:
+- `install-hook` writes the `commit-msg` and `post-commit` hooks (and, when `tokens: true` in `cordee/config.yml`,
+  adds the ledger to `post-commit`, writes `pre-push` and says how to turn the ledger off; when off, it removes its own
+  `pre-push` and the core runs even without the cockpit and ledger files), or prints the line to add to a hook it did
+  not write; each line passes in a repo without the harness:
   [test_install_hook_respects_an_existing_hook](/test/run),
   [test_install_hook_adds_the_ledger_hooks_that_pass_without_it](/test/run),
   [test_the_line_for_a_shared_hook](/test/run).
-- `deploy <source> <tag>`, run from the kit's clone, writes the kit's own files (`cordee/bin/`, `cordee/guide/` and
-  `cordee/WORKFLOW.md`, deleting what `bin/` and `guide/` no longer have), copies the rest of the template that the
-  repo lacks with the CI file of the forge `origin` names, updates the block in `AGENTS.md` when its markers are there
-  and `<source> <tag>` on the first line of `cordee/README.md`, and installs the hooks. It lists the other files
-  already in the repo, which the agent merges, and stops, touching nothing, when the host of `origin` names neither
-  GitHub nor GitLab and no `--forge` says which:
+- `deploy <source> <tag>`, run from the kit's clone, writes the kit's own files (`cordee/bin/`, `cordee/guide/`,
+  `cordee/WORKFLOW.md`, `cordee/GETTING-STARTED.md` and `cordee/REFERENCE.md`, deleting what `bin/` and `guide/` no
+  longer have), copies the rest of the template that the repo lacks with the CI file of the forge `origin` names,
+  updates the block in `AGENTS.md` when its markers are there and `<source> <tag>` on the first line of
+  `cordee/README.md`, and installs the hooks. It lists the other files already in the repo, which the agent merges, and
+  stops, touching nothing, when the host of `origin` names neither GitHub nor GitLab and no `--forge` says which:
   [test_deploy_copies_what_is_missing_and_lists_the_rest](/test/run),
   [test_deploy_asks_the_forge_when_origin_names_none](/test/run).
 - `touched` lists the modules a commit changes, in code or contract, each with its changed lines, so that the token
   ledger can split a batch's cost: [test_touched_lists_each_module_with_its_lines](/test/run). Before the first commit,
   it says to commit first, and `cockpit hints` says nothing:
   [test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing](/test/run).
-- `doctor` prints what a bug report needs: the kit's version, Python, git and the OS, the hooks folder, the ledger on
-  or off, the replies each log reader found in 30 days and an audit's time. A NOTE says what to fix: a hook that does
-  not run one of the kit's commands, `QUIZ.md` not kept out of git, or a `cordee/README.md` deployed from another
-  version than the kit's files: [test_doctor_says_what_to_fix](/test/run). The version is raised before each tag:
-  [test_the_version_is_the_last_tag_or_newer](/test/run).
+- `doctor` prints what a bug report needs: the kit's version, Python, git and the OS, the hooks folder, `tokens: off`
+  or, when `tokens: true`, the ledger on or off and the replies each log reader found in 30 days, and an audit's time.
+  A NOTE says what to fix: a hook that does not run one of the kit's active commands, `QUIZ.md` not kept out of git, or
+  a `cordee/README.md` deployed from another version than the kit's files: [test_doctor_says_what_to_fix](/test/run).
+  The version is raised before each tag: [test_the_version_is_the_last_tag_or_newer](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). On

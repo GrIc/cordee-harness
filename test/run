@@ -115,33 +115,49 @@ test_first_commit_of_a_repo() {
 }
 
 test_install_hook_respects_an_existing_hook() {
-  hook=$(git rev-parse --git-path hooks)/commit-msg
-  printf '#!/bin/sh\nexit 0\n' > "$hook"
+  hooks=$(git rev-parse --git-path hooks)
+  printf '#!/bin/sh\nexit 0\n' > "$hooks/commit-msg"
   fails bash cordee/bin/cordee install-hook
   says 'bash cordee/bin/cordee hook "$1"'
-  says "Installed $(git rev-parse --git-path hooks)/pre-push."
-  says 'git config cordee.ledger false stops it.'
+  says "Installed $hooks/post-commit."
+  lacks 'cordee.ledger'
+  [ ! -e "$hooks/pre-push" ]
   grep -qx '/QUIZ.md' "$(git rev-parse --git-path info/exclude)"
 }
 
 test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
   hooks=$(git rev-parse --git-path hooks)
-  line='[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed;'
-  line="$line [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record"
-  grep -qxF "$line" "$hooks/post-commit"
+  committed='[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed'
+  grep -qxF "$committed" "$hooks/post-commit"
+  [ ! -e "$hooks/pre-push" ]
+  rm -rf cordee/bin/cockpit cordee/bin/ledger cordee/bin/harness/cockpit.py cordee/bin/harness/ledger.py \
+    cordee/bin/harness/logs
+  succeeds bash cordee/bin/cordee audit
+  succeeds bash cordee/bin/cordee next
+  succeeds bash cordee/bin/cordee doctor
+  says 'tokens: off'
+  echo 'tokens: true' > cordee/config.yml
+  succeeds bash cordee/bin/cordee install-hook
+  says 'git config cordee.ledger false stops it.'
+  grep -qxF "$committed; [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record" "$hooks/post-commit"
   grep -qxF '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"' "$hooks/pre-push"
   git init -q --bare "$tmp/origin.git"
   succeeds git push -q "$tmp/origin.git" HEAD:main
+  rm cordee/config.yml
+  succeeds bash cordee/bin/cordee install-hook
+  [ ! -e "$hooks/pre-push" ]
 }
 
 # A shared hook (core.hooksPath) runs in every repo: the line install-hook prints must block here and pass elsewhere.
 test_the_line_for_a_shared_hook() {
+  echo 'tokens: true' > cordee/config.yml
   git config core.hooksPath "$tmp/hooks"
   fails bash cordee/bin/cordee install-hook
   says "Your commit-msg hook is $(git rev-parse --git-path hooks)/commit-msg"
   line='[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed;'
   says "$line [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record"
   says '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"'
+  rm cordee/config.yml
   mkdir "$tmp/hooks"
   { echo '#!/bin/sh'; sed -n '/commit-msg hook/{n;p;}' "$out"; echo 'echo other checks pass'; } \
     > "$tmp/hooks/commit-msg"
@@ -175,7 +191,7 @@ test_deploy_copies_what_is_missing_and_lists_the_rest() {
 
   printf '# Ours\n\n<!-- sdd-fabrik -->\nold\n<!-- /sdd-fabrik -->\n\n# Footer\n' > AGENTS.md
   printf 'Deployed from https://example.test/kit v0.1.0.\n\n# Our map\n' > cordee/README.md
-  echo old > cordee/WORKFLOW.md
+  echo old | tee cordee/WORKFLOW.md cordee/GETTING-STARTED.md > cordee/REFERENCE.md
   echo old > cordee/bin/sdd
   rm cordee/modules/.gitkeep
   echo 'batch-lines: 150' > cordee/config.yml
@@ -186,6 +202,8 @@ test_deploy_copies_what_is_missing_and_lists_the_rest() {
   says '  cordee/config.yml'
   [ ! -e cordee/bin/sdd ] && [ ! -e cordee/modules/.gitkeep ]
   cmp -s cordee/WORKFLOW.md "$kit/template/cordee/WORKFLOW.md"
+  cmp -s cordee/GETTING-STARTED.md "$kit/template/cordee/GETTING-STARTED.md"
+  cmp -s cordee/REFERENCE.md "$kit/template/cordee/REFERENCE.md"
   grep -qF '<!-- cordee -->' AGENTS.md && grep -qF '# Ours' AGENTS.md && grep -qF '# Footer' AGENTS.md
   [ "$(head -1 cordee/README.md)" = 'Deployed from https://example.test/kit v10.0.0.' ]
   grep -qF '# Our map' cordee/README.md
@@ -646,7 +664,7 @@ test_audit_accepts_links_to_names_groups_and_files() {
 }
 
 test_markdown_ratio_leaves_out_the_kit_docs() {
-  seq 1 50 > cordee/WORKFLOW.md
+  seq 1 50 | tee cordee/WORKFLOW.md cordee/GETTING-STARTED.md > cordee/REFERENCE.md
   mkdir cordee/guide
   seq 1 50 > cordee/guide/start.md
   printf '# Agents\n\n<!-- cordee -->\nkit\n\nkit\n<!-- /cordee -->\nours\n' > AGENTS.md
@@ -821,7 +839,9 @@ test_next_points_to_doctor_for_hooks_out_of_date() {
   succeeds bash cordee/bin/cordee next
   lacks 'doctor'
   echo '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record' > "$(git rev-parse --git-path hooks)/post-commit"
-  rm "$(git rev-parse --git-path hooks)/pre-push"
+  succeeds bash cordee/bin/cordee next
+  says 'NOTE hooks out of date: post-commit. bash cordee/bin/cordee doctor says what to do.'
+  echo 'tokens: true' > cordee/config.yml
   succeeds bash cordee/bin/cordee next
   says 'NOTE hooks out of date: post-commit, pre-push. bash cordee/bin/cordee doctor says what to do.'
 }
@@ -1575,6 +1595,11 @@ test_the_config_lists_what_is_not_code() {
 
 test_doctor_says_what_to_fix() {
   export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
+  succeeds bash cordee/bin/cordee doctor
+  lacks 'NOTE'
+  says 'tokens: off'
+  echo 'tokens: true' > cordee/config.yml
+  bash cordee/bin/cordee install-hook > /dev/null
   succeeds bash cordee/bin/cordee doctor
   lacks 'NOTE'
   says 'ledger: on'

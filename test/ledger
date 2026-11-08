@@ -171,6 +171,7 @@ test_sync_sends_only_notes_a_remote_has_not_seen() {
 }
 
 test_installed_hooks_record_and_share_the_ledger() {
+  echo 'tokens: true' > cordee/config.yml
   bash cordee/bin/cordee install-hook > /dev/null
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   echo two >> src/search/a.py

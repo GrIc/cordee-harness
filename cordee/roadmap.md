@@ -11,11 +11,6 @@
 - [The cockpit's tests read only logs the kit wrote](issues/real-log-excerpts.md).
 - [A script that imports harness leaves __pycache__ in template/](issues/pycache-in-template.md).
 
-## Simpler rules
-
-- The cockpit and the ledger become an optional module: the core (drift, size, quiz, `next`) runs without them and
-  without a network hook.
-
 ## Then
 
 - CI sums up a merge request from its commits' trailers (quizzed, bypassed with a reason, the human's own, an agent's

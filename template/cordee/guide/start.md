@@ -3,16 +3,17 @@
 ## GENESIS: a new project
 
 Ask the human, one question at a time: the first useful slice, for whom, the non-goals, whose coding conventions to
-follow, the qualities that matter here (accessibility, devices, performance, cost, carbon), then the settings of
-`config.yml`: the batch size (200 lines of code and tests by default) and the risk (`none`, `normal` or `high`, as its
-comment says). Write only what the first slice needs: `README.md`, `coding-style.md` with its first rules and commands,
-in `config.yml` the settings that differ from its defaults, one contract per module the slice touches. Scaffold with the
-stack's generator, then strip what the slice does not use. The first delivery follows [PLAN](plan.md) or COMPILE in [the
-workflow](../WORKFLOW.md).
+follow, the qualities that matter here (accessibility, devices, performance, cost, carbon), and, if not settled during
+deploy, the settings of `config.yml`: `tokens` (`false` by default, `true` for the cockpit and ledger), the batch size
+(200 lines of code and tests by default) and the risk (`none`, `normal` or `high`, as its comment says). Write only
+what the first slice needs: `README.md`, `coding-style.md` with its first rules and commands, in `config.yml` the
+settings that differ from its defaults (and run `bash cordee/bin/cordee install-hook` if `tokens` changed), one
+contract per module the slice touches. Scaffold with the stack's generator, then strip what the slice does not use. The
+first delivery follows [PLAN](plan.md) or COMPILE in [the workflow](../WORKFLOW.md).
 
 ## ADOPT: existing code
 
-Read the existing instructions, README, tests and entry points. Keep the behavior and the existing checks. Ask the
-settings of `config.yml` as GENESIS does and write those that differ. Write the map, a coding style drawn from what the
-code already does, and contracts only where the intent is not obvious from code and tests, with `governs` paths checked
-by `git ls-files`. Changes you would like to make become issues, not contract text.
+Read the existing instructions, README, tests and entry points. Keep the behavior and the existing checks. If not
+settled during deploy, ask the settings of `config.yml` as GENESIS does and write those that differ. Write the map, a
+coding style drawn from what the code already does, and contracts only where the intent is not obvious from code and
+tests, with `governs` paths checked by `git ls-files`. Changes you would like to make become issues, not contract text.

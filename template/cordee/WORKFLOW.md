@@ -1,8 +1,8 @@
 # Cordee workflow
 
-How a change is made in this repo. This file and `guide/` belong to [Cordee](https://github.com/GrIc/cordee-harness)
-and are replaced on upgrade: project rules go in [coding-style.md](coding-style.md) or in `AGENTS.md` outside the kit
-block.
+How a change is made in this repo. This file, `GETTING-STARTED.md`, `REFERENCE.md` and `guide/` belong to
+[Cordee](https://github.com/GrIc/cordee-harness) and are replaced on upgrade: project rules go in
+[coding-style.md](coding-style.md) or in `AGENTS.md` outside the kit block.
 
 Read a guide only when its case comes:
 
@@ -21,7 +21,7 @@ A file is created when first needed.
 | Why, for whom, success, non-goals | `cordee/product.md` |
 | Look, accessibility, voice | `cordee/design.md` |
 | Code, tests, docs and commit conventions, project commands | `cordee/coding-style.md` |
-| The repo's settings: batch size, risk, sensitive files, waits | `cordee/config.yml`, shipped with the defaults as comments |
+| The repo's settings: tokens, batch size, risk, sensitive files, waits | `cordee/config.yml`, shipped with the defaults as comments |
 | System design, data, deployment | `cordee/architecture.md` |
 | Decisions, with what was rejected | `cordee/decisions.md` |
 | Order of the work, someday | `cordee/roadmap.md`: one line and link per change, and nowhere else |
@@ -62,10 +62,10 @@ A file is created when first needed.
    high risk the advice to have a second human read the diff. It says how many questions the quiz has and gives away
    none of their answers. The human reads the diff, answers `QUIZ.md` and commits with `git commit -F
    .git/cordee/message`. Start the next batch in a fresh session: a long one reads its whole history again with every
-   call. Then run `bash cordee/bin/cockpit hints`: it prints a line only when this dev's costs show something new to
-   cut, or their quiz answers in a module were flagged twice. Put each to the human as a question, with the change you
-   would make (turn off a plugin or an MCP server, fold an output, write a rule in the contract, the coding style or the
-   quiz instructions), and make it only on a yes, in a batch of its own.
+   call. Then, when `tokens: true` in `cordee/config.yml`, run `bash cordee/bin/cockpit hints`: it prints a line only
+   when this dev's costs show something new to cut, or their quiz answers in a module were flagged twice. Put each to
+   the human as a question, with the change you would make (turn off a plugin or an MCP server, fold an output, write a
+   rule in the contract, the coding style or the quiz instructions), and make it only on a yes, in a batch of its own.
 
 Wherever a fresh reviewer is asked for (plan, batch, module), a tool that cannot spawn one does its part itself and
 says so; one that cannot pick a model or resume a sub-agent skips that.

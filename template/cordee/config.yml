@@ -1,6 +1,11 @@
 # This repo's settings for Cordee, read at each commit. The kit never replaces this file. A contract's front
 # matter sets the same keys for its module. Uncomment a line to change its default.
 
+# The cockpit (local token breakdown and hints) and the token ledger (anonymous monthly spend per module, shared on
+# push in refs/notes/cordee-ledger). Off by default so the core runs without a network hook; set to true, then run
+# bash cordee/bin/cordee install-hook.
+# tokens: false
+
 # Lines of code and tests an agent batch may change.
 # batch-lines: 200
 

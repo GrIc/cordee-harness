@@ -8,8 +8,7 @@ import time
 
 from harness import VERSION
 from harness.git import git, try_git
-from harness.hooks import HOOKS
-from harness.logs import READERS
+from harness.hooks import active_hooks, tokens_on
 
 DAYS = 30
 
@@ -28,12 +27,16 @@ def doctor():
               "the line it prints if it does not write the hook itself.")
     if try_git("check-ignore", "-q", "QUIZ.md") is None:
         print("NOTE QUIZ.md is not kept out of git: run bash cordee/bin/cordee install-hook.")
-    off = try_git("config", "--bool", "cordee.ledger") == "false"
-    print("ledger: " + ("off (git config cordee.ledger false)" if off else "on"))
-    repo, end = git("rev-parse", "--show-toplevel"), int(time.time())
-    replies = {reader.__name__.rsplit(".", 1)[-1]: sum(1 for _ in reader.usage(repo, end - DAYS * 86400, end))
-               for reader in READERS}
-    print(f"replies read in {DAYS} days: " + ", ".join(f"{name} {count}" for name, count in replies.items()))
+    if tokens_on():
+        from harness.logs import READERS
+        off = try_git("config", "--bool", "cordee.ledger") == "false"
+        print("ledger: " + ("off (git config cordee.ledger false)" if off else "on"))
+        repo, end = git("rev-parse", "--show-toplevel"), int(time.time())
+        replies = {reader.__name__.rsplit(".", 1)[-1]: sum(1 for _ in reader.usage(repo, end - DAYS * 86400, end))
+                   for reader in READERS}
+        print(f"replies read in {DAYS} days: " + ", ".join(f"{name} {count}" for name, count in replies.items()))
+    else:
+        print("tokens: off")
     start = time.monotonic()
     subprocess.run(["sh", "cordee/bin/cordee", "audit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(f"audit: {time.monotonic() - start:.1f} s")
@@ -41,7 +44,7 @@ def doctor():
 
 def missing(folder):
     """Each command of the kit's hooks that the hook of that name in folder does not run, as (hook, command)."""
-    return [(name, command) for name, _, commands in HOOKS for command in commands
+    return [(name, command) for name, _, commands in active_hooks() for command in commands
             if command not in read(os.path.join(folder, name))]
 
 

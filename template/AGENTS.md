@@ -14,8 +14,8 @@ What the harness gives you, besides the checks the workflow runs:
 - `bash cordee/bin/cordee doctor` says what is out of date in this clone, and prints what a bug report about the harness
   needs: do what its NOTE lines say, and paste it in the report.
 - `bash cordee/bin/cordee quiet <command>` prints one line when a command passes, its end when it fails.
-- `bash cordee/bin/cockpit report "$PWD"` shows where this dev's tokens went:
-  [cordee/guide/tokens.md](cordee/guide/tokens.md).
+- `bash cordee/bin/cockpit report "$PWD"` (when `tokens: true` in `cordee/config.yml`) shows where this dev's tokens
+  went: [cordee/guide/tokens.md](cordee/guide/tokens.md).
 - A guide for each rarer case (first batch, plan, upgrade), listed at the top of the workflow.
 - When the dev types *quiz feedback*: read `QUIZ.md`, with what the dev ticked and wrote under each wrong question,
   and talk the questions through: where to look, as the hint says, never which box or why it is right. Propose a fix
@@ -45,8 +45,8 @@ Be lazy with effort, never with thought.
   is right, and only the agent that writes the quiz opens the key. A quiz answered with your help proves nothing.
 - Fix a red main before anything else. Run the CI checks locally before proposing a batch.
 - The harness runs on Python 3.10 or later: when a command says it is missing, tell the human how to install it.
-- Each clone needs the hooks once: if `$(git rev-parse --git-path hooks)/pre-push` does not mention `cordee/bin/ledger`,
-  run `bash cordee/bin/cordee install-hook` and tell the human.
+- Each clone needs the hooks once: if `$(git rev-parse --git-path hooks)/commit-msg` does not mention
+  `cordee/bin/cordee`, run `bash cordee/bin/cordee install-hook` and tell the human.
 
 ### INTAKE, always
 

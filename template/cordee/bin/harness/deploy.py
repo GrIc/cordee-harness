@@ -8,6 +8,7 @@ from harness import hooks
 from harness.git import git, try_git
 
 CI = {"github": ".github/workflows/cordee.yml", "gitlab": ".gitlab-ci.yml"}
+KIT_DOCS = ("cordee/WORKFLOW.md", "cordee/GETTING-STARTED.md", "cordee/REFERENCE.md")
 MARKER = r"<!-- (?:cordee|sdd-fabrik) -->.*?<!-- /(?:cordee|sdd-fabrik) -->"
 STAMP = r"^Deployed from [^\n]*"
 
@@ -32,7 +33,7 @@ def deploy(source, tag, forge=None):
                 continue
             if name == ".gitkeep" and os.path.lexists(os.path.dirname(path)):
                 continue
-            if os.path.lexists(path) and path != "cordee/WORKFLOW.md":
+            if os.path.lexists(path) and path not in KIT_DOCS:
                 if (path == "AGENTS.md" and replace_mark(path, MARKER, block)
                         or path == "cordee/README.md" and replace_mark(path, STAMP, stamp)):
                     copied.append(path)

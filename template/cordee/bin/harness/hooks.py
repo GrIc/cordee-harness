@@ -5,17 +5,21 @@ import sys
 
 from harness import quiz
 from harness.checks import check, report
-from harness.git import commit_or, empty_tree, git, is_agent, try_git
+from harness.contracts import value
+from harness.git import commit_or, empty_tree, git, is_agent, lines, try_git
 from harness.journal import committed
 
 
 # Each hook's line, and the commands in it that a hook written by hand or by a hook manager must run too.
-HOOKS = [("commit-msg", '[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee hook "$1" || exit 1',
-          ["cordee/bin/cordee hook"]),
-         ("post-commit", "[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed;"
-                         " [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record",
-          ["cordee/bin/cordee committed", "cordee/bin/ledger record"]),
-         ("pre-push", '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"', ["cordee/bin/ledger sync"])]
+CORE_HOOKS = [("commit-msg", '[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee hook "$1" || exit 1',
+               ["cordee/bin/cordee hook"]),
+              ("post-commit", "[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed",
+               ["cordee/bin/cordee committed"])]
+TOKEN_HOOKS = [CORE_HOOKS[0],
+               ("post-commit", f"{CORE_HOOKS[1][1]}; [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record",
+                ["cordee/bin/cordee committed", "cordee/bin/ledger record"]),
+               ("pre-push", '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"',
+                ["cordee/bin/ledger sync"])]
 
 
 def hook(message_file):
@@ -57,16 +61,34 @@ def read_message(message_file):
 
 
 def install():
-    """The quiz checks each commit; the token ledger notes each commit and is shared at each push."""
+    """The quiz checks each commit; when tokens are on in cordee/config.yml, the token ledger notes each commit and is
+    shared at each push."""
     exclude = git("rev-parse", "--git-path", "info/exclude")
     os.makedirs(os.path.dirname(exclude), exist_ok=True)
+    os.makedirs(git("rev-parse", "--git-path", "cordee"), exist_ok=True)
     if not os.path.isfile(exclude) or "/QUIZ.md" not in quiz.read_lines(exclude):
         with open(exclude, "a", newline="") as file:
             file.write("/QUIZ.md\n")
-    done = [install_one(name, line) for name, line, _ in HOOKS]
-    print("The token ledger notes what agents spend on each module, never who:"
-          " git config cordee.ledger false stops it.")
+    done = [install_one(name, line) for name, line, _ in active_hooks()]
+    if tokens_on():
+        print("The token ledger notes what agents spend on each module, never who:"
+              " git config cordee.ledger false stops it.")
+    else:
+        pre_push = git("rev-parse", "--git-path", "hooks") + "/pre-push"
+        if try_git("config", "core.hooksPath") is None and os.path.isfile(pre_push) and ours(pre_push):
+            os.remove(pre_push)
     return 0 if all(done) else 1
+
+
+def active_hooks():
+    return TOKEN_HOOKS if tokens_on() else CORE_HOOKS
+
+
+def tokens_on():
+    """Whether cordee/config.yml turns the cockpit and the token ledger on."""
+    path = os.path.join(git("rev-parse", "--show-toplevel"), "cordee/config.yml")
+    text = quiz.read_lines(path) if os.path.isfile(path) else lines(try_git("show", "HEAD:cordee/config.yml") or "")
+    return value(text, "tokens") == "true"
 
 
 def install_one(name, line):

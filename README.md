@@ -63,8 +63,8 @@ production breaks. A team that merges faster than it understands builds comprehe
 | Fresh review & risk-scaled quiz | A fresh agent context reviews the staged diff against the contract and coding style, then writes `QUIZ.md` and a hidden key in `.git/cordee/`: one to three predictive questions, each citing one to three places of the diff; when `risk: high`, three or more, citing every hunk of code (recommending a second human's reading); 0 at `risk: none` or for Markdown-only changes outside the contracts and what modules govern, unless the batch touches a `sensitive` file (the workflow, the harness, the architecture and the contracts by default), which asks one at any risk. Passing stamps `Quiz: 3/3, covers 5/7` on the commit: how many hunks of code the questions cite. |
 | Quiz feedback loop | Questions the developer flags are logged locally in `quiz-journal` when the quiz passes. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
 | Pace & module onboarding (`cordee brief`) | Before a batch, surfaces unanswered `QUIZ.md` files in sibling worktrees and remote branches waiting for review past `review-wait-hours` (4 by default) and younger than `abandoned-days` (14), bots aside, and spots a developer's first batch in a module to offer discovery mode and name the three teammates who delivered there most. |
-| Anonymous team ledger | Hooks record token spend (writer vs. reviewer, by model) per module and month in `refs/notes/cordee-ledger` and sync it on push (`git config cordee.ledger false` opts out). `ledger report` shows what each feature cost. The quiz never goes there. |
-| Private cockpit & self-tuning | On the developer's machine over their last 10 agent batches, `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
+| Anonymous team ledger (optional, `tokens: true`) | Hooks record token spend (writer vs. reviewer, by model) per module and month in `refs/notes/cordee-ledger` and sync it on push (`git config cordee.ledger false` opts out). `ledger report` shows what each feature cost. The quiz never goes there. |
+| Private cockpit & self-tuning (optional, `tokens: true`) | On the developer's machine over their last 10 agent batches, `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
 | Quiet runner (`cordee quiet`) | Runs verbose test or build commands and prints one line when green, or the last 30 lines when red, keeping agent context lean. |
 
 ### What it deliberately does not do
@@ -91,8 +91,9 @@ production breaks. A team that merges faster than it understands builds comprehe
 
 ### 1. What lives in your repository
 
-Kit-owned files (`cordee/bin/`, `cordee/WORKFLOW.md`, `cordee/guide/`, and the marked block in `AGENTS.md`) are replaced
-cleanly on upgrade. Everything else belongs to your project:
+Kit-owned files (`cordee/bin/`, `cordee/WORKFLOW.md`, `cordee/GETTING-STARTED.md`, `cordee/REFERENCE.md`,
+`cordee/guide/`, and the marked block in `AGENTS.md`) are replaced cleanly on upgrade. Everything else belongs to your
+project:
 
 ```
 AGENTS.md, CLAUDE.md       agent instructions + the Cordee block (@AGENTS.md import for Claude Code)
@@ -102,8 +103,10 @@ AGENTS.md, CLAUDE.md       agent instructions + the Cordee block (@AGENTS.md imp
 cordee/
   README.md                your system map and module table (first line tracks source URL and tag)
   coding-style.md          your settled code, test and command conventions
-  config.yml               your settings: batch size, risk and sensitive files, for the repo (never replaced on upgrade)
-  WORKFLOW.md, guide/      kit-owned batch loop and on-demand guides (start, plan, tokens, upgrade)
+  config.yml               your settings: tokens, batch size, risk and sensitive files (never replaced on upgrade)
+  GETTING-STARTED.md       kit-owned daily cheat sheet for developers (commit flow, refusals, one-time setup)
+  REFERENCE.md             kit-owned complete reference manual for humans
+  WORKFLOW.md, guide/      kit-owned batch loop and on-demand guides for agents (start, plan, tokens, upgrade)
   bin/{cordee,ledger,cockpit}  kit-owned launchers, which find Python
   bin/harness/              kit-owned Python package they run, one module per topic
   modules/<module>.md      created as needed: short contracts (<= 50 lines)
@@ -150,11 +153,12 @@ flowchart LR
    - If an answer is wrong, read the hint written inside `QUIZ.md`. When the code does not match what you meant, tick
      *The code does not do what I wanted* and type `quiz feedback` to your agent.
 5. Fresh session & hints. Start the next batch in a new session so the agent does not re-read a long history on
-   every call. At handoff, `cockpit hints` prints nothing unless your last 10 batches show something new to cut or a
-   module flagged twice in quizzes.
-6. Push & merge. Pushing syncs anonymous `cordee-ledger` notes, and CI replays drift and size on each commit. Merge
-   branches with a merge commit or a rebase (squash merges add batches up and drop per-commit trailers). To amend a
-   committed agent batch that changes files, run `git reset --soft HEAD^` and commit again.
+   every call. When `tokens: true` in `cordee/config.yml`, `cockpit hints` at handoff prints nothing unless your last
+   10 batches show something new to cut or a module flagged twice in quizzes.
+6. Push & merge. CI replays drift and size on each commit (and when `tokens: true`, pushing syncs anonymous
+   `cordee-ledger` notes). Merge branches with a merge commit or a rebase (squash merges add batches up and drop
+   per-commit trailers). To amend a committed agent batch that changes files, run `git reset --soft HEAD^` and commit
+   again.
 
 ### 4. Useful commands
 
@@ -181,12 +185,38 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    git ls-remote --tags --refs <source>
    git clone --depth 1 --branch <tag> <source> <tmp>
    ```
-3. From the repository, run `bash <tmp>/template/cordee/bin/cordee deploy <source> <tag>`. It copies what is missing of
+3. Walk the human through the setup in two short steps (using your tool's question prompt if it has one), explaining
+   what each option does before configuring the repository:
+   - Scope (`tokens` in `cordee/config.yml`, `false` by default): ask whether the repo wants **Core only** or **Core +
+     Cockpit & Ledger (`tokens: true`)**, and explain both:
+     - **Core** (always on, no network hook): module contracts (`<= 50` lines) linked to tests, drift check,
+       single-module batches within `batch-lines`, a fresh reviewer agent that checks the diff and writes `QUIZ.md`
+       (`commit-msg` grades it offline, `post-commit` journals any feedback flags locally), `cordee brief` / `next` /
+       `quiet` / `doctor`, and CI replay of drift and size on push.
+     - **Cockpit & Ledger** (`tokens: true`): adds two tools. The local **Cockpit** (`cordee/bin/cockpit`) reads local
+       Claude Code, opencode and Kilo Code logs on the developer's machine so `cockpit report "$PWD"` breaks down where
+       tokens go (writer vs. reviewer, models, context startup, cache reads, MCP servers, plugins, tool output) and
+       `cockpit hints` at handoff flags avoidable overhead or recurring quiz flags at most once every 10 batches. The
+       shared **Ledger** (`cordee/bin/ledger`) records anonymous monthly token spend per module in
+       `refs/notes/cordee-ledger` on commit (under random keys dated the first of the month: no commit hash, no author,
+       no day, never the quiz) and syncs it on push via a `pre-push` hook so `ledger report` shows what each feature
+       cost (any developer can opt out locally with `git config cordee.ledger false`).
+   - Repository settings (`cordee/config.yml`): present the defaults and ask if the human wants to change any of them
+     now:
+     - `batch-lines: 200` (max changed non-blank lines of code and tests per agent batch; overridable per module);
+     - `risk: normal` (`none`: no quiz on code; `normal`: 1 to 3 questions; `high`: 3 or more questions citing every
+       hunk of code, recommending a second human's reading);
+     - `review-wait-hours: 4` and `abandoned-days: 14` (window for `cordee brief` to flag teammate branches awaiting
+       review);
+     - `sensitive`, `not-code` and `agent-emails` (see comments in `cordee/config.yml`).
+4. From the repository, run `bash <tmp>/template/cordee/bin/cordee deploy <source> <tag>`. It copies what is missing of
    `<tmp>/template/`, with only the CI file of the repo's forge, read from the host of `origin`, puts `<source>` and
-   `<tag>` on the first line of `cordee/README.md`, and installs the hooks. When the host names neither GitHub nor
-   GitLab, it says so: ask the human, then run it again with `--forge github` or `--forge gitlab`. When a hook is
-   already in place, show the human the lines it printed.
-4. Merge each file it lists as already in the repo:
+   `<tag>` on the first line of `cordee/README.md`, and installs the core hooks. When the host names neither GitHub nor
+   GitLab, it says so: ask the human, then run it again with `--forge github` or `--forge gitlab`. Write any settings
+   the human chose into `cordee/config.yml`, and if `tokens: true` was chosen, run
+   `bash cordee/bin/cordee install-hook` so the ledger hooks (`post-commit` and `pre-push`) are installed too. When a
+   hook is already in place, show the human the lines `install-hook` printed.
+5. Merge each file `deploy` listed as already in the repo:
    - `AGENTS.md`: append the block between `<!-- cordee -->` and `<!-- /cordee -->`;
    - `CLAUDE.md`: add a line `@AGENTS.md`;
    - `.gitattributes`: append its line, which keeps the scripts' line ends LF on Windows;
@@ -194,7 +224,7 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    - `.gitlab-ci.yml`: add its `cordee-audit` job, with the `rules` of the other jobs when they run in merge request
      pipelines, and `test` to `stages` if the file lists them without it;
    - anything else: stop and ask the human.
-5. Deny `git commit`, `git push` and `--no-verify` in your tool's project settings, merged into what is there, so that
+6. Deny `git commit`, `git push` and `--no-verify` in your tool's project settings, merged into what is there, so that
    every dev of the repo gets them:
    - Claude Code, `.claude/settings.json`: `"permissions": {"deny": ["Bash(git commit:*)", "Bash(git push:*)"]}`;
    - opencode, `opencode.json`, and Kilo Code, `kilo.jsonc` (its VS Code extension reads it too), at the end of the
@@ -207,10 +237,12 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    For another tool, write only a format its documentation gives, else write nothing and tell the human. If the tool
    commits on its own (Aider does by default, without hooks), turn that off. Tell the human that for their other
    agents these rules are instructions only.
-6. Delete `<tmp>`. Report the files added and merged, the dependencies, and a proposed commit message with
-   `Large-Batch: deploys Cordee` (the scripts alone are over the size limit) and without `Agent-Assisted` or an
+7. Delete `<tmp>`. Report the files added and merged, the chosen `cordee/config.yml` settings, the dependencies, and
+   point the human to `cordee/GETTING-STARTED.md` (daily cheat sheet: how a batch runs, how to commit, one-time git and
+   forge settings, what each refusal means) and `cordee/REFERENCE.md` (complete human manual). Propose a commit message
+   with `Large-Batch: deploys Cordee` (the scripts alone are over the size limit) and without `Agent-Assisted` or an
    agent's `Co-Authored-By` (the files come from the kit, not from you). The human commits.
-7. Then follow GENESIS (no code yet) or ADOPT (existing code) in `cordee/guide/start.md`, as your first batch.
+8. Then follow GENESIS (no code yet) or ADOPT (existing code) in `cordee/guide/start.md`, as your first batch.
 
 To upgrade or uninstall, follow `cordee/guide/upgrade.md` in the deployed repository.
 

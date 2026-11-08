@@ -122,7 +122,8 @@ def guidance():
             paths.append(path)
             if not git("ls-files", "--", path):
                 print(f"NOTE {contract}: {path} matches no tracked file, a typo or code still to come.")
-    markdown = nonblank("cordee/*.md", "AGENTS.md", ":!cordee/WORKFLOW.md", ":!cordee/guide/") - kit_lines()
+    markdown = nonblank("cordee/*.md", "AGENTS.md", ":!cordee/WORKFLOW.md", ":!cordee/GETTING-STARTED.md",
+                        ":!cordee/REFERENCE.md", ":!cordee/guide/") - kit_lines()
     if not paths:
         print(f"NOTE {markdown} lines of markdown, no contract yet.")
         return

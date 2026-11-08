@@ -26,7 +26,8 @@ clone the new release into `<tmp>` as step 2 of the upgrade says, and:
    `git fetch origin +refs/notes/sdd-ledger:refs/notes/sdd-ledger-remote` then
    `git notes --ref sdd-ledger merge -q -s cat_sort_uniq refs/notes/sdd-ledger-remote` (skip both when the remote has
    none). Then `git notes --ref cordee-ledger merge -q -s cat_sort_uniq refs/notes/sdd-ledger`, which keeps a note
-   the new hooks already wrote, and `git update-ref -d` both old refs. The next push shares the new ref. Once every
+   the new hooks already wrote, and `git update-ref -d` both old refs. Set `tokens: true` in `cordee/config.yml` and
+   run `bash cordee/bin/cordee install-hook` if the repo keeps the ledger; the next push shares the new ref. Once every
    clone has switched, the human deletes the old one on the remote: `git push origin :refs/notes/sdd-ledger`. A clone
    or a dev with `git config sdd.ledger false` sets `git config cordee.ledger false` (`--global` when it was global).
 5. `bash cordee/bin/cordee doctor` then prints no NOTE. Delete `<tmp>`, and propose a commit message with

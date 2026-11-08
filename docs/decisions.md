@@ -737,3 +737,19 @@ markers are replaced); the deny rules in the command (Claude Code and opencode a
 others by hand: two paths for one step); appending the `AGENTS.md` block and the `@AGENTS.md` line on a first deploy
 (a third of the merges, with the CI merges still to the agent); the forge from the whole URL (a GitLab repo named
 `github-tools` would get the GitHub file).
+
+## 79. The cockpit and the ledger are opted in through `tokens: true`, and deploy guides the setup (2026-11-08)
+
+A repo that adopts Cordee for its contracts, size limit and quiz may want no token reading and no `pre-push` network
+hook. `tokens` in `cordee/config.yml` is `false` by default: `install-hook` then writes only `commit-msg` and
+`post-commit` (`committed`), removes a `pre-push` hook it wrote earlier, and `__main__.py` and `doctor.py` import
+neither `cockpit`, `ledger` nor `logs`, so the core runs even when their files are removed. Setting `tokens: true` and
+running `install-hook` adds `ledger record` to `post-commit`, writes `pre-push` (`ledger sync`), and has the workflow
+run `cockpit hints` at handoff; every clone of the repo gets the same hooks from `cordee/config.yml`. During deploy,
+the agent walks the human through that choice and the global `cordee/config.yml` settings (`batch-lines`, `risk`,
+review waits), then points to `cordee/GETTING-STARTED.md` (daily developer cheat sheet) and `cordee/REFERENCE.md`
+(complete human manual), both shipped in `template/cordee/`, replaced on upgrade, and left out of the markdown ratio.
+_Rejected:_ a `--tokens` flag on `deploy` that omits the files (a second tree to test, and turning tokens on later
+would need a new deploy instead of one line in `cordee/config.yml` and `install-hook`); keeping `tokens: true` as the
+default (installs a `pre-push` network hook before the human has chosen it); pointing humans only to `WORKFLOW.md`
+(written as terse operational instructions for agents, not as a progressive guide or full manual for humans).

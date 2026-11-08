@@ -8,7 +8,7 @@ import sys
 # Run as a folder, Python puts the folder itself on the path: its parent holds the package.
 sys.path[0] = os.path.dirname(os.path.abspath(sys.path[0]))
 
-from harness import brief, checks, cockpit, deploy, hooks, journal, ledger, quiz
+from harness import brief, checks, deploy, hooks, journal, quiz
 from harness.doctor import doctor
 from harness.drift import touched
 
@@ -82,6 +82,7 @@ def cordee_command(args):
 
 
 def ledger_command(args):
+    from harness import ledger
     if args == ["record"]:
         ledger.record()
     elif args[:1] == ["sync"] and len(args) <= 2:
@@ -93,6 +94,7 @@ def ledger_command(args):
 
 
 def cockpit_command(args):
+    from harness import cockpit
     if args[:1] == ["usage"] and len(args) == 4:
         cockpit.usage(args[1], int(args[2]), int(args[3]))
     elif args[:1] == ["report"] and len(args) in (2, 4):

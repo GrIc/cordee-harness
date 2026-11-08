@@ -4,8 +4,9 @@ governs: [template/cordee/bin/ledger, template/cordee/bin/harness/ledger.py, tes
 # ledger
 
 What agents spent on each module, by month, so that a team weighs the cost of its product's features, never of its
-people. The details stay on each dev's machine, in the [cockpit](cockpit.md); the repo only keeps the sums. On by
-default; with `git config cordee.ledger false`, nothing is noted, and the ledger never stops a commit or a push.
+people. The details stay on each dev's machine, in the [cockpit](cockpit.md); the repo only keeps the sums. Off by
+default (`tokens: false` in `cordee/config.yml`); when `tokens: true`, `install-hook` adds its hooks, and with
+`git config cordee.ledger false`, nothing is noted; the ledger never stops a commit or a push.
 
 - `record` splits the tokens spent since the last commit over the modules HEAD changes, by their changed lines, into
   a note of the git notes `cordee-ledger` that hangs on a random key, written by `cordee` on the first of the month:
