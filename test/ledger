@@ -121,10 +121,12 @@ test_sync_merges_two_devs_ledgers() {
 search writer'
   # One commit with no parent: nothing tells whose notes came first.
   fails "$(git rev-list --parents refs/remotes/ledger)" "$(git rev-parse refs/remotes/ledger)"
-  # The other dev merges it back without a shared history.
+  # The other dev merges it back with their next note, without a shared history.
   cd "$tmp/a"
+  printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
+  batch 1 0 2026-10-23T13:00:00Z
   bash cordee/bin/ledger sync
-  fails "$(ledger refs/notes/cordee-ledger | wc -l | tr -d ' ')" 2
+  fails "$(ledger refs/notes/cordee-ledger | wc -l | tr -d ' ')" 3
 }
 
 # Keys are random, but if one ever held two notes, the merge keeps both and the next syncs still go through.
@@ -138,8 +140,10 @@ test_sync_merges_two_notes_on_one_key() {
   fails "$(bash cordee/bin/ledger sync 2>&1)" ''
   fails "$(ledger | cut -f3 | tr '\n' ' ')" 'import search '
   cd "$tmp/a"
+  git notes --ref cordee-ledger add -m "$(printf 'v1\t2026-10\tsearch\treviewer\tsonnet\t1\t1\t1\t1\t1')" \
+    "$(echo other | git hash-object --stdin)"
   fails "$(bash cordee/bin/ledger sync 2>&1)" ''
-  fails "$(ledger | wc -l | tr -d ' ')" 2
+  fails "$(ledger | wc -l | tr -d ' ')" 3
 }
 
 test_sync_without_a_ledger_fetches_nothing() {
@@ -149,6 +153,21 @@ test_sync_without_a_ledger_fetches_nothing() {
   git clone -q "$tmp/origin.git" "$tmp/b" 2> /dev/null && cd "$tmp/b"
   bash cordee/bin/ledger sync
   ! git rev-parse -q --verify refs/notes/cordee-ledger-remote
+}
+
+# A remote out of reach shows whether sync tried: a fetch fails without a word, a push says so.
+test_sync_sends_only_notes_a_remote_has_not_seen() {
+  printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
+  batch 1 0 2026-10-23T11:00:00Z
+  bash cordee/bin/ledger sync
+  git remote set-url origin "$tmp/gone.git"
+  fails "$(bash cordee/bin/ledger sync 2>&1)" ''
+  git -c init.defaultBranch=main init -q --bare "$tmp/mirror.git"
+  git remote add mirror "$tmp/mirror.git"
+  bash cordee/bin/ledger sync mirror
+  git ls-remote --exit-code mirror refs/notes/cordee-ledger > /dev/null
+  batch 1 0 2026-10-23T12:00:00Z
+  bash cordee/bin/ledger sync origin 2>&1 | grep -qF 'did not reach origin'
 }
 
 test_installed_hooks_record_and_share_the_ledger() {

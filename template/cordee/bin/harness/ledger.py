@@ -10,7 +10,7 @@ import time
 from collections import defaultdict
 
 from harness.drift import touched
-from harness.git import agent_log, git, lines, run, try_git
+from harness.git import agent_log, git, lines, run, shared_path, try_git
 
 REF = "refs/notes/cordee-ledger"
 # With / even on Windows, for the sh that runs the cockpit.
@@ -81,9 +81,18 @@ def neutral(month):
 
 def sync(remote):
     """Merges the remote's ledger into ours, then pushes the merged notes as one commit with no parent: the shared
-    history never shows whose notes came in which order. Runs before a push and never stops it. A dev with no ledger
-    has nothing to send, so their push stays a single round trip."""
+    history never shows whose notes came in which order. Runs before a push and never stops it. A dev with no ledger,
+    or none the remote has not seen, has nothing to send, so their push stays a single round trip: the notes of
+    others reach them with their next one."""
     if try_git("rev-parse", "-q", "--verify", REF) is None:
+        return
+    # The tree of the ledger each remote last took, one "tree<TAB>remote" line each: a remote can be a URL.
+    state = shared_path("ledger-synced")
+    synced = {}
+    if os.path.isfile(state):
+        with open(state, encoding="utf-8") as file:
+            synced = {name: tree for tree, name in (line.split("\t", 1) for line in lines(file.read().rstrip("\n")))}
+    if synced.get(remote) == git("rev-parse", f"{REF}^{{tree}}"):
         return
     month, seen = time.strftime("%Y-%m", time.gmtime()), ""
     if try_git("fetch", "-q", remote, f"+{REF}:{REF}-remote") is not None:
@@ -97,6 +106,11 @@ def sync(remote):
     # The lease: a ledger another dev pushed since the fetch is merged at the next push, never overwritten.
     if run(["push", "-q", "--no-verify", f"--force-with-lease={REF}:{seen}", remote, f"{flat}:{REF}"]).returncode:
         print(f"NOTE the token ledger did not reach {remote}: the next push retries.", file=sys.stderr)
+        return
+    synced[remote] = git("rev-parse", f"{flat}^{{tree}}")
+    os.makedirs(os.path.dirname(state), exist_ok=True)
+    with open(state, "w", encoding="utf-8", newline="") as file:
+        file.write("".join(f"{tree}\t{name}\n" for name, tree in synced.items()))
 
 
 def report():

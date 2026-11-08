@@ -24,7 +24,9 @@ default; with `git config cordee.ledger false`, nothing is noted, and the ledger
   notes add up and the shared history never shows whose came first:
   [test_sync_merges_two_devs_ledgers](/test/ledger). Two notes on one key keep both, and the next syncs go through:
   [test_sync_merges_two_notes_on_one_key](/test/ledger). A dev with no ledger fetches nothing:
-  [test_sync_without_a_ledger_fetches_nothing](/test/ledger).
+  [test_sync_without_a_ledger_fetches_nothing](/test/ledger). Nor does one whose ledger a remote already took: the
+  notes of others reach them with their next one, and each remote gets what it has not seen:
+  [test_sync_sends_only_notes_a_remote_has_not_seen](/test/ledger).
 - `report` sums the ledger by month, module, role and model, then shows per month the batches noted against the
   agent commits, marked as the hook marks them:
   [test_report_sums_by_month_module_role_and_model_then_shows_coverage](/test/ledger). Without a ledger, it says how

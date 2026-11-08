@@ -3,7 +3,6 @@
 ## Fixes
 
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).
-- The ledger syncs on push only when it holds notes the remote has not seen, not a fetch and a push every time.
 - `audit` caches `git show` by tree and path in `contracts.py`, if it takes over 3 s with 40 contracts on Windows.
 - The reviewer asks reading questions (what it returns, which line, why this choice), never a counterfactual across
   files.

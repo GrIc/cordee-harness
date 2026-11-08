@@ -710,3 +710,12 @@ an agent how to switch a repo, and the earlier decisions keep the names they wer
 _Rejected:_ a version that reads both names (code to keep for repos one person switches by hand); keeping
 `sdd/bin/sdd` as the command (a name the kit drops, kept only to type less); `grasp`, `belay` (taken, see the notes
 of 2026-11-08), `teachback`, `gotit` (free, but they name the quiz, not the pace).
+
+## 74. The ledger syncs only what a remote has not seen (2026-11-08)
+
+Each push fetched and pushed the ledger, even when the dev had no new note: one more round trip at every push, for
+nothing to send. `sync` now keeps, per remote, the tree of the ledger it last took, in the clone's
+`.git/cordee/ledger-synced`, and does nothing while ours is the same. The notes of others then reach a dev only with
+their next own note, so a local `ledger report` can lag behind the remote's; `git fetch` of the ref catches it up.
+_Rejected:_ `git ls-remote` before each push (still a round trip); one state for all remotes (a second remote would
+never get the ledger); fetching anyway and pushing only on change (the fetch is the cost).
