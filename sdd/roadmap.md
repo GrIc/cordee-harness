@@ -16,8 +16,11 @@
 
 ## Simpler rules
 
-- The quiz level takes three values (none, normal, high) plus the `sensitive` list, and the reviewer sets the number
-  of questions; the step less for tests and the `intent` risk go first.
+- The quiz level says only how many questions: none, normal or high, plus the `sensitive` list, the reviewer setting
+  the number; the step less for tests and the `intent` risk go first.
+- The reviewer picks what each question is about from what the batch changes: behavior for code, the promise for a
+  contract or `product.md`, the structure for `depends`, `governs` or `architecture.md`, what a test pins and misses
+  for tests alone, the rejected option for a decision. The dev who commits answers them all.
 - One install command for the mechanical part (copy without overwriting, hooks, exclude), the agent keeping only the
   merges.
 - The cockpit and the ledger become an optional module: the core (drift, size, quiz, `next`) runs without them and
@@ -25,20 +28,11 @@
 
 ## Then
 
-- More settings in `sdd/config.yml`: the roles present, the quiz type each role gets and when, who answers for a
-  missing role, the default checkpoint (commit or merge request); a contract states the levels it touches and its
-  checkpoint only where they differ from the project's.
-- Control at the merge request, architecture level: agents commit on their branch with the audit alone, a merge
-  request carries one story, a fresh reviewer writes the quiz on the whole request, the configured role answers it,
-  the merge commit carries the stamp and the CI checks it is there.
+- CI sums up a merge request from its commits' trailers (quizzed, bypassed with a reason, the human's own), with no
+  quiz of its own.
 - A relay quiz: the dev who takes over a module answers the quiz of its last batches.
-- A quiz per role, asked only when the change touches that role's level, with the fallback for a missing role.
-- Functional level with the PO: the agent's scenarios set against the PO's intent when a story is planned and when
-  its preview is accepted, without git for the PO.
 - [Hunks that only change comments count as code in the quiz](issues/comment-only-hunks.md).
 - A queue of slow decisions: a reversible one is taken as provisional with a review date, its age shown by `brief`.
-- Run level by impact: a minor impact goes to the dev, a strong one to ops.
-- Interface (UX) and tests (QA) levels.
 - Kilo Code and Copilot in the cockpit, specified from real logs of each ([Kilo Code](issues/kilo-code-reader.md)).
 - The ledger notes the exact model (`claude-opus-5-5`, not `opus`): the data an API of environmental impact needs,
   without the tooling to call it.

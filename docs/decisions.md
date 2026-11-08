@@ -599,3 +599,19 @@ anyway.
 _Rejected:_ the addresses as one regular expression, as the constant was (an address with a `+` or a `.` would need
 escaping); the batch's own list only (an agent could hide its lines or its mark in the commit that does it); the list
 adding to the kit's (a project could not stop counting an address that is a human's, such as a shared noreply).
+
+## 65. The quiz follows what the batch changes, not who answers (2026-11-08)
+
+A dev's batch is not only code: it may move a contract, a module's boundaries, its tests or a decision, and the dev who
+commits it must show they understood that part, not only the lines. The roadmap had a quiz per role, the roles and
+their fallbacks in `sdd/config.yml`, and a choice of checkpoint between commit and merge request: roles times quiz
+types times checkpoints, each pair to document, test and replay in CI, and a harness that must know who is who, against
+"a dev alone uses the whole harness" and "name to coordinate, never to measure" (spec of 2026-10-26). The quiz keeps
+one checkpoint, the commit, and one person, the dev who commits. Two axes split what the level mixed: the risk says
+how many questions, what the batch changes says what they are about (behavior, promise, structure, proof, rejected
+option), each still citing the batch. The reviewer picks that by reading the diff, in the workflow's prose, not in a
+rule of the script. A second human stays a recommendation with a name, as at `high` today. A merge request gets a
+summary of its commits' trailers in CI, never a second quiz.
+_Rejected:_ a quiz per role and the roles in the config (above); a cursor between commit and merge request (two full
+modes to keep, and a quiz at the merge request is what others already offer); the PO's functional level outside git,
+and run, UX and QA as levels of their own (a tool beside the repo, and question kinds cover what they would ask).
