@@ -162,7 +162,7 @@ may share a test; a criterion without a link is checked by hand, as its sentence
 `depends` names the modules this one builds on; check their tests pass before you do. `risk` is `low` (no quiz on
 code), `intent` (a quiz only when the contract moves, with its `governs` and `depends`), `normal` (the default) or
 `high`, for a module where a mistake costs much (an API contract, security, personal data, money): a stricter quiz.
-`sdd/config.yml` sets the repo's `risk` and `batch-lines` (200 lines of code and tests by default), as flat
+`sdd/config.yml` sets the repo's `risk` and `batch-lines` (200 non-blank lines of code and tests by default), as flat
 `key: value` lines with comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal
 risk in a repo at `risk: high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's
 code, higher or lower. A batch that changes a `batch-lines` is judged on its new value, with a note for the human, and

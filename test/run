@@ -289,6 +289,33 @@ test_a_rename_counts_only_its_edits() {
   says "SIZE 300 changed lines of code and tests"
 }
 
+test_blank_lines_do_not_count() {
+  echo 'More intent.' >> sdd/modules/search.md
+  seq 1 211 | awk '{ print; print ""; print "  " }' > src/search/big.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
+  git commit -qm 'Add a big search' 2> /dev/null
+  echo 'More intent.' >> sdd/modules/search.md
+  grep -v '^ *$' src/search/big.py > "$tmp/big.py"
+  mv "$tmp/big.py" src/search/big.py
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  lacks 'changed lines'
+}
+
+test_a_batch_of_many_files_counts_them_all() {
+  for n in $(seq 1 120); do seq "$n" $((n + 20)) > "src/search/f$n.py"; done
+  git add -A
+  git commit -qm 'Add many files' 2> /dev/null
+  echo 'More intent.' >> sdd/modules/search.md
+  for n in $(seq 1 120); do git mv "src/search/f$n.py" "src/search/g$n.py"; echo more >> "src/search/g$n.py"; done
+  seq 1 100 > src/search/more.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 220 changed lines of code and tests"
+}
+
 test_two_modules_block_an_agent() {
   echo 'More intent.' >> sdd/modules/search.md
   echo 'More intent.' >> sdd/modules/import.md

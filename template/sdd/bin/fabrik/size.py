@@ -28,28 +28,21 @@ def not_code(base, tree):
 def size(batch, base, tree, message):
     """Notes in batch what is over the limits from base to tree, counting the modules drift found touched."""
     count, specs = 0, []
-    for added, deleted, old, new in numstat(base, tree):
+    for added, _, old, new in numstat(base, tree):
         if batch.not_code(old) and batch.not_code(new):
             continue
         if batch.not_code(old) != batch.not_code(new):
             # Prose renamed to code, or back, counts whole, as two files would, even marked binary.
-            count += len(lines(git("cat-file", "blob", f"{tree}:{new}" if batch.not_code(old) else f"{base}:{old}")))
-        elif added == "-":
-            if not binary(base, old, tree, new):
+            blob = git("cat-file", "blob", f"{tree}:{new}" if batch.not_code(old) else f"{base}:{old}")
+            count += sum(1 for line in lines(blob) if line.strip())
+        elif added != "-" or not binary(base, old, tree, new):
+            if added == "-":
                 batch.hidden.append(new)
-                specs += [old, new]
-        else:
-            count += int(added) + int(deleted)
-    # binary or -diff in .gitattributes, even the batch's own, hides the lines of code from the human and from numstat,
-    # --text or not: only the patch shows them, its hunk headers giving their number.
+            specs += [old, new]
     if specs:
-        patch = git("--literal-pathspecs", "diff", "--text", "-U0", "-M", "--no-color", "--no-ext-diff", base, tree,
-                    "--", *specs)
-        for line in lines(patch):
-            if line.startswith("@@ "):
-                count += sum(int(side.partition(",")[2] or "1") for side in line.split(" ")[1:3])
-        batch.notes += "".join(f"NOTE {path}: an attribute marks it binary, but it is text. It counts as code: read it"
-                               " with git diff --text.\n" for path in batch.hidden)
+        count += changed_lines(base, tree, specs)
+    batch.notes += "".join(f"NOTE {path}: an attribute marks it binary, but it is text. It counts as code: read it"
+                           " with git diff --text.\n" for path in batch.hidden)
     limit, where = batch_lines(batch, base, tree)
     if re.search(r"^Large-Batch:[^\S\n]*\S", message, re.M):
         if count > limit:
@@ -76,6 +69,27 @@ def numstat(base, tree):
             added, deleted, path = field.split("\t", 2)
             old, new = (next(fields), next(fields)) if not path else (path, path)
             yield added, deleted, old, new
+
+
+def changed_lines(base, tree, specs):
+    """The lines the batch adds or deletes in these files, given as old path then new path, blank ones aside: they are
+    nothing to read. binary or -diff in .gitattributes, even the batch's own, hides lines of code from the human and
+    from numstat, so the patch is read with --text."""
+    count = 0
+    # By 100 paths, an old one beside its new one so that git still finds the rename: a Windows command line holds
+    # about 32,000 characters.
+    for start in range(0, len(specs), 100):
+        patch = git("--literal-pathspecs", "diff", "--text", "-U0", "-M", "--no-color", "--no-ext-diff", base, tree,
+                    "--", *specs[start:start + 100])
+        in_header = False
+        for line in lines(patch):
+            if line.startswith("diff --git "):
+                in_header = True
+            elif line.startswith("@@ "):
+                in_header = False
+            elif not in_header and line[:1] in ("+", "-") and line[1:].strip():
+                count += 1
+    return count
 
 
 def binary(base, old, tree, new):

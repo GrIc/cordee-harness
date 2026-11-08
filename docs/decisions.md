@@ -628,3 +628,13 @@ box or why it is right.
 _Rejected:_ hiding the key from the agents (the reviewer writes it and the hook reads it from the same clone, so any
 agent there can read it too); a check that greps the handoff for letters (the handoff is not in git, and a reason
 gives the answer away as well as a letter).
+
+## 67. The size counts no blank line (2026-11-08)
+
+`batch-lines` is there so that a human can take in what they must understand, and a blank line holds nothing to
+understand: a file of 211 lines of code spaced by blank lines counted 633 lines, three times the limit. `size.py` now
+reads the patch with `-U0` and counts the lines it adds or deletes that hold something other than whitespace, binary
+or not; prose renamed to code counts its lines that are not blank.
+_Rejected:_ `--ignore-blank-lines` (it drops only hunks whose lines are all blank, a hunk mixing code and blank lines
+still counts them); counting comments out too (a comment is read, and telling one from code takes a parser per
+language).
