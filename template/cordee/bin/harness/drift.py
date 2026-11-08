@@ -8,9 +8,8 @@ from harness.git import commit_or, empty_tree, exists, git, lines
 
 def drift(batch, base, tree, message):
     """Notes in batch the modules whose code or contract changed from base to tree (hit), the risk of each (risks),
-    the contracts whose code changed (coded), the changed paths they govern (governed), the files the contracts the
-    batch leaves as they were link to (linked), the modules among them whose changed code their own contract links to
-    (proven), and how many changed code that no Spec-Unchanged spares (touched)."""
+    the contracts whose code changed (coded), the changed paths they govern (governed), and how many changed code that
+    no Spec-Unchanged spares (touched)."""
     for line in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):", message, re.M):
         for name in line.split():
             if not exists(f"{tree}:cordee/modules/{name}.md"):
@@ -23,16 +22,11 @@ def drift(batch, base, tree, message):
             if not paths:
                 batch.errors += f"ERROR {contract}: governs is empty. List the paths this module owns.\n"
                 continue
-            linked, broken = links(tree, contract)
-            # A link the batch adds vouches for nothing yet: the contract that moves is judged at its risk.
-            if contract not in batch.changed:
-                batch.linked.update(linked)
+            broken = links(tree, contract)
             if broken:
                 batch.findings += "\n".join(broken) + "\n      Fix the link, or the name of the test it points to.\n"
             governed = lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))
             batch.governed.update(governed)
-            if contract not in batch.changed and set(governed) <= set(linked):
-                batch.proven.add(name)
             path = next(iter(governed), None)
         if path:
             batch.coded.append(contract)

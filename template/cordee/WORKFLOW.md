@@ -73,16 +73,11 @@ says so; one that cannot pick a model or resume a sub-agent skips that.
 ## Quiz
 
 A quiz has one to three questions, as many as what the batch changes calls for. A batch is judged at the highest risk
-of the modules it changes, in the parent or in the batch; code outside every module takes the repo's. At `low` it
-needs no quiz; at `intent`, only when it adds, deletes or changes the contract of a module at `intent`, which also
-holds its `governs` and `depends`. A batch that changes or deletes a sensitive file (see Contracts), in the parent's
-list or its own, asks one to three questions even at `low` or `intent`. A batch whose changed files are all Markdown,
-`.gitignore`, `.gitattributes` or `.gitkeep` that no contract is, no module governs and no `sensitive` list matches
-needs none either (one written is still graded). A batch of tests alone is judged one step lower (`high` gives `normal`,
-`normal` gives `intent`, `intent` gives `low`): it changes files that a contract the batch leaves as it was links to,
-and beside them only Markdown and those git files that no module governs and no `sensitive` list matches. A module takes
-the step only when its own contract links its changed files: a test linked from another module's contract keeps the risk
-of its module. A batch that changes or deletes a module at `risk: high` (an API contract, security, personal data,
+of the modules it changes, in the parent or in the batch; code outside every module takes the repo's. At `none` it
+needs no quiz. A batch that changes or deletes a sensitive file (see Contracts), in the parent's list or its own, asks
+one to three questions even at `none`. A batch whose changed files are all Markdown, `.gitignore`, `.gitattributes` or
+`.gitkeep` that no contract is, no module governs and no `sensitive` list matches needs none either (one written is
+still graded). A batch that changes or deletes a module at `risk: high` (an API contract, security, personal data,
 money) has three or more, and its `See` lines cite every hunk of code: `audit` fails until they do, the hook never
 checks it. The handoff then recommends a second human's reading; nothing requires one, so a dev alone uses the whole
 harness.
@@ -164,21 +159,21 @@ most 50 lines. Intent, never facts that a refactor keeping the behavior would ch
 formats). A criterion is a plain sentence, then links to the tests that prove it: a test name, a group, or the whole
 file with its name or path as the link text, relative to the contract or from the repo root. Several criteria may share
 a test; a criterion without a link is checked by hand, as its sentence says. No checkboxes, no status. `depends` names
-the modules this one builds on; check their tests pass before you do. `risk` is `low` (no quiz on code), `intent` (a
-quiz only when the contract moves, with its `governs` and `depends`), `normal` (the default) or `high`, for a module
-where a mistake costs much (an API contract, security, personal data, money): a stricter quiz. `cordee/config.yml` sets
-the repo's `risk` and `batch-lines` (200 non-blank lines of code and tests by default), as flat `key: value` lines with
-comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its module at normal risk in a repo at `risk:
-high`. A contract's `batch-lines` replaces the repo's for a batch that changes its module's code, higher or lower. A
-batch that changes a `batch-lines` is judged on its new value, with a note for the human, and SIZE says where the limit
-is set. `sensitive` lists the files that steer the project or the harness, which ask a quiz at any risk: one entry on
-the key's line or one per `- ` line below it, never split, as a path from the repo root, a folder ending with `/`, or a
-regular expression between slashes, found anywhere in the path. Unset in `cordee/config.yml`, it is the kit's list,
-shown there; set, it replaces it, and `sensitive: []` lists none. A contract's list adds to the repo's, for any file of
-a batch. `agent-emails`, the co-author addresses that mark an agent batch, and `not-code`, the files that count neither
-in the size nor in what a quiz covers besides Markdown and git's own files (lock files by default), are lists of
-`cordee/config.yml` written the same way, each replacing the kit's when set; a batch that changes one is judged by the
-stricter of its parent's and its own. A contract states a setting only where it differs from the repo's.
+the modules this one builds on; check their tests pass before you do. `risk` is `none` (no quiz on code), `normal` (the
+default) or `high`, for a module where a mistake costs much (an API contract, security, personal data, money): a
+stricter quiz. `cordee/config.yml` sets the repo's `risk` and `batch-lines` (200 non-blank lines of code and tests by
+default), as flat `key: value` lines with comments allowed; a contract's own `risk` wins, so `risk: normal` keeps its
+module at normal risk in a repo at `risk: high`. A contract's `batch-lines` replaces the repo's for a batch that
+changes its module's code, higher or lower. A batch that changes a `batch-lines` is judged on its new value, with a note
+for the human, and SIZE says where the limit is set. `sensitive` lists the files that steer the project or the harness,
+which ask a quiz at any risk: one entry on the key's line or one per `- ` line below it, never split, as a path from the
+repo root, a folder ending with `/`, or a regular expression between slashes, found anywhere in the path. Unset in
+`cordee/config.yml`, it is the kit's list, shown there; set, it replaces it, and `sensitive: []` lists none. A
+contract's list adds to the repo's, for any file of a batch. `agent-emails`, the co-author addresses that mark an agent
+batch, and `not-code`, the files that count neither in the size nor in what a quiz covers besides Markdown and git's own
+files (lock files by default), are lists of `cordee/config.yml` written the same way, each replacing the kit's when set;
+a batch that changes one is judged by the stricter of its parent's and its own. A contract states a setting only where
+it differs from the repo's.
 
 ## Decisions
 

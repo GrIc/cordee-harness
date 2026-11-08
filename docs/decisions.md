@@ -459,18 +459,7 @@ which are most of a young project); always at `low` (unowned code at a `high` re
 opposite of what the setting says); a risk of its own for code outside every module (one more key, for what a
 contract governing those files already sets).
 
-## 55. At intent risk, a quiz when a contract moves (2026-11-06)
-
-A team or a module that wants no question on code gets the step `intent`, between `low` and `normal`: a batch asks a
-quiz only when it adds, deletes or changes the contract of a module at `intent`, and a fix under `Spec-Unchanged` asks
-none. The owner asked for it after the comparison with Scion (decision 46), whose review reads the intent of a change
-rather than every line. Decision 47 also named `governs`, `depends`, `sdd/architecture.md` and a second module: the
-first two are in the contract, a second module's code that no `Spec-Unchanged` spares is drift until its contract
-changes too, and `sdd/architecture.md` goes to the sensitive files, which ask a quiz at any risk.
-_Rejected:_ a setting of its own for the levels a quiz asks (code, architecture, functional, run): one more knob to
-explain, which pays only for a team wanting run questions without architecture ones; `low` for such modules (no quiz
-even when the intent moves); any contract that moves (a contract of a module at `low`, in the same batch, asks
-nothing on its own).
+## 55. Superseded by 77.
 
 ## 56. A sensitive file asks a quiz at any risk (2026-11-06)
 
@@ -486,20 +475,7 @@ badly in a list meant to grow); a list in brackets (`[a, b]` splits a path with 
 the `- ` form instead); a contract's list for its own files only (a module that cares about a file outside it would
 have to govern it); `high` for a sensitive file (three or more questions on a one-line fix of the workflow).
 
-## 57. A batch of tests alone asks one step less (2026-11-06)
-
-Three questions on a batch that only adds tests cost the human what a change of behavior costs, while the tests leave
-what the product does as it was and the human reads them in the diff. A batch whose changed files are files a contract
-links to, with only Markdown and git's own files that no module governs and no `sensitive` list matches beside them,
-is judged one step lower: `high` gives `normal`, `normal` gives `intent`, `intent` gives `low`. The links are the
-contract's own word for which files prove it, read in the batch: a test deleted with its link, or one no contract
-links to yet, is code like any other. A contract may move with its tests, since a new test needs its link: at
-`intent` such a batch then asks nothing, unless the contracts are sensitive, as the kit's list has them. A sensitive
-file keeps its quiz at any step (56).
-_Rejected:_ test files found by name (`test_*`, `*_spec.*`, `tests/`: every language names them its own way, and a
-fixture or a helper there changes what every test checks); no quiz at all for tests (a test that asserts the wrong thing
-locks a bug in, and at `high` the human still reads one to three questions); the base's links too (a batch that drops
-a test and its link weakens the proof, and should ask what it asked before).
+## 57. Superseded by 77.
 
 ## 58. The kit's sensitive list holds what steers the agents (2026-11-06)
 
@@ -535,20 +511,7 @@ runs whatever its main holds); a slim or Alpine image (no git, and an install st
 both CI files in every repo (a workflow that never runs looks like a check); every forge (no team asked, and they run
 the same command).
 
-## 60. Only the module its own contract proves takes the step (2026-11-07)
-
-The step of 57 counts only the links of the contracts the batch leaves as they were, and it lowers a module only when
-its own contract links the files of it that the batch changes. It was taken once for all the modules of the batch: a
-test governed by a module at `high` and linked from another module's contract took the batch to `normal`, one to three
-questions with no hunk cited, and a project whose `sensitive` list drops `sdd/modules/` let a contract at `intent` move
-with its tests and ask nothing (security review of 812a574, 2026-11-06). A contract that moves is the intent moving,
-which 57 meant to leave under its quiz; a new test and its link at `intent` now ask one, as they already did under the
-kit's list. A link the batch adds lowers nothing, not even code outside every module, which would otherwise take the
-repo's risk one step down by a line in a contract at `low` (fresh review of this batch). This supersedes the contract
-moving with its tests of 57.
-_Rejected:_ refusing as drift a link to a file the contract does not govern (an end-to-end test proves several modules,
-and the module that governs it keeps its risk anyway); keeping the moving contract as 57 had it, since the kit's list
-makes it sensitive (a project that replaces the list loses that, and nothing says so).
+## 60. Superseded by 77.
 
 ## 61. A quiz written for the batch marks it as an agent's (2026-11-07)
 
@@ -742,3 +705,16 @@ _Rejected:_ the subject as a rule of the script, by file type (a contract with c
 mix, and the reviewer reads the diff anyway); dropping "what breaks if this line goes" (it reads one line, the trouble
 was the chain across files); a question per kind of change in every batch (one to three questions, picked where the
 batch weighs).
+
+## 77. Three risks: none, normal, high (2026-11-08)
+
+The risk now says only how many questions: none, one to three, or three or more citing every hunk; what they are about
+comes from what the batch changes (65, 76). `intent` (55) asked a quiz only when a contract moved, and the step less
+for a batch of tests alone (57, 60) took a level down by the links of the contracts left as they were: two rules that
+set what the quiz is about through its number, with the linked and proven files `drift` gathered only for them, and a
+security review was already needed to close a gap of the step (60). A contract that moves is now quizzed like code,
+and a batch of tests alone at `normal` asks one to three questions on what the tests pin and miss. `low` becomes
+`none`, the word for what it does. No repo used these levels, two days old, so the kit reads no old value.
+_Rejected:_ keeping `low` (it names a risk, where the value says the quiz); `intent` beside the three (the reviewer
+already asks about the promise when a contract moves); the step for tests on three levels (`normal` would step down to
+`none`, no question on a test that may lock a bug in).

@@ -4,11 +4,10 @@
 
 Ask the human, one question at a time: the first useful slice, for whom, the non-goals, whose coding conventions to
 follow, the qualities that matter here (accessibility, devices, performance, cost, carbon), then the settings of
-`config.yml`: the batch size (200 lines of code and tests by default) and the risk (`low`, `intent`, `normal` or
-`high`, as its comment says). Write only what the first slice needs: `README.md`, `coding-style.md` with its first
-rules and commands, in `config.yml` the settings that differ from its defaults, one contract per module the slice
-touches. Scaffold with the stack's
-generator, then strip what the slice does not use. The first delivery follows [PLAN](plan.md) or COMPILE in [the
+`config.yml`: the batch size (200 lines of code and tests by default) and the risk (`none`, `normal` or `high`, as its
+comment says). Write only what the first slice needs: `README.md`, `coding-style.md` with its first rules and commands,
+in `config.yml` the settings that differ from its defaults, one contract per module the slice touches. Scaffold with the
+stack's generator, then strip what the slice does not use. The first delivery follows [PLAN](plan.md) or COMPILE in [the
 workflow](../WORKFLOW.md).
 
 ## ADOPT: existing code

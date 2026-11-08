@@ -21,9 +21,9 @@ How the script reads a contract, written as the workflow's Contracts section say
   flat `key: value` lines, with quotes and comments allowed. `risk: high` in `cordee/config.yml` puts every module that
   does not say otherwise at high risk, and a contract's `risk: normal` keeps it at normal risk; without the file, the
   harness behaves as before: [test_the_config_sets_the_risk_a_contract_overrides](/test/run).
-- `risk` takes `low`, `intent`, `normal` or `high`, in lower case. Another value stops the commit with an ERROR that
-  names its file and lists the four; in the base it counts as `normal`, so that the commit fixing it passes:
-  [test_a_risk_is_one_of_four_values](/test/run).
+- `risk` takes `none`, `normal` or `high`, in lower case. Another value stops the commit with an ERROR that names its
+  file and lists the three; in the base it counts as `normal`, so that the commit fixing it passes:
+  [test_a_risk_is_one_of_three_values](/test/run).
 - `sensitive` takes one entry on the key's line or one per `- ` line below it, never split: a path, a folder ending
   with `/`, or a regular expression between slashes. Unset in `cordee/config.yml`, it is the kit's list; a contract's
   adds to it. A list in brackets other than `[]`, or an expression that does not compile, stops the commit with an

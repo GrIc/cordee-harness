@@ -13,8 +13,6 @@
 
 ## Simpler rules
 
-- The quiz level says only how many questions: none, normal or high, plus the `sensitive` list, the reviewer setting
-  the number; the step less for tests and the `intent` risk go first.
 - One install command for the mechanical part (copy without overwriting, hooks, exclude), the agent keeping only the
   merges.
 - The cockpit and the ledger become an optional module: the core (drift, size, quiz, `next`) runs without them and

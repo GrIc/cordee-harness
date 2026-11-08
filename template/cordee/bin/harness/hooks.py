@@ -35,7 +35,7 @@ def hook(message_file):
     if not report(batch, message):
         sys.exit(1)
     # A reword or an amend that changes no file leaves nothing to quiz on.
-    asked = batch.changed and (batch.level != "low" or os.path.isfile(quiz.QUIZ))
+    asked = batch.changed and (batch.level != "none" or os.path.isfile(quiz.QUIZ))
     if not is_agent(message, batch.emails) or not asked:
         return
     if re.search(r"^Bypass-Quiz:[^\S\n]*\S", message, re.M):

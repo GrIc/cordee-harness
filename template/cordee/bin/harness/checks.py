@@ -4,7 +4,7 @@ import sys
 from types import SimpleNamespace
 
 from harness import quiz
-from harness.contracts import RISKS, governs, highest, listed, matches, risk, sensitive
+from harness.contracts import governs, highest, listed, matches, risk, sensitive
 from harness.drift import drift
 from harness.git import AGENT_EMAILS, commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from harness.journal import committed
@@ -63,47 +63,30 @@ def audit_range(span):
 
 def check(base, tree, message):
     """Checks the change from base to tree (commits or trees) under a commit message. Returns the batch: its changed
-    files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only),
+    files, hit, high, level (none, normal or high), errors (fatal for everyone), findings (fatal for agents only),
     notes, the addresses that mark an agent (emails), what counts as no code (not_code) and the code git shows as
     binary (hidden)."""
     # The base's addresses too, so that the batch removing one is still judged as an agent's.
     emails = listed(tree, "agent-emails", AGENT_EMAILS, True) + listed(base, "agent-emails", AGENT_EMAILS, False)
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
-                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(),
-                            proven=set(), touched=0, emails=emails, not_code=not_code(base, tree), hidden=[])
+                            findings="", notes="", hit=[], risks={}, coded=[], governed=set(), touched=0,
+                            emails=emails, not_code=not_code(base, tree), hidden=[])
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
     # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch
     # emptying the list is judged by it.
     steering = sensitive(tree, True) + sensitive(base, False)
     flagged = [path for path in batch.changed if any(matches(entry, path) for entry in steering)]
-    # Tests a contract links to, alone or with prose the human reads, ask one step less: they prove the intent and leave
-    # what the product does as it was. A module takes the step only from its own contract: a test of one module linked
-    # from another's proves nothing of the first.
-    step = 1 if batch.linked.intersection(batch.changed) and all(
-        path in batch.linked or (PROSE_OR_GIT.search(path) and path not in batch.governed and path not in flagged)
-        for path in batch.changed) else 0
-    judged = {name: lower(found, step if name in batch.proven else 0) for name, found in batch.risks.items()}
-    risks = list(judged.values())
+    risks = list(batch.risks.values())
     # Code outside every module takes the repo's risk. Markdown and git's own files there ask no quiz: the human reads
     # their diff.
     if any(path not in batch.governed and not PROSE_OR_GIT.search(path) for path in batch.changed):
-        risks += [lower(risk(tree, None, True), step), lower(risk(base, None, False), step)]
-    level = highest(risks or ["low"])
-    # At intent, only a contract that moves asks a quiz. A boundary moves with one: governs and depends are in it, and
-    # code of a second module that no Spec-Unchanged spares is drift until its contract changes too.
-    if level == "intent":
-        moved = any(judged[name] == "intent" and f"cordee/modules/{name}.md" in batch.changed for name in batch.hit)
-        level = "normal" if moved else "low"
+        risks += [risk(tree, None, True), risk(base, None, False)]
+    batch.level = highest(risks or ["none"])
     if flagged:
-        level = highest([level, "normal"])
-    batch.level = {"low": "low", "high": "high"}.get(level, "normal")
+        batch.level = highest([batch.level, "normal"])
     batch.high = [name for name in batch.hit if batch.risks[name] == "high"] if batch.level == "high" else []
     return batch
-
-
-def lower(found, step):
-    return RISKS[max(RISKS.index(found) - step, 0)]
 
 
 def quiz_form(batch):

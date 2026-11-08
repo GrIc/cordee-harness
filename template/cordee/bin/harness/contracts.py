@@ -40,7 +40,7 @@ def front_matter(text):
     return found
 
 
-RISKS = ("low", "intent", "normal", "high")
+RISKS = ("none", "normal", "high")
 
 
 def risk(tree, contract, checked):
@@ -58,7 +58,7 @@ def risk(tree, contract, checked):
         return found
     if checked:
         sys.exit(f"ERROR {contract if own else 'cordee/config.yml'}: risk is {found}."
-                 " Write low, intent, normal or high.")
+                 " Write none, normal or high.")
     return "normal"
 
 
@@ -167,9 +167,9 @@ def modules(tree):
 
 
 def links(tree, contract):
-    """The files a contract links to in a tree, other than Markdown and folders, and the drift between the contract and
-    them: a linked file the tree lacks, or a name the file lacks."""
-    files, found = [], []
+    """The drift between a contract and the files it links to in a tree, other than Markdown and folders: a linked file
+    the tree lacks, or a name the file lacks."""
+    found = []
     text = re.sub(" +", " ", re.sub("[\r\n]", " ", git("show", f"{tree}:{contract}")))
     for link in re.findall(r"\[[^]]*\]\([^)]*\)", text):
         name, target = link[1:].split("](", 1)
@@ -183,12 +183,11 @@ def links(tree, contract):
         if not file:
             found.append(f'DRIFT {contract}: links "{name}" to {target}, a file the commit does not have.')
         elif git("cat-file", "-t", f"{tree}:{file}") == "blob":
-            files.append(file)
             # The name as whole words, as grep -w finds it.
             if name not in (posixpath.basename(file), file) and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)",
                                                                               git("show", f"{tree}:{file}")):
                 found.append(f'DRIFT {contract}: links "{name}", not found in {file}.')
-    return files, found
+    return found
 
 
 def resolve(folder, target):

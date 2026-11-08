@@ -1022,27 +1022,27 @@ test_the_config_sets_the_risk_a_contract_overrides() {
   says 'NOTE import: high risk'
 }
 
-test_a_risk_is_one_of_four_values() {
+test_a_risk_is_one_of_three_values() {
   printf -- '---\ngoverns: [src/search/]\nrisk: High\n---\n# search\n' > cordee/modules/search.md
   git add -A
   fails git commit -qm 'Search is risky'
-  says 'ERROR cordee/modules/search.md: risk is High. Write low, intent, normal or high.'
+  says 'ERROR cordee/modules/search.md: risk is High. Write none, normal or high.'
   git commit -q --no-verify -m 'Search is risky'
-  printf -- '---\ngoverns: [src/search/]\nrisk: intent\n---\n# search\n' > cordee/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: none\n---\n# search\n' > cordee/modules/search.md
   git add -A
-  succeeds git commit -qm 'Search moves by its intent'
+  succeeds git commit -qm 'Search asks no quiz'
   printf 'risk: medium\n' > cordee/config.yml
   echo two >> src/import/a.py
   git add -A
   fails git commit -qm 'Change import'
-  says 'ERROR cordee/config.yml: risk is medium. Write low, intent, normal or high.'
+  says 'ERROR cordee/config.yml: risk is medium. Write none, normal or high.'
 }
 
-test_low_risk_asks_no_quiz() {
-  printf 'risk: low\n' > cordee/config.yml
+test_risk_none_asks_no_quiz() {
+  printf 'risk: none\n' > cordee/config.yml
   printf -- '---\ngoverns: [src/import/]\nrisk: normal\n---\n# import\n' > cordee/modules/import.md
   git add -A
-  git commit -qm 'Put the repo at low risk, import at normal'
+  git commit -qm 'Put the repo at risk none, import at normal'
   echo two >> src/search/a.py
   echo two > tools.py
   git add -A
@@ -1059,28 +1059,7 @@ test_low_risk_asks_no_quiz() {
   # The batch that lowers a module's risk is judged at the risk it had.
   contract import src/import/
   git add -A
-  fails agent_commit 'Put import at low risk'
-  says 'No quiz for this agent-assisted batch'
-}
-
-test_intent_risk_asks_a_quiz_when_a_contract_moves() {
-  printf 'risk: intent\n' > cordee/config.yml
-  git add -A
-  git commit -qm 'Put the repo at intent risk'
-  echo two >> src/search/a.py
-  echo two > tools.py
-  git add -A
-  succeeds git commit -q -m 'Fix search' -m 'Agent-Assisted: yes' -m 'Spec-Unchanged(search): a fix'
-  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
-  echo three >> src/search/a.py
-  echo 'More intent.' >> cordee/modules/search.md
-  git add -A
-  fails agent_commit 'Change search'
-  says 'No quiz for this agent-assisted batch'
-  git reset -q --hard
-  contract tags src/tags/
-  git add -A
-  fails agent_commit 'Plan tags'
+  fails agent_commit 'Put import at risk none'
   says 'No quiz for this agent-assisted batch'
 }
 
@@ -1134,16 +1113,16 @@ test_a_deleted_high_risk_contract_is_high_risk() {
 }
 
 test_a_sensitive_file_always_asks_a_quiz() {
-  printf 'risk: low\n' > cordee/config.yml
+  printf 'risk: none\n' > cordee/config.yml
   git add -A
-  git commit -qm 'Put the repo at low risk'
+  git commit -qm 'Put the repo at risk none'
   echo 'Layers.' > cordee/architecture.md
   git add -A
   fails agent_commit 'Draw the layers'
   says 'No quiz for this agent-assisted batch'
   git reset -q --hard
   # The batch that empties the list is judged by the base's.
-  printf 'risk: low\nsensitive: []\n' > cordee/config.yml
+  printf 'risk: none\nsensitive: []\n' > cordee/config.yml
   git add -A
   fails agent_commit 'List no sensitive file'
   says 'No quiz for this agent-assisted batch'
@@ -1176,9 +1155,9 @@ test_a_sensitive_file_always_asks_a_quiz() {
 }
 
 test_the_kit_lists_what_steers_agents() {
-  printf 'risk: low\n' > cordee/config.yml
+  printf 'risk: none\n' > cordee/config.yml
   git add -A
-  git commit -qm 'Put the repo at low risk'
+  git commit -qm 'Put the repo at risk none'
   for file in src/AGENTS.md docs/claude.md .claude/settings.json .github/workflows/ci.yml .gitlab-ci.yml \
     kilo.jsonc; do
     mkdir -p "$(dirname "$file")"
@@ -1191,7 +1170,7 @@ test_the_kit_lists_what_steers_agents() {
 }
 
 test_sensitive_takes_files_folders_and_expressions() {
-  printf 'risk: low\nsensitive: tools  # a file, not the folder\n' > cordee/config.yml
+  printf 'risk: none\nsensitive: tools  # a file, not the folder\n' > cordee/config.yml
   mkdir tools
   echo one > tools/a.sh
   git add -A
@@ -1199,23 +1178,23 @@ test_sensitive_takes_files_folders_and_expressions() {
   echo two >> tools/a.sh
   git add -A
   succeeds agent_commit 'Change a tool'
-  printf 'risk: low\nsensitive: [tools/, db/]\n' > cordee/config.yml
+  printf 'risk: none\nsensitive: [tools/, db/]\n' > cordee/config.yml
   git add -A
   fails git commit -qm 'Settings'
   says 'ERROR cordee/config.yml: sensitive is [tools/, db/]. Write one entry per line below the key, as "  - tools/".'
-  printf 'risk: low\nsensitive:\n  - /(/\n' > cordee/config.yml
+  printf 'risk: none\nsensitive:\n  - /(/\n' > cordee/config.yml
   git add -A
   fails git commit -qm 'Settings'
   says 'ERROR cordee/config.yml: sensitive lists /(/, a regular expression that does not compile'
   git commit -q --no-verify -m 'Settings'
   # In the base it is left out, so that the commit fixing it passes.
-  printf 'risk: low\nsensitive:\n  - tools/, db/\n' > cordee/config.yml
+  printf 'risk: none\nsensitive:\n  - tools/, db/\n' > cordee/config.yml
   git add -A
   succeeds git commit -qm 'Fix the settings'
   echo three >> tools/a.sh
   git add -A
   succeeds agent_commit 'Change a tool'
-  printf 'risk: low\nsensitive:\n  - tools/\n' > cordee/config.yml
+  printf 'risk: none\nsensitive:\n  - tools/\n' > cordee/config.yml
   git add -A
   git commit -qm 'Settings'
   echo four >> tools/a.sh
@@ -1225,102 +1204,6 @@ test_sensitive_takes_files_folders_and_expressions() {
   git reset -q --hard
   git rm -q tools/a.sh
   fails agent_commit 'Drop a tool'
-  says 'No quiz for this agent-assisted batch'
-}
-
-# A contract for search at risk $1, governing its tests and linking to one.
-tested_contract() {
-  printf -- '---\ngoverns: [src/search/, tests/]\nrisk: %s\n---\n# search\n\n- X: [test_x](%s).\n' \
-    "$1" /tests/test_search.py > cordee/modules/search.md
-}
-
-test_a_batch_of_tests_alone_asks_one_step_less() {
-  mkdir tests
-  echo 'def test_x(): pass' > tests/test_search.py
-  tested_contract high
-  git add -A
-  git commit -qm 'Search is at high risk'
-  echo 'def test_y(): pass' >> tests/test_search.py
-  echo 'How to test.' > README.md
-  git add -A
-  printf 'Test more\n\nAgent-Assisted: yes\nSpec-Unchanged(search): tests only\n' > "$msg"
-  write_quiz tests/test_search.py 'A B'
-  succeeds bash cordee/bin/cordee audit --message "$msg"
-  lacks 'high risk'
-  # Code beside the tests keeps the module's risk.
-  echo two >> src/search/a.py
-  git add -A
-  fails bash cordee/bin/cordee audit --message "$msg"
-  says 'QUIZ.md needs 3 questions or more'
-  git reset -q --hard
-  # A test that only another module's contract links to keeps the risk of its own module.
-  mkdir lib
-  echo 'def test_i(): pass' > lib/test_index.py
-  printf -- '---\ngoverns: [lib/]\nrisk: high\n---\n# index\n' > cordee/modules/index.md
-  echo '- I: [test_i](/lib/test_index.py).' >> cordee/modules/search.md
-  git add -A
-  git commit -qm 'Search links a test of index'
-  echo 'def test_j(): pass' >> lib/test_index.py
-  git add -A
-  printf 'Test index\n\nAgent-Assisted: yes\nSpec-Unchanged(index): tests only\n' > "$tmp/index-msg"
-  write_quiz lib/test_index.py 'A B'
-  fails bash cordee/bin/cordee audit --message "$tmp/index-msg"
-  says 'QUIZ.md needs 3 questions or more'
-  git reset -q --hard HEAD~1
-  rm QUIZ.md
-  tested_contract normal
-  git commit -qam 'Search is at normal risk'
-  echo 'def test_z(): pass' >> tests/test_search.py
-  git add -A
-  succeeds git commit -q -F "$msg"
-  [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
-  # A test no contract links to is code like any other.
-  echo 'def test_w(): pass' > tests/test_more.py
-  git add -A
-  fails git commit -q -F "$msg"
-  says 'No quiz for this agent-assisted batch'
-  git reset -q --hard
-  # At intent, a contract that moves with its tests keeps its risk, even out of the sensitive list; a sensitive test
-  # still asks a quiz.
-  printf 'sensitive: []\n' > cordee/config.yml
-  tested_contract intent
-  git add -A
-  git commit -qm 'Search moves by its intent'
-  echo 'def test_v(): pass' >> tests/test_search.py
-  echo 'More intent.' >> cordee/modules/search.md
-  git add -A
-  fails agent_commit 'Test more'
-  says 'No quiz for this agent-assisted batch'
-  git reset -q --hard
-  # Nor beside a test that a contract left as it was links to.
-  mkdir e2e
-  echo 'def test_t(): pass' > e2e/test_t.py
-  printf -- '---\ngoverns: [src/import/]\n---\n# import\n\n- T: [test_t](/e2e/test_t.py).\n' > cordee/modules/import.md
-  git add -A
-  git commit -qm 'Import links a test'
-  echo 'def test_s(): pass' >> e2e/test_t.py
-  echo 'More intent.' >> cordee/modules/search.md
-  git add -A
-  fails agent_commit 'Test more'
-  says 'No quiz for this agent-assisted batch'
-  git reset -q --hard HEAD~1
-  # Nor does code outside every module that a link the batch adds points to.
-  printf 'risk: high\nsensitive: []\n' > cordee/config.yml
-  tested_contract low
-  git commit -qam 'The repo is at high risk'
-  echo deploy > deploy.sh
-  echo '- D: [deploy](/deploy.sh).' >> cordee/modules/search.md
-  git add -A
-  write_quiz deploy.sh 'A B'
-  fails bash cordee/bin/cordee audit --message "$msg"
-  says 'QUIZ.md needs 3 questions or more'
-  git reset -q --hard
-  rm QUIZ.md
-  printf 'sensitive:\n  - tests/\n' > cordee/config.yml
-  git commit -qam 'Keep the tests under a quiz'
-  echo 'def test_u(): pass' >> tests/test_search.py
-  git add -A
-  fails git commit -q -F "$msg"
   says 'No quiz for this agent-assisted batch'
 }
 

@@ -116,7 +116,7 @@ def step_left():
         number = 3 if re.search(r"^DRIFT", found, re.M) else 5
         return f"step {number}: fix what the audit finds.\n{found.rstrip()}"
     bypass = re.search(r"^Bypass-Quiz:[^\S\n]*\S", message, re.M)
-    if bypass or (batch.level == "low" and not os.path.isfile(quiz.QUIZ)):
+    if bypass or (batch.level == "none" and not os.path.isfile(quiz.QUIZ)):
         return f"step 7: hand off, then the human commits with git commit -F {path}."
     if not os.path.isfile(quiz.QUIZ):
         return "step 6: a fresh reviewer reads the staged diff, reports its findings, then writes QUIZ.md and its key."
