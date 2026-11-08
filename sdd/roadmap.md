@@ -2,7 +2,6 @@
 
 ## Fixes
 
-- The Markdown ratio leaves out the kit's block in `AGENTS.md` and the "to settle" lines of the style template.
 - [The journal may lose the feedback that led to a rework](issues/journal-loses-reworked-feedback.md).
 - [A quiz outlives its commit once HEAD moves on](issues/stale-quiz-after-pull.md).
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).

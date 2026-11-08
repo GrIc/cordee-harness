@@ -71,8 +71,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   project. The hook checks nothing when it finishes a merge or a cherry-pick, whose commits were checked
   when first made: [test_a_cherry_pick_asks_no_new_quiz](/test/run).
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
-  workflow and guides, and governs paths that match nothing: [test_audit_notes_the_markdown_ratio](/test/run),
-  [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),
+  workflow, guides and block in `AGENTS.md` and the coding style's rows still to settle, and governs paths that match
+  nothing: [test_audit_notes_the_markdown_ratio](/test/run), [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),
   [test_audit_points_out_governs_paths_that_match_nothing](/test/run).
 
 Constraints: Python 3.10, standard library only, behind a `sh` launcher, and git, on Linux, macOS and Windows (Git

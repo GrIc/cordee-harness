@@ -553,9 +553,12 @@ test_markdown_ratio_leaves_out_the_kit_docs() {
   seq 1 50 > sdd/WORKFLOW.md
   mkdir sdd/guide
   seq 1 50 > sdd/guide/start.md
+  printf '# Agents\n\n<!-- sdd-fabrik -->\nkit\n\nkit\n<!-- /sdd-fabrik -->\nours\n' > AGENTS.md
+  printf '# Style\n| Errors | to settle |\n| Naming | snake_case |\n| Tests | to fill at GENESIS or ADOPT |\n' \
+    > sdd/coding-style.md
   git add -A
   succeeds bash sdd/bin/sdd audit
-  says 'NOTE 8 lines of markdown'
+  says 'NOTE 12 lines of markdown'
 }
 
 test_range_checks_each_commit() {

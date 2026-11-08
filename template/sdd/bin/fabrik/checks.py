@@ -132,20 +132,30 @@ def report(batch, message):
 
 def guidance():
     """Guidance for the agent, never a refusal: governs paths that match nothing, and the project's markdown against the
-    code it governs (WORKFLOW.md and guide/ are the kit's)."""
+    code it governs (WORKFLOW.md, guide/ and kit_lines() are the kit's)."""
     paths = []
     for contract in lines(git("ls-files", "sdd/modules/*.md")):
         for path in governs(f":{contract}"):
             paths.append(path)
             if not git("ls-files", "--", path):
                 print(f"NOTE {contract}: {path} matches no tracked file, a typo or code still to come.")
-    markdown = nonblank("sdd/*.md", "AGENTS.md", ":!sdd/WORKFLOW.md", ":!sdd/guide/")
+    markdown = nonblank("sdd/*.md", "AGENTS.md", ":!sdd/WORKFLOW.md", ":!sdd/guide/") - kit_lines()
     if not paths:
         print(f"NOTE {markdown} lines of markdown, no contract yet.")
         return
     code = nonblank(*paths, ":!*.md")
     print(f"NOTE {markdown} lines of markdown for {code} lines of governed code, ratio"
           f" {markdown / code if code else 0:.2f} (guideline: at most 1).")
+
+
+def kit_lines():
+    """The kit's lines in the project's markdown: its block in AGENTS.md, and the rows of coding-style.md still to
+    settle or to fill."""
+    agents = [line.strip() for line in lines(try_git("grep", "-h", "-v", "-e", "^[[:space:]]*$", "--", "AGENTS.md"))]
+    start, end = "<!-- sdd-fabrik -->", "<!-- /sdd-fabrik -->"
+    block = agents.index(end) - agents.index(start) + 1 if start in agents and end in agents else 0
+    rows = try_git("grep", "-h", "-c", "-e", "to settle", "-e", "to fill at", "--", "sdd/coding-style.md")
+    return block + int(rows or 0)
 
 
 def nonblank(*paths):
