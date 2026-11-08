@@ -84,8 +84,8 @@ production breaks. A team that merges faster than it understands builds comprehe
   where supported, but preventing access to secrets or real data belongs to your environment.
 - Monitor or rank developers. No per-person token chart, velocity metric, or quiz score.
 - Read every agent's cost logs yet. Any agent that reads `AGENTS.md` gets the workflow, checks, quiz, and
-  quiz-flag hints; token accounting reads Claude Code, opencode and Kilo Code, and `cockpit report` / cost hints
-  read Claude Code.
+  quiz-flag hints; token accounting reads Claude Code, opencode, Kilo Code and Antigravity CLI, and `cockpit report` /
+  cost hints read Claude Code.
 
 ## Getting started and daily use
 
@@ -194,10 +194,10 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
        (`commit-msg` grades it offline, `post-commit` journals any feedback flags locally), `cordee brief` / `next` /
        `quiet` / `doctor`, and CI replay of drift and size on push.
      - **Cockpit & Ledger** (`tokens: true`): adds two tools. The local **Cockpit** (`cordee/bin/cockpit`) reads local
-       Claude Code, opencode and Kilo Code logs on the developer's machine so `cockpit report "$PWD"` breaks down where
-       tokens go (writer vs. reviewer, models, context startup, cache reads, MCP servers, plugins, tool output) and
-       `cockpit hints`, run by `cordee hints` at handoff, flags avoidable overhead at most once every 10 batches. The
-       shared **Ledger** (`cordee/bin/ledger`) records anonymous monthly token spend per module in
+       Claude Code, opencode, Kilo Code and Antigravity CLI logs on the developer's machine so `cockpit report "$PWD"`
+       breaks down where tokens go (writer vs. reviewer, models, context startup, cache reads, MCP servers, plugins,
+       tool output) and `cockpit hints`, run by `cordee hints` at handoff, flags avoidable overhead at most once every
+       10 batches. The shared **Ledger** (`cordee/bin/ledger`) records anonymous monthly token spend per module in
        `refs/notes/cordee-ledger` on commit (under random keys dated the first of the month: no commit hash, no author,
        no day, never the quiz) and syncs it on push via a `pre-push` hook so `ledger report` shows what each feature
        cost (any developer can opt out locally with `git config cordee.ledger false`).

@@ -133,6 +133,64 @@ test_kilo_code_reads_like_opencode() {
 writer glm-4.6 1 5 7 50 9'
 }
 
+# Antigravity CLI's index and transcripts, in $tmp/home: a session in $repo that spawns a reviewer next to a command,
+# then two agents in one reply, one in each form of the call, and a session in a folder whose name starts like the
+# repo's.
+test_antigravity_names_the_reviewer_from_the_call_that_spawned_it() {
+  $python - "$tmp/home/.gemini/antigravity-cli" "$repo" <<'PY'
+import json, os, pathlib, sqlite3, sys
+home, repo = sys.argv[1:]
+os.makedirs(home)
+db = sqlite3.connect(os.path.join(home, "conversation_summaries.db"))
+db.execute("create table conversation_summaries (conversation_id, parent_conversation_id, agent_name, workspace_uris)")
+uri = json.dumps([pathlib.Path(repo).as_uri()])
+db.executemany("insert into conversation_summaries values (?, ?, ?, ?)", [
+    ("a1", "", "", uri), ("b2", "a1", "self", uri), ("c3", "a1", "research", uri), ("d4", "a1", "research", uri),
+    ("e5", "", "", json.dumps([pathlib.Path(repo + "-other").as_uri()]))])
+db.commit()
+
+
+def reply(minute, input=0, calls=()):
+    step = {"type": "PLANNER_RESPONSE", "created_at": f"2026-10-23T10:{minute:02}:00Z"}
+    if input:
+        step.update(input_tokens=input, output_tokens=4, cache_read_tokens=50)
+    return dict(step, tool_calls=[{"name": name, "args": args} for name, args in calls])
+
+
+def created(*ids):
+    return {"type": "GENERIC", "content": "".join(f'{{\n  "conversationId":  "{cid}"\n}}' for cid in ids)}
+
+
+picked = "The user changed setting `Model Selection` from None to Gemini 4 Argon (High). No need to comment."
+# transcript.jsonl writes each argument of a call as JSON, transcript_full.jsonl as is.
+logs = {
+    "a1": ("transcript.jsonl", [
+        {"type": "USER_INPUT", "content": f"<USER_SETTINGS_CHANGE>\n{picked}\n</USER_SETTINGS_CHANGE>"},
+        reply(4, 5), reply(1, 5, [("run_command", {}), ("invoke_subagent", {
+            "Role": '"Batch Reviewer and Quiz Author"', "Model": '"flash"', "TypeName": '"self"'})]),
+        {"type": "GENERIC", "content": "Command output: ok"}, created("b2"),
+        reply(2, 5, [("invoke_subagent", {"Subagents": json.dumps([{"Prompt": "Read"}])}),
+                     ("invoke_subagent", {"Model": '"pro"'})]),
+        created("c3"), created("d4"), reply(3), reply(59, 5) | {"created_at": "2026-10-23T11:01:00Z"}]),
+    "b2": ("transcript_full.jsonl", [reply(5, 7)]),
+    "c3": ("transcript_full.jsonl", [reply(6, 8)]),
+    "d4": ("transcript_full.jsonl", [reply(7, 9)]),
+    "e5": ("transcript.jsonl", [reply(8, 100)]),
+}
+for cid, (name, steps) in logs.items():
+    folder = os.path.join(home, "brain", cid, ".system_generated", "logs")
+    os.makedirs(folder)
+    with open(os.path.join(folder, name), "w") as file:
+        file.writelines(json.dumps(step) + "\n" for step in steps)
+        # A line Antigravity is still writing.
+        file.write('{"type": "PLANNER_RESPONSE", "input_')
+PY
+  fails "$(HOME=$tmp/home USERPROFILE=$tmp/home usage)" 'agent:research Gemini 4 Argon (High) 1 8 4 50 0
+agent:research pro 1 9 4 50 0
+reviewer flash 1 7 4 50 0
+writer Gemini 4 Argon (High) 3 15 12 150 0'
+}
+
 test_report_weighs_roles_and_what_is_sent_along() {
   real_repo
   {

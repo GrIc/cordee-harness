@@ -20,6 +20,12 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   [test_opencode_child_session_is_the_reviewer](/test/cockpit).
 - Kilo Code, built on opencode, reads like it from its own base, which its CLI and VS Code extension share:
   [test_kilo_code_reads_like_opencode](/test/cockpit).
+- Antigravity CLI, an index of the conversations by folder, the very repo's, and a transcript each: a session is the
+  writer, at the model the dev picked last; a sub-agent takes its role and model from the call that created it, one or
+  a list, several in a reply among other tools, the reviewer when its role names a review or a quiz, the session's
+  model when the call gives none; a reply without a token count, as before October 2026, or a line still being
+  written, is none:
+  [test_antigravity_names_the_reviewer_from_the_call_that_spawned_it](/test/cockpit).
 - `report <repo> [<since> <until>]`, for the repo holding that folder (`$PWD` may be below its root or go through a
   symlink), over the dev's last 10 agent batches by default, shows Claude Code's cost in input-equivalent tokens (its
   provider's price ratios) by role and model, the context a session and a sub-agent start with, the longest context

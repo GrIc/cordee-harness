@@ -1669,7 +1669,7 @@ test_doctor_says_what_to_fix() {
   succeeds bash cordee/bin/cordee doctor
   lacks 'NOTE'
   says 'ledger: on'
-  says 'replies read in 30 days: claude_code 0, kilo_code 0, opencode 0'
+  says 'replies read in 30 days: antigravity 0, claude_code 0, kilo_code 0, opencode 0'
   says 'audit: '
   hooks=$(git rev-parse --git-path hooks)
   echo '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record' > "$hooks/post-commit"

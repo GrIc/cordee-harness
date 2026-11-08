@@ -806,3 +806,16 @@ already counts once.
 _Rejected:_ `cockpit hints` at every handoff with the logs left unread at `tokens: false` (the core must run without
 the cockpit's files); the hint in `next` (it runs at each step, and a hint mid-batch pulls the agent off it); a mark
 on the journal line for a quiz rewritten (decision 69 rejected the same).
+
+## 85. The cockpit reads Antigravity CLI (2026-11-08)
+
+Two batches of this repo were made with Antigravity CLI and the ledger noted nothing for them (review of 2026-11-08,
+section 2). A reader for it now gives `usage` its replies: the conversations of `conversation_summaries.db` whose
+folder is the repo, exactly, and each one's transcript. The writer's model is the one the dev picked last in the
+session, as its transcript tells the agent (`Gemini 4 Argon (High)`); a sub-agent's role and model come from the
+`invoke_subagent` call that created it, in either of its two forms, the reviewer when its role names a review or a
+quiz. Measured on this machine's 222 conversations: tokens appear on 5 October 2026, every reply since has them, and
+all but 2 sessions name their model; on the two batches the review counted, the reader finds the same calls and
+tokens to the unit. It only weighs `usage`: `report` and cost hints stay Claude Code's.
+_Rejected:_ the model from `settings.json` (the dev's current pick, not the session's); the sub-agent's role from its
+prompt (a prompt names a review in passing); the protobuf blobs of `conversations/<id>.db` (no published format).

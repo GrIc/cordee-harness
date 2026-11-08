@@ -147,8 +147,8 @@ To enable the cockpit and token ledger for the repository, set `tokens: true` in
 
 ### 7.1 Local cockpit (`cordee/bin/cockpit`)
 
-Reads local agent logs on the developer's machine (Claude Code, opencode, and Kilo Code) without sending anything over
-the network:
+Reads local agent logs on the developer's machine (Claude Code, opencode, Kilo Code and Antigravity CLI) without sending
+anything over the network:
 
 - `bash cordee/bin/cockpit report "$PWD" [<since> <until>]`: over the developer's last 10 agent batches by default,
   reports Claude Code's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`) and exact
