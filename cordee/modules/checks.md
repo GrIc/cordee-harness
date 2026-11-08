@@ -2,7 +2,7 @@
 governs: [template/cordee/bin/cordee, template/cordee/bin/harness/__init__.py, template/cordee/bin/harness/__main__.py,
   template/cordee/bin/harness/git.py, template/cordee/bin/harness/drift.py,
   template/cordee/bin/harness/size.py, template/cordee/bin/harness/checks.py, template/cordee/bin/harness/hooks.py,
-  template/cordee/bin/harness/doctor.py,
+  template/cordee/bin/harness/doctor.py, template/cordee/bin/harness/deploy.py,
   template/.github/workflows/cordee.yml, template/.gitlab-ci.yml, test/run]
 ---
 # checks
@@ -54,6 +54,12 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_install_hook_respects_an_existing_hook](/test/run),
   [test_install_hook_adds_the_ledger_hooks_that_pass_without_it](/test/run),
   [test_the_line_for_a_shared_hook](/test/run).
+- `deploy <source> <tag>`, run from the kit's clone, copies into the repo the template's files it lacks, never one it
+  has, with the CI file of the forge `origin` names, writes `<source> <tag>` on the first line of `cordee/README.md` and
+  installs the hooks. It lists the files already there, which the agent merges, and stops, copying nothing, when the
+  host of `origin` names neither GitHub nor GitLab and no `--forge` says which:
+  [test_deploy_copies_what_is_missing_and_lists_the_rest](/test/run),
+  [test_deploy_asks_the_forge_when_origin_names_none](/test/run).
 - `touched` lists the modules a commit changes, in code or contract, each with its changed lines, so that the token
   ledger can split a batch's cost: [test_touched_lists_each_module_with_its_lines](/test/run). Before the first commit,
   it says to commit first, and `cockpit hints` says nothing:

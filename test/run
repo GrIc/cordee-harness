@@ -155,6 +155,35 @@ test_the_line_for_a_shared_hook() {
   succeeds git commit -q --allow-empty -m 'No kit here'
 }
 
+test_deploy_copies_what_is_missing_and_lists_the_rest() {
+  new_repo app
+  git remote add origin git@github.com:acme/gitlab-tools.git
+  echo '# Ours' > AGENTS.md
+  mkdir sub && cd sub
+  succeeds bash "$kit/template/cordee/bin/cordee" deploy https://example.test/kit v9.9.9
+  cd ..
+  says 'with the CI file for github.'
+  says '  AGENTS.md'
+  lacks '  CLAUDE.md'
+  [ "$(cat AGENTS.md)" = '# Ours' ]
+  cmp -s CLAUDE.md "$kit/template/CLAUDE.md"
+  [ -f .github/workflows/cordee.yml ] && [ ! -e .gitlab-ci.yml ]
+  [ "$(head -1 cordee/README.md)" = 'Deployed from https://example.test/kit v9.9.9.' ]
+  grep -qF 'cordee/bin/cordee hook' "$(git rev-parse --git-path hooks)/commit-msg"
+  git add -A
+  succeeds git commit -qm 'Deploy Cordee' -m 'Large-Batch: deploys Cordee'
+}
+
+test_deploy_asks_the_forge_when_origin_names_none() {
+  new_repo app
+  git remote add origin https://git.example.test/acme/github-tools.git
+  fails bash "$kit/template/cordee/bin/cordee" deploy https://example.test/kit v9.9.9
+  says '--forge gitlab'
+  [ ! -e cordee ]
+  succeeds bash "$kit/template/cordee/bin/cordee" deploy https://example.test/kit v9.9.9 --forge gitlab
+  [ -f .gitlab-ci.yml ] && [ ! -e .github ]
+}
+
 test_over_max_lines_blocks_an_agent_warns_a_human() {
   echo 'More intent.' >> cordee/modules/search.md
   seq 1 211 > src/search/big.py

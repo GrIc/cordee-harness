@@ -181,9 +181,12 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    git ls-remote --tags --refs <source>
    git clone --depth 1 --branch <tag> <source> <tmp>
    ```
-3. Copy `<tmp>/template/` into the repository root without overwriting anything, and with only the CI file of the
-   repo's forge: `.github/workflows/cordee.yml` for GitHub, `.gitlab-ci.yml` for GitLab. Read the forge from the host of
-   `git remote get-url origin`; when it names neither, ask the human. Where a file already exists:
+3. From the repository, run `bash <tmp>/template/cordee/bin/cordee deploy <source> <tag>`. It copies what is missing of
+   `<tmp>/template/`, with only the CI file of the repo's forge, read from the host of `origin`, puts `<source>` and
+   `<tag>` on the first line of `cordee/README.md`, and installs the hooks. When the host names neither GitHub nor
+   GitLab, it says so: ask the human, then run it again with `--forge github` or `--forge gitlab`. When a hook is
+   already in place, show the human the lines it printed.
+4. Merge each file it lists as already in the repo:
    - `AGENTS.md`: append the block between `<!-- cordee -->` and `<!-- /cordee -->`;
    - `CLAUDE.md`: add a line `@AGENTS.md`;
    - `.gitattributes`: append its line, which keeps the scripts' line ends LF on Windows;
@@ -191,10 +194,7 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    - `.gitlab-ci.yml`: add its `cordee-audit` job, with the `rules` of the other jobs when they run in merge request
      pipelines, and `test` to `stages` if the file lists them without it;
    - anything else: stop and ask the human.
-4. Replace `<source>` and `<tag>` on the first line of `cordee/README.md` with the URL and the tag you deployed from.
-5. Run `bash cordee/bin/cordee install-hook`. If it declines because another hook is in place, show the human the lines
-   it printed.
-6. Deny `git commit`, `git push` and `--no-verify` in your tool's project settings, merged into what is there, so that
+5. Deny `git commit`, `git push` and `--no-verify` in your tool's project settings, merged into what is there, so that
    every dev of the repo gets them:
    - Claude Code, `.claude/settings.json`: `"permissions": {"deny": ["Bash(git commit:*)", "Bash(git push:*)"]}`;
    - opencode, `opencode.json`, and Kilo Code, `kilo.jsonc` (its VS Code extension reads it too), at the end of the
@@ -207,10 +207,10 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
    For another tool, write only a format its documentation gives, else write nothing and tell the human. If the tool
    commits on its own (Aider does by default, without hooks), turn that off. Tell the human that for their other
    agents these rules are instructions only.
-7. Delete `<tmp>`. Report the files added and merged, the dependencies, and a proposed commit message with
+6. Delete `<tmp>`. Report the files added and merged, the dependencies, and a proposed commit message with
    `Large-Batch: deploys Cordee` (the scripts alone are over the size limit) and without `Agent-Assisted` or an
    agent's `Co-Authored-By` (the files come from the kit, not from you). The human commits.
-8. Then follow GENESIS (no code yet) or ADOPT (existing code) in `cordee/guide/start.md`, as your first batch.
+7. Then follow GENESIS (no code yet) or ADOPT (existing code) in `cordee/guide/start.md`, as your first batch.
 
 To upgrade or uninstall, follow `cordee/guide/upgrade.md` in the deployed repository.
 

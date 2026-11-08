@@ -8,7 +8,7 @@ import sys
 # Run as a folder, Python puts the folder itself on the path: its parent holds the package.
 sys.path[0] = os.path.dirname(os.path.abspath(sys.path[0]))
 
-from harness import brief, checks, cockpit, hooks, journal, ledger, quiz
+from harness import brief, checks, cockpit, deploy, hooks, journal, ledger, quiz
 from harness.doctor import doctor
 from harness.drift import touched
 
@@ -58,6 +58,10 @@ def cordee_command(args):
         print(f"key: {quiz.key_path()}")
     elif command == "install-hook":
         return hooks.install()
+    elif command == "deploy" and len(args) == 3:
+        return deploy.deploy(args[1], args[2])
+    elif command == "deploy" and len(args) == 5 and args[3] == "--forge":
+        return deploy.deploy(args[1], args[2], args[4])
     elif command == "touched":
         for module, lines in touched(args[1] if len(args) > 1 else "HEAD"):
             print(f"{module}\t{lines}")
@@ -73,7 +77,8 @@ def cordee_command(args):
         return misuse("usage: bash cordee/bin/cordee hook <message-file>\n"
                       "       bash cordee/bin/cordee audit [--message <file> | --range <base>..<tip>]\n"
                       "       bash cordee/bin/cordee fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
-                      "       bash cordee/bin/cordee next | quiet <command>... | doctor")
+                      "       bash cordee/bin/cordee next | quiet <command>... | doctor\n"
+                      "       bash <kit>/template/cordee/bin/cordee deploy <source> <tag> [--forge github|gitlab]")
 
 
 def ledger_command(args):
