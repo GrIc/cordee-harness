@@ -49,8 +49,8 @@ def audit_range(span):
         commits = [git("rev-parse", tip)]
     status = 0
     for commit in commits:
-        # Commits from before the harness was adopted are not its business.
-        if not exists(f"{commit}:cordee/bin/cordee"):
+        # Commits from before the harness was adopted are not its business; the one that removes it is.
+        if not exists(f"{commit}:cordee/bin/cordee") and not exists(f"{commit}^:cordee/bin/cordee"):
             continue
         message = git("log", "-1", "--format=%B", commit)
         if report(check(commit_or(f"{commit}^", empty_tree()), commit, message), message):

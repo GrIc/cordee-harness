@@ -714,6 +714,19 @@ test_range_ignores_commits_before_adoption() {
   succeeds bash cordee/bin/cordee audit --range "$start..HEAD"
 }
 
+test_range_checks_the_commit_that_removes_the_harness() {
+  start=$(git rev-parse HEAD)
+  git rm -rq cordee/bin
+  echo two >> src/search/a.py
+  git add -A
+  git commit -q --no-verify -m 'Drop the harness' -m 'Agent-Assisted: yes'
+  cp -R "$kit/template/cordee/bin" cordee/
+  git add -A
+  git commit -q --no-verify -m 'Bring it back'
+  fails bash cordee/bin/cordee audit --range "$start..HEAD"
+  says 'DRIFT cordee/modules/search.md'
+}
+
 # A ready agent batch on search: code and contract.
 batch() {
   echo two >> src/search/a.py

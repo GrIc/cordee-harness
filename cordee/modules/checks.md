@@ -75,7 +75,10 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   The version is raised before each tag: [test_the_version_is_the_last_tag_or_newer](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
-- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). On
+- CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). It skips
+  the commits made before the harness came, not the one that removes it:
+  [test_range_ignores_commits_before_adoption](/test/run),
+  [test_range_checks_the_commit_that_removes_the_harness](/test/run). On
   GitLab, those of each push, and for a new branch those the default branch lacks: checked by hand on a GitLab
   project. The hook checks nothing when it finishes a merge or a cherry-pick, whose commits were checked
   when first made: [test_a_cherry_pick_asks_no_new_quiz](/test/run).

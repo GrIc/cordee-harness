@@ -753,3 +753,14 @@ _Rejected:_ a `--tokens` flag on `deploy` that omits the files (a second tree to
 would need a new deploy instead of one line in `cordee/config.yml` and `install-hook`); keeping `tokens: true` as the
 default (installs a `pre-push` network hook before the human has chosen it); pointing humans only to `WORKFLOW.md`
 (written as terse operational instructions for agents, not as a progressive guide or full manual for humans).
+
+## 80. CI checks the commit that removes the harness (2026-11-08)
+
+`audit --range` skipped every commit without `cordee/bin/cordee`, there for the commits made before adoption. A push
+that removes the harness in one commit and brings it back in the next, as a `deploy` gone wrong then put right does,
+went through CI with that commit unchecked, and the hook, which passes in a repo without the harness, had not checked
+it either. CI now skips a commit only when its parent lacks the harness too: the removal is judged like any batch,
+which an agent's fails on its size, a human's only warns. A tip without the harness still fails CI, on the missing
+script.
+_Rejected:_ refusing any commit that removes `cordee/bin/` (removing the kit is a guided step, `guide/upgrade.md`); a
+hook that fails when the script is missing (it runs in older branches and in other repos sharing the hook).
