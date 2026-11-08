@@ -10,6 +10,7 @@ from collections import Counter
 from fabrik import quiz
 from fabrik.checks import check, quiz_form
 from fabrik.contracts import config, governs
+from fabrik.doctor import missing
 from fabrik.git import commit_or, empty_tree, exists, git, lines, me, try_git
 from fabrik.journal import committed
 
@@ -84,10 +85,14 @@ def newcomer(address, module):
 
 
 def next_step():
-    """The step of COMPILE left for the batch, read from its state in git, then the untracked files, which never
-    block."""
+    """The step of COMPILE left for the batch, read from its state in git, then the hooks out of date and the untracked
+    files, which never block."""
     committed()
     print(step_left())
+    # A hook out of date fails without a word: the quiz stays after its commit, or the ledger notes nothing.
+    stale = dict.fromkeys(name for name, _ in missing(git("rev-parse", "--git-path", "hooks")))
+    if stale:
+        print(f"NOTE hooks out of date: {', '.join(stale)}. bash sdd/bin/sdd doctor says what to do.")
     untracked = lines(git("ls-files", "--others", "--exclude-standard"))
     if untracked:
         print(f"Untracked, stage those of the batch: {', '.join(untracked)}.")

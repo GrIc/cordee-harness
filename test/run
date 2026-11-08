@@ -748,6 +748,15 @@ test_next_leads_a_batch_to_its_quiz() {
   says 'step 6: the batch changed since the quiz'
 }
 
+test_next_points_to_doctor_for_hooks_out_of_date() {
+  succeeds bash sdd/bin/sdd next
+  lacks 'doctor'
+  echo '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' > "$(git rev-parse --git-path hooks)/post-commit"
+  rm "$(git rev-parse --git-path hooks)/pre-push"
+  succeeds bash sdd/bin/sdd next
+  says 'NOTE hooks out of date: post-commit, pre-push. bash sdd/bin/sdd doctor says what to do.'
+}
+
 test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked() {
   echo 'More intent.' >> sdd/modules/search.md
   seq 1 300 > src/search/a.py

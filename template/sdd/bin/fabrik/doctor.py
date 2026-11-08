@@ -23,13 +23,9 @@ def doctor():
               "upgrade (sdd/guide/upgrade.md), or fix its first line.")
     folder = git("rev-parse", "--git-path", "hooks")
     print(f"hooks: {folder}" + (" (core.hooksPath)" if try_git("config", "core.hooksPath") else ""))
-    for name, _, commands in HOOKS:
-        path = os.path.join(folder, name)
-        text = read(path)
-        for command in commands:
-            if command not in text:
-                print(f"NOTE the {name} hook does not run {command}: run bash sdd/bin/sdd install-hook, and add "
-                      "the line it prints if it does not write the hook itself.")
+    for name, command in missing(folder):
+        print(f"NOTE the {name} hook does not run {command}: run bash sdd/bin/sdd install-hook, and add "
+              "the line it prints if it does not write the hook itself.")
     if try_git("check-ignore", "-q", "QUIZ.md") is None:
         print("NOTE QUIZ.md is not kept out of git: run bash sdd/bin/sdd install-hook.")
     print("ledger: " + ("off (git config sdd.ledger false)" if try_git("config", "--bool", "sdd.ledger") == "false"
@@ -41,6 +37,12 @@ def doctor():
     start = time.monotonic()
     subprocess.run(["sh", "sdd/bin/sdd", "audit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print(f"audit: {time.monotonic() - start:.1f} s")
+
+
+def missing(folder):
+    """Each command of the kit's hooks that the hook of that name in folder does not run, as (hook, command)."""
+    return [(name, command) for name, _, commands in HOOKS for command in commands
+            if command not in read(os.path.join(folder, name))]
 
 
 def deployed_tag():

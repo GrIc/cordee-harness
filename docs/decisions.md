@@ -675,3 +675,11 @@ a kit test fails when it is older than the last tag, so the test job fetches the
 _Rejected:_ the first line of `sdd/README.md` alone (nothing to raise, but a partial copy of the files goes unseen);
 reading the version from the kit's git tags (a deployed repo has none); a doctor that fixes what it finds (the hooks
 may be shared or built by a manager, and `install-hook` already writes what it may).
+
+## 71. `next` names the hooks out of date (2026-11-08)
+
+A hook out of date fails without a word: the quiz stays after its commit, or the ledger notes nothing, and on
+2026-11-04 it took reading the hooks by hand to see it. `next`, which the agent runs again and again, now adds one line
+naming the hooks that do not run a command of the kit, and sends to `doctor`, which says what to do with each.
+_Rejected:_ the full list of what to add (it would repeat at each `next`, `doctor` gives it once); the line in `audit`
+(CI runs it, where no hook runs); refusing the step (a check that locks, for a cause outside the batch).

@@ -23,6 +23,7 @@ batch, read from git rather than remembered.
   missing or older than the last commit; the audit's findings, drift as step 3 and the others as step 5; step 6 while a
   batch that asks a quiz, without `Bypass-Quiz`, has a quiz missing, malformed or older than the batch; else step 7, the
   handoff. It lists the untracked files, which never block: [test_next_leads_a_batch_to_its_quiz](/test/run),
-  [test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked](/test/run).
+  [test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked](/test/run). It names in one line the hooks that do not run
+  a command of the kit, and sends to `doctor`: [test_next_points_to_doctor_for_hooks_out_of_date](/test/run).
 
 Constraints: as [checks](checks.md).
