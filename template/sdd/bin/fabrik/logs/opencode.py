@@ -7,8 +7,13 @@ from fabrik.logs import REVIEW
 
 
 def usage(repo, start, end):
+    return read(os.path.join("opencode", "opencode.db"), repo, start, end)
+
+
+def read(path, repo, start, end):
+    """The replies of a base at path under the data folder, opencode's or a tool built on it."""
     share = os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share"))
-    base = os.path.join(share, "opencode", "opencode.db")
+    base = os.path.join(share, path)
     if not os.path.exists(base):
         return
     db = sqlite3.connect(f"file:{base}?mode=ro", uri=True)

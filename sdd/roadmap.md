@@ -2,6 +2,7 @@
 
 ## Fixes
 
+- [The quiz's answers reach the human through the agents](issues/quiz-answers-reach-the-human.md).
 - A pure rename counts zero lines in the size: `size.py` reads the diff with `--no-renames`, so a rename counts twice.
 - The Markdown ratio leaves out the kit's block in `AGENTS.md` and the "to settle" lines of the style template.
 - [The journal may lose the feedback that led to a rework](issues/journal-loses-reworked-feedback.md).
@@ -32,7 +33,7 @@
 - A relay quiz: the dev who takes over a module answers the quiz of its last batches.
 - [Hunks that only change comments count as code in the quiz](issues/comment-only-hunks.md).
 - A queue of slow decisions: a reversible one is taken as provisional with a review date, its age shown by `brief`.
-- Kilo Code and Copilot in the cockpit, specified from real logs of each ([Kilo Code](issues/kilo-code-reader.md)).
+- Copilot in the cockpit, specified from its real logs.
 - The ledger notes the exact model (`claude-opus-5-5`, not `opus`): the data an API of environmental impact needs,
   without the tooling to call it.
 - Someday: publish the exchanges between humans and agents (quiz feedback, hints, trailers) as an open protocol, so

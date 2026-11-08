@@ -86,9 +86,10 @@ test_without_python_only_the_commit_msg_hook_stops() {
   fails "$(bash sdd/bin/cockpit hints 2>&1)" ''
 }
 
-test_opencode_child_session_is_the_reviewer() {
-  mkdir -p "$XDG_DATA_HOME/opencode"
-  $python - "$XDG_DATA_HOME/opencode/opencode.db" "$repo" <<'PY'
+# An opencode base at $1, with a writer session and its reviewer child, one reply each, in $repo.
+opencode_base() {
+  mkdir -p "$(dirname "$1")"
+  $python - "$1" "$repo" <<'PY'
 import json, sqlite3, sys
 db = sqlite3.connect(sys.argv[1])
 db.execute("create table session (id, parent_id, directory, title)")
@@ -101,6 +102,16 @@ for i, (session, role) in enumerate([("s1", "assistant"), ("s1", "user"), ("s2",
     db.execute("insert into message values (?, ?, ?, ?)", (i, session, 1792751400000, json.dumps(data)))
 db.commit()
 PY
+}
+
+test_opencode_child_session_is_the_reviewer() {
+  opencode_base "$XDG_DATA_HOME/opencode/opencode.db"
+  fails "$(usage)" 'reviewer glm-4.6 1 5 7 50 9
+writer glm-4.6 1 5 7 50 9'
+}
+
+test_kilo_code_reads_like_opencode() {
+  opencode_base "$XDG_DATA_HOME/kilo/kilo.db"
   fails "$(usage)" 'reviewer glm-4.6 1 5 7 50 9
 writer glm-4.6 1 5 7 50 9'
 }

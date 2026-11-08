@@ -15,6 +15,8 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   reviewer: [test_claude_code_splits_writer_and_reviewer_once_per_reply](/test/cockpit).
 - opencode, a SQLite base: a child session whose title names a review is the reviewer:
   [test_opencode_child_session_is_the_reviewer](/test/cockpit).
+- Kilo Code, built on opencode, reads like it from its own base, which its CLI and VS Code extension share:
+  [test_kilo_code_reads_like_opencode](/test/cockpit).
 - `report <repo> [<since> <until>]`, for the repo holding that folder (`$PWD` may be below its root or go through a
   symlink), over the dev's last 10 agent batches by default, shows Claude Code's cost in input-equivalent tokens (its
   provider's price ratios) by role and model, the context a session and a sub-agent start with, the longest context
@@ -40,5 +42,6 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
 Constraints: as [checks](checks.md); a new tool is one reader in `fabrik/logs/`, which `usage` finds by itself,
 and `report` and `hints` too when it weighs its calls. Only that reader knows the tool's logs, names and prices.
 Tested on Linux, macOS and Windows.
-Non-goals: a report for opencode (only its sums for now), tools whose logs we have not read yet (Codex), telling
-apart two batches worked on at the same time, changing the dev's setup (the agent asks, the dev decides).
+Non-goals: a report for opencode and Kilo Code (only their sums for now), tools whose logs we have not read yet
+(Codex), telling apart two batches worked on at the same time, changing the dev's setup (the agent asks, the dev
+decides).

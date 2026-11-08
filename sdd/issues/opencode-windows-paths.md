@@ -9,4 +9,6 @@ Guess, to check against the owner's export of the session table: the reader keep
 stores the directory Windows writes (`C:\Users\...`), maybe in another case. A session started in a worktree would
 miss too.
 
+Kilo Code reads through the same `read()` since 2026-11-08: the fix covers both.
+
 Where: `template/sdd/bin/fabrik/logs/opencode.py`, `test/cockpit`.

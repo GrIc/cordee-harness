@@ -83,8 +83,8 @@ production breaks. A team that merges faster than it understands builds comprehe
   where supported, but preventing access to secrets or real data belongs to your environment.
 - Monitor or rank developers. No per-person token chart, velocity metric, or quiz score.
 - Read every agent's cost logs yet. Any agent that reads `AGENTS.md` gets the workflow, checks, quiz, and
-  quiz-flag hints; token accounting reads Claude Code and opencode, and `cockpit report` / cost hints read Claude
-  Code.
+  quiz-flag hints; token accounting reads Claude Code, opencode and Kilo Code, and `cockpit report` / cost hints
+  read Claude Code.
 
 ## Getting started and daily use
 
