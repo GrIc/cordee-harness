@@ -172,6 +172,24 @@ test_deploy_copies_what_is_missing_and_lists_the_rest() {
   grep -qF 'cordee/bin/cordee hook' "$(git rev-parse --git-path hooks)/commit-msg"
   git add -A
   succeeds git commit -qm 'Deploy Cordee' -m 'Large-Batch: deploys Cordee'
+
+  printf '# Ours\n\n<!-- sdd-fabrik -->\nold\n<!-- /sdd-fabrik -->\n\n# Footer\n' > AGENTS.md
+  printf 'Deployed from https://example.test/kit v0.1.0.\n\n# Our map\n' > cordee/README.md
+  echo old > cordee/WORKFLOW.md
+  echo old > cordee/bin/sdd
+  rm cordee/modules/.gitkeep
+  echo 'batch-lines: 150' > cordee/config.yml
+  succeeds bash "$kit/template/cordee/bin/cordee" deploy https://example.test/kit v10.0.0
+  lacks '  AGENTS.md'
+  lacks '  cordee/README.md'
+  lacks '.gitkeep'
+  says '  cordee/config.yml'
+  [ ! -e cordee/bin/sdd ] && [ ! -e cordee/modules/.gitkeep ]
+  cmp -s cordee/WORKFLOW.md "$kit/template/cordee/WORKFLOW.md"
+  grep -qF '<!-- cordee -->' AGENTS.md && grep -qF '# Ours' AGENTS.md && grep -qF '# Footer' AGENTS.md
+  [ "$(head -1 cordee/README.md)" = 'Deployed from https://example.test/kit v10.0.0.' ]
+  grep -qF '# Our map' cordee/README.md
+  [ "$(cat cordee/config.yml)" = 'batch-lines: 150' ]
 }
 
 test_deploy_asks_the_forge_when_origin_names_none() {

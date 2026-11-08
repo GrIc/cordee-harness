@@ -719,16 +719,21 @@ _Rejected:_ keeping `low` (it names a risk, where the value says the quiz); `int
 already asks about the promise when a contract moves); the step for tests on three levels (`normal` would step down to
 `none`, no question on a test that may lock a bug in).
 
-## 78. A deploy command does the copy, the agent the merges (2026-11-08)
+## 78. A deploy command does the copy and the upgrade, the agent the merges (2026-11-08)
 
 The deploy had the agent copy `template/` file by file without overwriting, pick the CI file from the host of
 `origin`, edit the first line of `cordee/README.md` and run `install-hook`: four steps a script does the same way each
 time, and an agent may not. `bash <tmp>/template/cordee/bin/cordee deploy <source> <tag>` now does them from the
-kit's clone, in Python like the rest, tested by `test/run`. It lists the files already in the repo; their merges and
-the deny rules, which depend on the tool the agent runs in, stay with the agent. A host that names neither forge stops
-it before any copy, and the human answers through `--forge`.
+kit's clone, in Python like the rest, tested by `test/run`, and does the upgrade and the switch from SDD-Fabrik too:
+it replaces the kit's own files (`cordee/bin/` and `cordee/guide/`, cleared first so deleted files go, and
+`cordee/WORKFLOW.md`), replaces the marked block in `AGENTS.md` when the `cordee` or `sdd-fabrik` markers are already
+there, and updates the `Deployed from` line of `cordee/README.md`. It lists the other files already in the repo; their
+merges (or on upgrade, what `git diff <old> <new>` changed in them) and the deny rules, which depend on the tool the
+agent runs in, stay with the agent. A host that names neither forge stops it before any write, and the human answers
+through `--forge`.
 _Rejected:_ a script at the kit's root, outside `template/` (nothing more in each repo, but a fourth thing to test,
-that `upgrade` could never reuse); the deny rules in the command (Claude Code and opencode as JSON, Kilo as JSONC,
-Copilot and the others by hand: two paths for one step); the simple merges in the command (the `AGENTS.md` block and
-the `@AGENTS.md` line, a third of the merges, with the CI merges still to the agent); the forge from the whole URL
-(a GitLab repo named `github-tools` would get the GitHub file).
+that `upgrade` could never reuse); a second `upgrade` command (the same steps as `deploy` once the kit's files and
+markers are replaced); the deny rules in the command (Claude Code and opencode as JSON, Kilo as JSONC, Copilot and the
+others by hand: two paths for one step); appending the `AGENTS.md` block and the `@AGENTS.md` line on a first deploy
+(a third of the merges, with the CI merges still to the agent); the forge from the whole URL (a GitLab repo named
+`github-tools` would get the GitHub file).
