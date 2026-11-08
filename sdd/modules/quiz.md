@@ -29,7 +29,8 @@ The questions that make the human understand an agent batch before it is committ
   [test_a_commit_without_the_hook_leaves_no_quiz](/test/run), [test_an_amend_clears_its_quiz](/test/run),
   [test_audit_clears_the_last_commit_s_quiz](/test/run),
   [test_the_next_fingerprint_clears_a_quiz_left_behind](/test/run),
-  [test_a_merge_on_top_of_the_batch_still_clears_its_quiz](/test/run).
+  [test_a_merge_on_top_of_the_batch_still_clears_its_quiz](/test/run). A quiz left for a batch redone before any commit
+  goes there once, when the next `fingerprint` runs: [test_a_reworked_batch_journals_the_old_quiz_s_flags](/test/run).
 - `audit` checks its form, so that the reviewer, not the human, meets a malformed quiz:
   [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_cites_three_places_at_most](/test/run).
   It only notes a quiz older than its batch and, past one question, a right answer always in the same place:

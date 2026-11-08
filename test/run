@@ -1380,6 +1380,22 @@ test_the_next_fingerprint_clears_a_quiz_left_behind() {
   [ ! -e QUIZ.md ]
 }
 
+# The dev flags a question, the agent redoes the batch and the reviewer writes a new quiz: the flag is journaled once.
+test_a_reworked_batch_journals_the_old_quiz_s_flags() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A C C
+  fails agent_commit 'Change search'
+  sed 's/^> - \[ \] The code does not do/> - [x] The code does not do/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
+  echo three >> src/search/a.py
+  git add -A
+  bash sdd/bin/sdd fingerprint > /dev/null
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  succeeds agent_commit 'Change search'
+  [ "$(journal | cut -f 3-6)" = 'search	not-wanted	Question 2?	-' ]
+}
+
 # The same clone, then a pull that brings the batch back under a merge made elsewhere: no hook ran on top of it.
 test_a_merge_on_top_of_the_batch_still_clears_its_quiz() {
   rm "$(git rev-parse --git-path hooks)/post-commit"

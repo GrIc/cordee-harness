@@ -1,14 +1,15 @@
 """The quiz journal: the questions a dev flagged or commented, kept on this machine and shared by the clone's
 worktrees. A line is v2, the time, the batch's modules, the causes, the title and the words, tab-separated; the
 cockpit reads it."""
+import hashlib
 import os
 import re
 import time
 from collections import Counter
 
-from fabrik.drift import touched
-from fabrik.git import commit_or, git, lines, shared_path
-from fabrik.quiz import QUIZ, fingerprint, key_path, read_lines
+from fabrik.drift import changes, touched
+from fabrik.git import commit_or, empty_tree, git, lines, shared_path
+from fabrik.quiz import QUIZ, fingerprint, key_path, read_lines, staged
 
 CAUSES = ["not-understood", "unclear", "not-wanted"]
 
@@ -42,9 +43,27 @@ def quizzed(key, written):
     return None
 
 
+def reworked():
+    """Before a new quiz: the questions flagged in a quiz left for a batch that changed since and was never committed
+    go to the journal, on the modules staged now. A flag that got the batch redone would be lost with that quiz. Once
+    per state of QUIZ.md: the reviewer may ask again for the same batch."""
+    key = key_path()
+    if not (os.path.isfile(QUIZ) and os.path.isfile(key)) or read_lines(key)[:1] in ([], [staged()]):
+        return
+    with open(QUIZ, "rb") as file:
+        state = hashlib.sha1(file.read()).hexdigest()
+    done = git("rev-parse", "--git-path", "sdd/quiz-journaled")
+    if os.path.isfile(done) and read_lines(done) == [state]:
+        return
+    write(",".join(module for module, _ in changes(commit_or("HEAD", empty_tree()), git("write-tree"))))
+    with open(done, "w", encoding="utf-8") as file:
+        file.write(state + "\n")
+
+
 def write(modules):
     """Appends a line per question of QUIZ.md the dev flagged or commented. It runs once the commit of a passed quiz
-    exists, when the boxes are the dev's last word. The block's boxes are read by their place, so in any language."""
+    exists, or before a new quiz replaces this one, when the boxes are the dev's last word. The block's boxes are read
+    by their place, so in any language."""
     rows, title, causes, words, box = [], "", [], "", 0
 
     def close():

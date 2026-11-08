@@ -55,11 +55,14 @@ def touched(commit):
     """The modules whose code or contract a commit changes, each with its changed lines."""
     if commit_or(commit, None) is None:
         sys.exit(f"No commit {commit} here: commit first, or name a commit.")
-    parent = commit_or(f"{commit}^", empty_tree())
+    return changes(commit_or(f"{commit}^", empty_tree()), commit)
+
+
+def changes(base, tree):
+    """The modules whose code or contract changes from base to tree, each with its changed lines."""
     found = []
-    for contract in contracts(commit):
-        stats = git("diff", "--numstat", "--no-renames", parent, commit, "--", contract,
-                    *governs(f"{commit}:{contract}"))
+    for contract in contracts(tree):
+        stats = git("diff", "--numstat", "--no-renames", base, tree, "--", contract, *governs(f"{tree}:{contract}"))
         changed = sum(int(row[0]) + int(row[1]) for row in (line.split("\t") for line in lines(stats)) if row[0] != "-")
         if changed:
             found.append((module(contract), changed))

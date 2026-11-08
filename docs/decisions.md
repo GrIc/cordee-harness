@@ -650,3 +650,15 @@ a pull of 200 commits costs no 200 processes. A pull with rebase rewrites the ba
 _Rejected:_ the last N commits (a pull brings others' newer commits first, so any N can miss the batch); only the
 commits that carry `Quiz:` (a batch committed with `--no-verify` must leave no quiz either); telling the dev the
 hooks are out of date (a batch of its own, and the quiz would stay until they act).
+
+## 69. A quiz replaced before any commit is journaled by the next fingerprint (2026-11-08)
+
+On 2026-11-05 a demo repo took a decision from a quiz answer flagged "the code does not do what I wanted", yet its
+journal was empty: the journal read only the quiz of the commit that passed, and a batch redone after a flag gets a new
+quiz first. The reviewer runs `fingerprint` before writing one, so `fingerprint` now journals the flags of a quiz left
+for a batch that changed since and was never committed, on the modules staged now, once per state of `QUIZ.md`. The
+lines keep format v2 and no mark: `not-wanted` already says why the batch was redone. The cause is a guess, not
+checked: the demo's opencode sessions are not on this machine.
+_Rejected:_ a `reworked` mark in a v3 line (a new format and two readers in the cockpit, for a reason the box already
+gives); journaling at each failed commit (the boxes are ticked after the hook writes the block, so the dev's last word
+comes later).

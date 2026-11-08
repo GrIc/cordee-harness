@@ -50,6 +50,7 @@ def sdd_command(args):
         return checks.audit_staged()
     elif command == "fingerprint":
         journal.committed()
+        journal.reworked()
         os.makedirs(os.path.dirname(quiz.key_path()), exist_ok=True)
         print(f"fingerprint: {quiz.staged()}")
         print("quiz: QUIZ.md")

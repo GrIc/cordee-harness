@@ -136,7 +136,8 @@ Once the commit of a passed quiz exists, each question the dev flagged or commen
 `$(git rev-parse --git-common-dir)/sdd/quiz-journal`, on this machine only and shared by the clone's worktrees: one
 tab-separated line, `v2`, the time in epoch seconds, the batch's modules (joined by `,`, or `-`), the boxes ticked
 (`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words (or
-`-`). The cockpit reads it.
+`-`). A quiz left for a batch that changed since and was never committed goes there too, when `fingerprint` runs for
+the new one. The cockpit reads it.
 
 ## Contracts
 
