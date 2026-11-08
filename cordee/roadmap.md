@@ -4,8 +4,6 @@
 
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).
 - `audit` caches `git show` by tree and path in `contracts.py`, if it takes over 3 s with 40 contracts on Windows.
-- The reviewer asks reading questions (what it returns, which line, why this choice), never a counterfactual across
-  files.
 - [Split test/run by module](issues/split-test-run.md).
 - [A wrong answer is fixed by ticking another box of the same question](issues/retry-same-question.md).
 - [A flag is lost when the quiz is rewritten for the same batch](issues/unclear-flag-lost-same-batch.md).
@@ -17,9 +15,6 @@
 
 - The quiz level says only how many questions: none, normal or high, plus the `sensitive` list, the reviewer setting
   the number; the step less for tests and the `intent` risk go first.
-- The reviewer picks what each question is about from what the batch changes: behavior for code, the promise for a
-  contract or `product.md`, the structure for `depends`, `governs` or `architecture.md`, what a test pins and misses
-  for tests alone, the rejected option for a decision. The dev who commits answers them all.
 - One install command for the mechanical part (copy without overwriting, hooks, exclude), the agent keeping only the
   merges.
 - The cockpit and the ledger become an optional module: the core (drift, size, quiz, `next`) runs without them and

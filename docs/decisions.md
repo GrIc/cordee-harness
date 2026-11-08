@@ -728,3 +728,17 @@ it. `test/run`, which CI runs on Linux, macOS and Windows, now fails when `audit
 `git show` by tree and path in `contracts.py` comes only if Windows goes over.
 _Rejected:_ the cache now (code for a cost no one has seen); a timing job of its own in CI (a fourth suite to run
 before each batch, for one test); the time printed without a limit (a number no one reads on a green run).
+
+## 76. The reviewer asks about what the batch changes, from the lines it cites (2026-11-08)
+
+Decision 65 split the quiz in two: the risk says how many questions, what the batch changes says what they are about.
+The workflow still told the reviewer only how to ask about code. It now names a subject per kind of change: behavior
+for code, the promise for a contract or `product.md`, the structure for `depends`, `governs` or `architecture.md`, what
+a test pins and misses, the rejected option for a decision. Of the seven questions devs flagged in this repo's journal,
+four set a scenario to run through the code ("if measure() stopped reading reader.calls() at the first Call, what
+would the mcp hint say?"), all four ticked "not understood": a question is now answered from the lines its `See`
+cites.
+_Rejected:_ the subject as a rule of the script, by file type (a contract with code would need a pair of rules for each
+mix, and the reviewer reads the diff anyway); dropping "what breaks if this line goes" (it reads one line, the trouble
+was the chain across files); a question per kind of change in every batch (one to three questions, picked where the
+batch weighs).

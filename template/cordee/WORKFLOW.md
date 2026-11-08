@@ -89,9 +89,13 @@ harness.
 
 `bash cordee/bin/cordee fingerprint` prints the batch fingerprint and the two paths to write. The reviewer writes:
 
-- `QUIZ.md` at the repo root (kept out of git): questions that make the human predict, not recognize. Ask what this
-  code does, never the technology: from what it does to how, then why. What does this return for that input, which
-  line enforces this rule, what breaks if this line goes, why this option over that one. Each question has a `See`
+- `QUIZ.md` at the repo root (kept out of git): questions that make the human predict, not recognize. Each is about
+  what the batch changes, never the technology, and the reviewer picks which from the diff: the behavior for code,
+  from what it does to how, then why (what this returns for that input, which line enforces this rule, what breaks if
+  this line goes, why this option over that one); the promise for a contract or `product.md`; the structure for
+  `depends`, `governs` or `architecture.md`; what a test pins and what it misses for tests alone; the rejected option
+  for a decision. A question is answered by reading the lines its `See` cites, never by following a change of the code
+  through other files. Each question has a `See`
   line citing one to three places of the batch, `file:line` or `file:line-line`, separated by `, `, and 2 to 4 boxes;
   the right box changes place. Everything the human reads is in their language: the title and the line under it,
   questions, boxes, hints; the marks `## `, `See` and `- [ ]` stay as shown.
