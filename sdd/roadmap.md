@@ -2,7 +2,6 @@
 
 ## Fixes
 
-- [Code marked binary escapes the size and the coverage](issues/binary-code-skips-size.md).
 - A pure rename counts zero lines in the size: `size.py` reads the diff with `--no-renames`, so a rename counts twice.
 - The Markdown ratio leaves out the kit's block in `AGENTS.md` and the "to settle" lines of the style template.
 - [The journal may lose the feedback that led to a rework](issues/journal-loses-reworked-feedback.md).

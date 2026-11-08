@@ -33,6 +33,7 @@ The questions that make the human understand an agent batch before it is committ
   It only notes a quiz older than its batch and, past one question, a right answer always in the same place:
   [test_a_quiz_older_than_the_batch_only_warns](/test/run).
 - The trailer says how many hunks of code the quiz cites, outside what `not-code` lists:
-  [test_the_trailer_says_how_much_the_quiz_covers](/test/run).
+  [test_the_trailer_says_how_much_the_quiz_covers](/test/run). Code that `.gitattributes` marks binary has its hunks
+  too: [test_the_quiz_covers_code_marked_binary](/test/run).
 
 Constraints: as [checks](checks.md).

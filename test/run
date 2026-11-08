@@ -759,6 +759,15 @@ test_the_trailer_says_how_much_the_quiz_covers() {
   git log -1 --format=%B | grep -qx 'Quiz: 3/3'
 }
 
+test_the_quiz_covers_code_marked_binary() {
+  echo '*.py binary' > .gitattributes
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  succeeds agent_commit 'Change search'
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
+}
+
 test_wrong_answer_explains_then_a_retry_passes() {
   batch
   write_quiz src/search/a.py 'A B C'

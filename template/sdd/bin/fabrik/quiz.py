@@ -62,7 +62,7 @@ def form(batch):
             sys.exit(f"Question {question.number} has no right box in the key: line {question.number + 1} starts with"
                      " its letter, A for the first box.")
         batch.ranks += question.right
-    batch.coverage = cover(cites, batch.not_code)
+    batch.coverage = cover(cites, batch.not_code, batch.hidden)
 
 
 def key_path():
@@ -110,14 +110,17 @@ def questions():
     return found
 
 
-def cover(cites, not_code):
+def cover(cites, not_code, hidden):
     """How much of the staged code the cited places meet: covered hunks, all hunks, and the missed ones as file:line.
-    cites holds (file, first, last); not_code tells the paths that are no code. A hunk that only deletes is met at the
-    line before it or the one after, so a deleted file at its line 1."""
+    cites holds (file, first, last); not_code tells the paths that are no code, hidden the code git shows as binary. A
+    hunk that only deletes is met at the line before it or the one after, so a deleted file at its line 1."""
     covered, total, missed = 0, 0, []
     # Plain a/ and b/ paths and one hunk per change, whatever the dev's diff settings.
-    diff = git("diff", "--cached", "-U0", "--inter-hunk-context=0", "--no-renames", "--no-color", "--no-ext-diff",
-               "--src-prefix=a/", "--dst-prefix=b/")
+    options = ["diff", "--cached", "-U0", "--inter-hunk-context=0", "--no-renames", "--no-color", "--no-ext-diff",
+               "--src-prefix=a/", "--dst-prefix=b/"]
+    diff = git(*options)
+    if hidden:
+        diff += "\n" + git("--literal-pathspecs", *options, "--text", "--", *hidden)
     head, code, path = False, False, ""
     for line in lines(diff):
         if line.startswith("diff --git "):
