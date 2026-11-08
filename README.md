@@ -61,10 +61,10 @@ production breaks. A team that merges faster than it understands builds comprehe
 | Module contracts & drift check | Each `cordee/modules/<module>.md` (`<= 50` lines) declares `governs` pathspecs, optional `depends`, `risk` (`none`, `normal`, `high`) and `batch-lines`, and plain-sentence criteria linked to real tests (or checked by hand when unlinked). Touching governed code without updating its contract, or stating `Spec-Unchanged(<module>): <reason>`, refuses an agent commit; links to missing files or renamed tests fail as drift too. |
 | Small, single-module batches | Refuses agent commits above `batch-lines` changed lines of code and tests, 200 by default and set for the repo in `cordee/config.yml` or for a module in its contract (with a 5% note margin so agents never trim tests or names to fit) or spanning a second unspared module, unless the human writes `Large-Batch: <reason>` (`Spec-Unchanged` spares its module from the one-module limit, not the line count). |
 | Fresh review & risk-scaled quiz | A fresh agent context reviews the staged diff against the contract and coding style, then writes `QUIZ.md` and a hidden key in `.git/cordee/`: one to three predictive questions, each citing one to three places of the diff; when `risk: high`, three or more, citing every hunk of code (recommending a second human's reading); 0 at `risk: none` or for Markdown-only changes outside the contracts and what modules govern, unless the batch touches a `sensitive` file (the workflow, the harness, the architecture and the contracts by default), which asks one at any risk. Passing stamps `Quiz: 3/3, covers 5/7` on the commit: how many hunks of code the questions cite. |
-| Quiz feedback loop | Questions the developer flags are logged locally in `quiz-journal` when the quiz passes. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
+| Quiz feedback loop | Questions the developer flags are logged locally in `quiz-journal` when the quiz passes or is rewritten; at most once in 10 batches, `cordee hints` at handoff names a module flagged *unclear* or *not what I wanted* twice, so the agent can propose a rule. A wrong answer writes a directional hint and optional checkboxes (*not understood*, *unclear*, *not what I wanted*) into `QUIZ.md`; typing `quiz feedback` has the agent walk through the gap, and it spends nothing until the developer asks. |
 | Pace & module onboarding (`cordee brief`) | Before a batch, surfaces unanswered `QUIZ.md` files in sibling worktrees and remote branches waiting for review past `review-wait-hours` (4 by default) and younger than `abandoned-days` (14), bots aside, and spots a developer's first batch in a module to offer discovery mode and name the three teammates who delivered there most. |
 | Anonymous team ledger (optional, `tokens: true`) | Hooks record token spend (writer vs. reviewer, by model) per module and month in `refs/notes/cordee-ledger` and sync it on push (`git config cordee.ledger false` opts out). `ledger report` shows what each feature cost. The quiz never goes there. |
-| Private cockpit & self-tuning (optional, `tokens: true`) | On the developer's machine over their last 10 agent batches, `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cockpit hints` flags avoidable Claude Code overhead or any module whose quizzes were flagged *unclear* or *not what I wanted* twice, so the agent can propose a trim or a new rule. |
+| Private cockpit & self-tuning (optional, `tokens: true`) | On the developer's machine over their last 10 agent batches, `cockpit report` breaks down Claude Code tokens (roles, models, context startup, cache reads, MCP servers, plugins, tool output). At most once in 10 batches, `cordee hints` at handoff flags avoidable Claude Code overhead, so the agent can propose a trim. |
 | Quiet runner (`cordee quiet`) | Runs verbose test or build commands and prints one line when green, or the last 30 lines when red, keeping agent context lean. |
 
 ### What it deliberately does not do
@@ -153,8 +153,8 @@ flowchart LR
    - If an answer is wrong, read the hint written inside `QUIZ.md`. When the code does not match what you meant, tick
      *The code does not do what I wanted* and type `quiz feedback` to your agent.
 5. Fresh session & hints. Start the next batch in a new session so the agent does not re-read a long history on
-   every call. When `tokens: true` in `cordee/config.yml`, `cockpit hints` at handoff prints nothing unless your last
-   10 batches show something new to cut or a module flagged twice in quizzes.
+   every call. `cordee hints` at handoff prints nothing unless your last 10 batches show a module flagged twice in
+   quizzes or, when `tokens: true` in `cordee/config.yml`, something new to cut.
 6. Push & merge. CI replays drift and size on each commit (and when `tokens: true`, pushing syncs anonymous
    `cordee-ledger` notes). Merge branches with a merge commit or a rebase (squash merges add batches up and drop
    per-commit trailers). To amend a committed agent batch that changes files, run `git reset --soft HEAD^` and commit
@@ -196,7 +196,7 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
      - **Cockpit & Ledger** (`tokens: true`): adds two tools. The local **Cockpit** (`cordee/bin/cockpit`) reads local
        Claude Code, opencode and Kilo Code logs on the developer's machine so `cockpit report "$PWD"` breaks down where
        tokens go (writer vs. reviewer, models, context startup, cache reads, MCP servers, plugins, tool output) and
-       `cockpit hints` at handoff flags avoidable overhead or recurring quiz flags at most once every 10 batches. The
+       `cockpit hints`, run by `cordee hints` at handoff, flags avoidable overhead at most once every 10 batches. The
        shared **Ledger** (`cordee/bin/ledger`) records anonymous monthly token spend per module in
        `refs/notes/cordee-ledger` on commit (under random keys dated the first of the month: no commit hash, no author,
        no day, never the quiz) and syncs it on push via a `pre-push` hook so `ledger report` shows what each feature

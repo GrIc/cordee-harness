@@ -45,7 +45,7 @@ for batches touching that module.
 
 | Setting | Scope | Default | Description |
 |---|---|---|---|
-| `tokens` | Repo | `false` | Enables the cockpit and the token ledger. When `false`, `install-hook` writes only `commit-msg` and `post-commit` (`committed`), with no `pre-push` network hook. When `true`, `install-hook` adds `ledger record` to `post-commit` and `ledger sync` to `pre-push`, and the workflow runs `cockpit hints` at handoff. Run `bash cordee/bin/cordee install-hook` after changing it. |
+| `tokens` | Repo | `false` | Enables the cockpit and the token ledger. When `false`, `install-hook` writes only `commit-msg` and `post-commit` (`committed`), with no `pre-push` network hook. When `true`, `install-hook` adds `ledger record` to `post-commit` and `ledger sync` to `pre-push`, and `cordee hints` at handoff adds the cockpit's cost hints. Run `bash cordee/bin/cordee install-hook` after changing it. |
 | `batch-lines` | Repo, Contract | `200` | Maximum changed non-blank lines of code and tests in an agent batch. Up to 5% over prints a `NOTE` without blocking; above 5% refuses an agent batch unless `Large-Batch: <reason>` is in the commit message. A contract's `batch-lines` replaces the repo's when that module's governed code changes (if multiple coded modules set it, the lowest wins). Changing `batch-lines` applies immediately to the batch and prints a `NOTE`. |
 | `risk` | Repo, Contract | `normal` | Quiz requirement: `none` (no quiz on code), `normal` (1 to 3 questions), or `high` (3 or more questions whose `See` lines cite every changed hunk of code, with a second human's reading recommended). A batch is judged at the highest risk of the modules it touches in the parent or the batch; code outside every module uses the repo's risk. |
 | `sensitive` | Repo, Contract | Kit list | Paths (`path/to/file`), folders (`folder/`), or regular expressions (`/pattern/`) that always require a quiz (at least `normal` risk), even when `risk: none` or when only Markdown changed. Setting `sensitive` in `cordee/config.yml` replaces the kit's list (`sensitive: []` empties it); a contract's `sensitive` list adds to the repo's. |
@@ -123,8 +123,8 @@ findings, and writes `QUIZ.md` at the repo root plus the answer key at the path 
   range overlaps a `See` range.
 - Once the commit succeeds, `post-commit` (`bash cordee/bin/cordee committed`) records any question the developer
   flagged or commented into `$(git rev-parse --git-common-dir)/cordee/quiz-journal` (local to the machine, shared
-  across worktrees) and removes `QUIZ.md` and the key. If a quiz is replaced before any commit because the batch was
-  reworked after feedback, the next `fingerprint` run journals those flags too.
+  across worktrees) and removes `QUIZ.md` and the key. If a quiz is replaced before any commit, for a reworked batch or
+  for the same one, the next `fingerprint` run journals those flags too.
 
 ## 6. Commit trailers
 
@@ -154,10 +154,9 @@ the network:
   reports Claude Code's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`) and exact
   model, median starting context for sessions and sub-agents, longest context reached, cache-read share, and estimated
   cost of attachments sent along with calls (tool results, skill listings, hooks, MCP instructions, memory files).
-- `bash cordee/bin/cockpit hints`: run at handoff when `tokens: true`; prints a hint at most once per 10 agent batches
-  when MCP servers or plugins go unused above the cost threshold, when context exceeds 150k tokens, when a log format
-  change prevents reading replies or token counts, or when a module's quizzes were flagged *unclear* or *not-wanted*
-  twice or more in the local `quiz-journal`.
+- `bash cordee/bin/cockpit hints`: run by `cordee hints` at handoff when `tokens: true`; prints a hint at most once
+  per 10 agent batches when MCP servers or plugins go unused above the cost threshold, when context exceeds 150k
+  tokens, or when a log format change prevents reading replies or token counts.
 
 ### 7.2 Anonymous team ledger (`cordee/bin/ledger`)
 
@@ -184,8 +183,9 @@ Tracks what each product module costs in tokens per month, never per developer:
 | `bash cordee/bin/cordee install-hook` | Install `QUIZ.md` in `.git/info/exclude` and write the active git hooks (`commit-msg`, `post-commit`, and `pre-push` when `tokens: true`). |
 | `bash cordee/bin/cordee quiet <command>...` | Run a command, printing one summary line on success or the last 30 lines on failure. |
 | `bash cordee/bin/cordee doctor` | Print version, environment, hook status, token/ledger status, and audit timing, with `NOTE` lines for anything to fix. |
+| `bash cordee/bin/cordee hints` | At handoff, name a module whose quiz answers were flagged *unclear* or *not-wanted* twice in the last 10 batches, then the cockpit's cost hints when `tokens: true` (each at most once every 10 batches). |
 | `bash cordee/bin/cordee touched [<commit>]` | List the modules changed by `<commit>` (`HEAD` by default) with their changed line counts. |
 | `bash <kit>/template/cordee/bin/cordee deploy <source> <tag> [--forge github\|gitlab]` | Deploy or upgrade Cordee from a kit clone into the current repository. |
 | `bash cordee/bin/cockpit report <repo> [<since> <until>]` | Show local Claude Code token breakdown and attachment overhead. |
-| `bash cordee/bin/cockpit hints` | Print actionable cost or quiz-flag hints (at most once every 10 batches). |
+| `bash cordee/bin/cockpit hints` | Print actionable cost hints (at most once every 10 batches). |
 | `bash cordee/bin/ledger report` | Show monthly anonymous token spend per module, role, and model, plus batch coverage. |

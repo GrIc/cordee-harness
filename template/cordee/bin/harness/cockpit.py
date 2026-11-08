@@ -1,6 +1,5 @@
 """The cockpit: where a dev's agent tokens go, read from the agents' own logs on this machine. Nothing leaves it but
 what the token ledger asks for."""
-import os
 import statistics
 import sys
 import time
@@ -8,13 +7,10 @@ from collections import defaultdict
 from types import SimpleNamespace
 
 from harness import journal
-from harness.git import agent_log, git, lines, me, shared_path
+from harness.git import git
 from harness.logs import MCP, READERS, SKILLS, Sent, label
 
 FIELDS = ["input", "output", "cache_read", "cache_write"]
-# The dev's last batches, whatever their pace: enough that "never called" means something, and a hint comes back
-# after as many.
-BATCHES = 10
 # A hint names what costs at least this share, below which a cut does not show on the bill, or a context this long.
 SHARE, LONG = 0.05, 150_000
 
@@ -35,12 +31,12 @@ def usage(repo, start, end):
 
 def report(repo, start=None, end=None):
     """Where the tokens went, for the dev to cut: a part per tool that can weigh its calls. By default, over the dev's
-    last BATCHES batches."""
+    last journal.BATCHES batches."""
     # The agents name their logs from the repo's real path, which $PWD may not be: a symlink, macOS's /private, a
     # folder below the root.
     repo = git("-C", repo, "rev-parse", "--show-toplevel")
     if start is None:
-        start, end = window(batches(repo))[0], int(time.time())
+        start, end = journal.window(journal.batches(repo))[0], int(time.time())
     measured = measures(repo, start, end)
     for seen in measured:
         for text in unread(seen).values():
@@ -89,53 +85,17 @@ def measure(reader, repo, start, end):
 
 
 def hints():
-    """What the last batches show to cut or to write down, for the agent to put to the dev as a question. Silent before
-    the first batch and when nothing is new: a hint shown comes back BATCHES batches later at the earliest, in any of
-    the clone's worktrees. It notes when it was shown by its last batch's time, which every branch reads alike."""
+    """What the last batches show to cut, for the agent to put to the dev as a question; journal.show says when."""
     repo = git("rev-parse", "--show-toplevel")
-    times = batches(repo)
+    times = journal.batches(repo)
     if not times:
         return
-    start, count = window(times)
+    start, count = journal.window(times)
     found = {}
     for seen in measures(repo, start, int(time.time())):
         found.update(unread(seen))
         found.update(cuts(seen, count))
-    for module, flags in sorted(journal.flagged(start).items()):
-        if flags >= 2:
-            found["quiz " + module] = (f"Quiz answers in {module} were flagged unclear or not what you wanted {flags}"
-                                       f" times: propose the rule you would write.")
-    state = shared_path("hints")
-    shown = {}
-    if os.path.exists(state):
-        with open(state, encoding="utf-8") as file:
-            shown = {key: int(when) for key, when in (line.rstrip("\n").split("\t") for line in file)}
-    for key, text in found.items():
-        if key not in shown or sum(when > shown[key] for when in times) >= BATCHES:
-            print("HINT " + text)
-            shown[key] = times[0]
-    os.makedirs(os.path.dirname(state), exist_ok=True)
-    with open(state, "w", encoding="utf-8", newline="") as file:
-        file.writelines(f"{key}\t{when}\n" for key, when in shown.items())
-
-
-def batches(repo):
-    """The commit times of the dev's agent batches in a repo, newest first: the cockpit counts in batches, whatever the
-    dev's pace. Without an address git would commit with, the dev has no batch."""
-    address = me(cwd=repo)
-    if address is None:
-        return []
-    times = []
-    for line in lines(agent_log("--format=%aE%x09%ct", cwd=repo)):
-        email, when = line.split("\t")
-        if email.lower() == address.lower():
-            times.append(int(when))
-    return times
-
-
-def window(times):
-    """Where the last BATCHES batches start, the start of the logs when there are fewer, and how many they are."""
-    return (times[BATCHES] if len(times) > BATCHES else 0), max(min(len(times), BATCHES), 1)
+    journal.show(found, times)
 
 
 def unread(seen):

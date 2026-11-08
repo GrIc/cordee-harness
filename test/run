@@ -156,6 +156,7 @@ test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
   succeeds bash cordee/bin/cordee doctor
   says 'tokens: off'
   echo 'tokens: true' > cordee/config.yml
+  succeeds bash cordee/bin/cordee hints
   succeeds bash cordee/bin/cordee install-hook
   says 'git config cordee.ledger false stops it.'
   grep -qxF "$committed; [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record" "$hooks/post-commit"
@@ -644,6 +645,8 @@ test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing() {
   says 'No commit HEAD here: commit first, or name a commit.'
   succeeds bash cordee/bin/cockpit hints
   [ ! -s "$out" ]
+  succeeds bash cordee/bin/cordee hints
+  [ ! -s "$out" ]
 }
 
 # The shell must not expand the glob: b.py is gone from the working tree, a.py is still there.
@@ -771,10 +774,12 @@ batch() {
 
 # The reviewer's side: QUIZ.md citing file $1, and the key with answers $2 (like "A B C"), one question each.
 write_quiz() {
-  local key a i=0
+  local key fingerprint a i=0
   key=$(bash cordee/bin/cordee fingerprint | sed -n 's/^key: //p')
+  # Taken before the key is opened, which empties it: fingerprint would find an empty key, which no reviewer leaves.
+  fingerprint=$(bash cordee/bin/cordee fingerprint | sed -n 's/^fingerprint: //p')
   {
-    bash cordee/bin/cordee fingerprint | sed -n 's/^fingerprint: //p'
+    echo "$fingerprint"
     for a in $2; do echo "$a Because of $a."; done
   } > "$key"
   {
@@ -1423,6 +1428,19 @@ test_a_reworked_batch_journals_the_old_quiz_s_flags() {
   answer A B C
   succeeds agent_commit 'Change search'
   [ "$(journal | cut -f 3-6)" = 'search	not-wanted	Question 2?	-' ]
+}
+
+# The reviewer writes a new quiz for the same batch, as when the dev flags a question unclear.
+test_a_quiz_rewritten_for_the_same_batch_journals_its_flags() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A C C
+  fails agent_commit 'Change search'
+  sed 's/^> - \[ \] The question is unclear/> - [x] The question is unclear/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  succeeds agent_commit 'Change search'
+  [ "$(journal | cut -f 3-6)" = 'search	unclear	Question 2?	-' ]
 }
 
 # The same clone, then a pull that brings the batch back under a merge made elsewhere: no hook ran on top of it.

@@ -69,6 +69,12 @@ def cordee_command(args):
         brief.brief(args[1] if len(args) > 1 else "")
     elif command == "next":
         brief.next_step()
+    elif args == ["hints"]:
+        journal.hints()
+        # A repo may remove the cockpit's files, as the hooks' lines allow, and keep tokens: true.
+        if hooks.tokens_on() and os.path.isfile(os.path.join(os.path.dirname(__file__), "cockpit.py")):
+            from harness import cockpit
+            cockpit.hints()
     elif command == "quiet" and len(args) > 1:
         return quiet(args[1:])
     elif command == "doctor":
@@ -77,7 +83,7 @@ def cordee_command(args):
         return misuse("usage: bash cordee/bin/cordee hook <message-file>\n"
                       "       bash cordee/bin/cordee audit [--message <file> | --range <base>..<tip>]\n"
                       "       bash cordee/bin/cordee fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
-                      "       bash cordee/bin/cordee next | quiet <command>... | doctor\n"
+                      "       bash cordee/bin/cordee next | hints | quiet <command>... | doctor\n"
                       "       bash <kit>/template/cordee/bin/cordee deploy <source> <tag> [--forge github|gitlab]")
 
 

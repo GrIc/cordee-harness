@@ -62,8 +62,8 @@ A file is created when first needed.
    high risk the advice to have a second human read the diff. It says how many questions the quiz has and gives away
    none of their answers. The human reads the diff, answers `QUIZ.md` and commits with `git commit -F
    .git/cordee/message`. Start the next batch in a fresh session: a long one reads its whole history again with every
-   call. Then, when `tokens: true` in `cordee/config.yml`, run `bash cordee/bin/cockpit hints`: it prints a line only
-   when this dev's costs show something new to cut, or their quiz answers in a module were flagged twice. Put each to
+   call. Then run `bash cordee/bin/cordee hints`: it prints a line only when this dev's quiz answers in a module were
+   flagged twice or, when `tokens: true` in `cordee/config.yml`, their costs show something new to cut. Put each to
    the human as a question, with the change you would make (turn off a plugin or an MCP server, fold an output, write a
    rule in the contract, the coding style or the quiz instructions), and make it only on a yes, in a batch of its own.
 
@@ -135,8 +135,8 @@ Once the commit of a passed quiz exists, each question the dev flagged or commen
 `$(git rev-parse --git-common-dir)/cordee/quiz-journal`, on this machine only and shared by the clone's worktrees: one
 tab-separated line, `v2`, the time in epoch seconds, the batch's modules (joined by `,`, or `-`), the boxes ticked
 (`not-understood`, `unclear`, `not-wanted`, joined by `,`, or `-`), the question's title and the dev's own words (or
-`-`). A quiz left for a batch that changed since and was never committed goes there too, when `fingerprint` runs for
-the new one. The cockpit reads it.
+`-`). A quiz replaced before any commit, for a batch redone or for the same one, goes there too, when `fingerprint`
+runs for the new one. `bash cordee/bin/cordee hints` reads it.
 
 ## Contracts
 

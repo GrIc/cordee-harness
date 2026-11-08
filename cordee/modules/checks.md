@@ -70,7 +70,7 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   elsewhere: [test_deploy_refuses_a_kit_inside_the_repo](/test/run).
 - `touched` lists the modules a commit changes, in code or contract, each with its changed lines, so that the token
   ledger can split a batch's cost: [test_touched_lists_each_module_with_its_lines](/test/run). Before the first commit,
-  it says to commit first, and `cockpit hints` says nothing:
+  it says to commit first, and `cockpit hints` and `cordee hints` say nothing:
   [test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing](/test/run).
 - `doctor` prints what a bug report needs: the kit's version, Python, git and the OS, the hooks folder, `tokens: off`
   or, when `tokens: true`, the ledger on or off and the replies each log reader found in 30 days, and an audit's time.
@@ -79,7 +79,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   The version is raised before each tag: [test_the_version_is_the_last_tag_or_newer](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run). A command missing an argument, or with
-  one it does not know, prints the usage: [test_a_command_missing_an_argument_prints_the_usage](/test/run).
+  one it does not know, prints the usage: [test_a_command_missing_an_argument_prints_the_usage](/test/run). `hints`
+  prints the quiz journal's hints, then the cockpit's when `tokens: true`, as [quiz](quiz.md) says.
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). It skips
   the commits made before the harness came, not the one that removes it:
   [test_range_ignores_commits_before_adoption](/test/run),

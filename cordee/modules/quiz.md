@@ -29,8 +29,16 @@ The questions that make the human understand an agent batch before it is committ
   [test_a_commit_without_the_hook_leaves_no_quiz](/test/run), [test_an_amend_clears_its_quiz](/test/run),
   [test_audit_clears_the_last_commit_s_quiz](/test/run),
   [test_the_next_fingerprint_clears_a_quiz_left_behind](/test/run),
-  [test_a_merge_on_top_of_the_batch_still_clears_its_quiz](/test/run). A quiz left for a batch redone before any commit
-  goes there once, when the next `fingerprint` runs: [test_a_reworked_batch_journals_the_old_quiz_s_flags](/test/run).
+  [test_a_merge_on_top_of_the_batch_still_clears_its_quiz](/test/run). A quiz left for a batch redone before any commit,
+  or rewritten for the same batch, goes there once, when the next `fingerprint` runs:
+  [test_a_reworked_batch_journals_the_old_quiz_s_flags](/test/run),
+  [test_a_quiz_rewritten_for_the_same_batch_journals_its_flags](/test/run).
+- `cordee hints`, at handoff and whatever `tokens` says, names a module whose answers were flagged unclear or not what
+  the dev wanted twice or more over their last 10 agent batches, counted once per question title and cause, then the
+  cockpit's hints when `tokens: true`. A hint comes back 10 batches later at the earliest, once per clone:
+  [test_hints_name_a_module_whose_quiz_is_flagged_twice](/test/cockpit),
+  [test_hints_find_a_dev_with_a_plus_or_a_mailmap](/test/cockpit). Before the first commit it says nothing:
+  [test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing](/test/run).
 - `audit` checks its form, so that the reviewer, not the human, meets a malformed quiz:
   [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_cites_three_places_at_most](/test/run).
   It only notes a quiz older than its batch and, past one question, a right answer always in the same place:

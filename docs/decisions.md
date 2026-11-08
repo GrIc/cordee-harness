@@ -792,3 +792,17 @@ both ended in a DRIFT that told the author to add the very line they had written
 stops the commit with an ERROR that names the fault: more than one name, no such module, or no reason.
 _Rejected:_ sparing every module of a list (two ways to write one thing, and the workflow, the reference and the CI
 already show one per line); a note that lets the commit go on (the module is still unspared, so the DRIFT follows).
+
+## 84. `cordee hints` reads the quiz journal whatever `tokens` says, and a rewritten quiz is journaled (2026-11-08)
+
+Since decision 79 a repo is at `tokens: false` by default, and only `cockpit hints`, run at handoff when tokens are on,
+read the quiz journal: a default repo filled it and never heard of it (review of 2026-11-08, B2). The journal's hint
+now comes from the core, `bash cordee/bin/cordee hints`, which the workflow runs at each handoff, and which runs
+`cockpit hints` after it when `tokens: true`; the batches, the window and when a hint comes back move with it to
+`journal.py`. `fingerprint` also journaled only a quiz whose batch had changed, so a question flagged unclear, then
+asked again for the same batch, lost its flag (`cordee/issues/unclear-flag-lost-same-batch.md`). It now journals any
+quiz it replaces, once per state of `QUIZ.md`; a quiz that then passes journals the same flags, which `flagged()`
+already counts once.
+_Rejected:_ `cockpit hints` at every handoff with the logs left unread at `tokens: false` (the core must run without
+the cockpit's files); the hint in `next` (it runs at each step, and a hint mid-batch pulls the agent off it); a mark
+on the journal line for a quiz rewritten (decision 69 rejected the same).

@@ -1,6 +1,6 @@
 """The quiz journal: the questions a dev flagged or commented, kept on this machine and shared by the clone's
-worktrees. A line is v2, the time, the batch's modules, the causes, the title and the words, tab-separated; the
-cockpit reads it."""
+worktrees. A line is v2, the time, the batch's modules, the causes, the title and the words, tab-separated; hints()
+reads it."""
 import hashlib
 import os
 import re
@@ -8,10 +8,13 @@ import time
 from collections import Counter
 
 from harness.drift import changes, touched
-from harness.git import commit_or, empty_tree, git, lines, shared_path
-from harness.quiz import QUIZ, fingerprint, key_path, read_lines, staged
+from harness.git import agent_log, commit_or, empty_tree, git, lines, me, shared_path
+from harness.quiz import QUIZ, fingerprint, key_path, read_lines
 
 CAUSES = ["not-understood", "unclear", "not-wanted"]
+# The dev's last batches, whatever their pace: enough that "never called" means something, and a hint comes back
+# after as many.
+BATCHES = 10
 
 
 def committed():
@@ -44,11 +47,11 @@ def quizzed(key, written):
 
 
 def reworked():
-    """Before a new quiz: the questions flagged in a quiz left for a batch that changed since and was never committed
-    go to the journal, on the modules staged now. A flag that got the batch redone would be lost with that quiz. Once
-    per state of QUIZ.md: the reviewer may ask again for the same batch."""
-    key = key_path()
-    if not (os.path.isfile(QUIZ) and os.path.isfile(key)) or read_lines(key)[:1] in ([], [staged()]):
+    """Before a new quiz: the questions flagged in a quiz left for a batch never committed go to the journal, on the
+    modules staged now. Whether the flag got the batch redone or the quiz rewritten for the same batch, it would be lost
+    with that quiz. Once per state of QUIZ.md: the reviewer may ask again for the same batch. A quiz that then passes
+    journals its flags again, which flagged() counts once."""
+    if not (os.path.isfile(QUIZ) and os.path.isfile(key_path())):
         return
     with open(QUIZ, "rb") as file:
         state = hashlib.sha1(file.read()).hexdigest()
@@ -105,3 +108,51 @@ def flagged(start):
                     flags.update((module, fields[4], cause) for module in fields[2].split(",") if module != "-"
                                  for cause in fields[3].split(",") if cause in ("unclear", "not-wanted"))
     return Counter(module for module, _, _ in flags)
+
+
+def hints():
+    """The modules whose quiz answers the dev flagged unclear or not what they wanted twice over their last batches,
+    for the agent to propose a rule. Silent before the first batch and when nothing is new."""
+    times = batches(git("rev-parse", "--show-toplevel"))
+    if not times:
+        return
+    found = {f"quiz {module}": (f"Quiz answers in {module} were flagged unclear or not what you wanted {flags} times:"
+                                " propose the rule you would write.")
+             for module, flags in sorted(flagged(window(times)[0]).items()) if flags >= 2}
+    show(found, times)
+
+
+def show(found, times):
+    """Prints each hint found, by its key, unless it was shown less than BATCHES batches ago, in any of the clone's
+    worktrees. It notes when a hint was shown by its last batch's time, which every branch reads alike."""
+    state = shared_path("hints")
+    shown = {}
+    if os.path.exists(state):
+        with open(state, encoding="utf-8") as file:
+            shown = {key: int(when) for key, when in (line.rstrip("\n").split("\t") for line in file)}
+    for key, text in found.items():
+        if key not in shown or sum(when > shown[key] for when in times) >= BATCHES:
+            print("HINT " + text)
+            shown[key] = times[0]
+    os.makedirs(os.path.dirname(state), exist_ok=True)
+    with open(state, "w", encoding="utf-8", newline="") as file:
+        file.writelines(f"{key}\t{when}\n" for key, when in shown.items())
+
+
+def batches(repo):
+    """The commit times of the dev's agent batches in a repo, newest first: hints count in batches, whatever the dev's
+    pace. Without an address git would commit with, the dev has no batch."""
+    address = me(cwd=repo)
+    if address is None:
+        return []
+    times = []
+    for line in lines(agent_log("--format=%aE%x09%ct", cwd=repo)):
+        email, when = line.split("\t")
+        if email.lower() == address.lower():
+            times.append(int(when))
+    return times
+
+
+def window(times):
+    """Where the last BATCHES batches start, the start of the logs when there are fewer, and how many they are."""
+    return (times[BATCHES] if len(times) > BATCHES else 0), max(min(len(times), BATCHES), 1)

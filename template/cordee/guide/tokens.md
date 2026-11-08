@@ -6,6 +6,6 @@ no commit, author or date. The hooks `install-hook` writes note it at each commi
 dev sets `git config cordee.ledger false` (`--global` for every repo). The tokens come from `cordee/bin/cockpit`, which
 reads the agents' logs on this machine, Claude Code's, opencode's and Kilo Code's. `bash cordee/bin/cockpit report
 "$PWD"`, from any folder of the repo, shows a dev where their own tokens went; `bash cordee/bin/cockpit hints` says
-what to cut, or which module's quizzes the dev flagged, once in 10 batches at most. To audit a clone, `git fetch origin
+what to cut, once in 10 batches at most, and `cordee hints` runs it at handoff. To audit a clone, `git fetch origin
 refs/notes/cordee-ledger:refs/notes/cordee-ledger`, then `bash cordee/bin/ledger report`: the tokens by month, module,
 role and model, then per month the batches noted against the agent commits.
