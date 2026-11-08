@@ -58,6 +58,23 @@ test_claude_code_splits_writer_and_reviewer_once_per_reply() {
 writer opus 2 2 20 200 2000'
 }
 
+# A session that revives a sub-agent of another session links its log; once the folder moves, the link breaks.
+test_claude_code_reads_a_revived_sub_agent_once() {
+  real_repo
+  mkdir -p "$claude/s2/subagents" "$tmp/moved"
+  reply r1 2026-10-23T10:50:00Z claude-sonnet-5-5 0 0 0 500 > "$claude/s1/subagents/agent-a.jsonl"
+  reply r2 2026-10-23T10:55:00Z claude-sonnet-5-5 0 0 0 500 > "$tmp/moved/agent-b.jsonl"
+  meta='{"agentType":"general-purpose","description":"Review batch 2"}'
+  echo "$meta" > "$claude/s1/subagents/agent-a.meta.json"
+  for agent in a b; do echo "$meta" > "$claude/s2/subagents/agent-$agent.meta.json"; done
+  # Git Bash copies the file unless told to link.
+  MSYS=winsymlinks:nativestrict ln -s "$claude/s1/subagents/agent-a.jsonl" "$claude/s2/subagents/agent-a.jsonl"
+  MSYS=winsymlinks:nativestrict ln -s "$tmp/moved/agent-b.jsonl" "$claude/s2/subagents/agent-b.jsonl"
+  rm "$tmp/moved/agent-b.jsonl"
+  bash "$kit/template/cordee/bin/cockpit" report "$repo" 1792749600 1792753200 | tr -s ' ' > "$tmp/out"
+  grep -q '^reviewer sonnet 1 ' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
+}
+
 # As Windows answers before Python is installed: the commit-msg hook stops and says what to install, as install-hook
 # does; what the ledger asks and the hints say nothing, and a push goes through.
 test_without_python_only_the_commit_msg_hook_stops() {

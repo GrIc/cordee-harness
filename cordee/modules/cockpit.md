@@ -13,7 +13,9 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   nothing: [test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
 - Claude Code: each reply counts once, a half-written last line, a sub-agent's result and what a tool call's input
   holds are no reply; the session is the writer, a sub-agent whose description names a review or a quiz is the
-  reviewer: [test_claude_code_splits_writer_and_reviewer_once_per_reply](/test/cockpit).
+  reviewer: [test_claude_code_splits_writer_and_reviewer_once_per_reply](/test/cockpit). A sub-agent revived in
+  another session counts once, even after the repo or its log folder moved:
+  [test_claude_code_reads_a_revived_sub_agent_once](/test/cockpit).
 - opencode, a SQLite base: a child session whose title names a review is the reviewer:
   [test_opencode_child_session_is_the_reviewer](/test/cockpit).
 - Kilo Code, built on opencode, reads like it from its own base, which its CLI and VS Code extension share:

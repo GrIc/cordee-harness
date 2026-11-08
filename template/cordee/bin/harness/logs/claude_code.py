@@ -43,6 +43,10 @@ def logs(repo):
     folder = os.path.join(home, "projects", re.sub(r"[^A-Za-z0-9]", "-", repo))
     for path in sorted(glob.glob(f"{glob.escape(folder)}/*.jsonl")) + sorted(
             glob.glob(f"{glob.escape(folder)}/*/subagents/*.jsonl")):
+        # A session that revives another session's sub-agent links its log, by an absolute path that breaks when the
+        # folder moves: the log is read in the session that wrote it.
+        if os.path.islink(path):
+            continue
         role = "writer"
         if os.path.basename(os.path.dirname(path)) == "subagents":
             meta = read_json(path[: -len(".jsonl")] + ".meta.json")
