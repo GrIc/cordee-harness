@@ -14,8 +14,8 @@ What the harness gives you, besides the checks the workflow runs:
 - `bash sdd/bin/cockpit report "$PWD"` shows where this dev's tokens went: [sdd/guide/tokens.md](sdd/guide/tokens.md).
 - A guide for each rarer case (first batch, plan, upgrade), listed at the top of the workflow.
 - When the dev types *quiz feedback*: read `QUIZ.md`, with what the dev ticked and wrote under each wrong question,
-  and talk the questions through. Propose a fix to the batch and, when a question or a guide is at fault, a change to
-  the harness; make it only on a yes.
+  and talk the questions through: where to look, as the hint says, never which box or why it is right. Propose a fix
+  to the batch and, when a question or a guide is at fault, a change to the harness; make it only on a yes.
 
 ### How you work
 
@@ -37,6 +37,8 @@ Be lazy with effort, never with thought.
   you take yourself, and list in the handoff.
 - Mark your work `Agent-Assisted: yes` in the proposed commit message. Never commit, push, bypass a hook, or tick
   `QUIZ.md`: the human does.
+- The quiz's answers never reach the human before the commit: no reply, report or handoff gives a right box or why it
+  is right, and only the agent that writes the quiz opens the key. A quiz answered with your help proves nothing.
 - Fix a red main before anything else. Run the CI checks locally before proposing a batch.
 - The harness runs on Python 3.10 or later: when a command says it is missing, tell the human how to install it.
 - Each clone needs the hooks once: if `$(git rev-parse --git-path hooks)/pre-push` does not mention `sdd/bin/ledger`,

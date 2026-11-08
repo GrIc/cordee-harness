@@ -54,16 +54,18 @@ A file is created when first needed.
    to you in. It reads the staged diff, the contract and the coding style, and reports findings with their evidence. A
    finding that adds a check, an error path or a fallback names an input the code really receives and gets wrong;
    without one, you leave it out and list it in the handoff. Once you have fixed or listed the findings, it writes the
-   quiz, then runs the audit of step 5 again, which checks the quiz. Give it a smaller model than the writer's unless
-   the batch is large or touches security or data. After a fix, send the same reviewer the change: it checks that its
-   quiz still holds for a fraction of a fresh one.
+   quiz, then runs the audit of step 5 again, which checks the quiz. It reports how many questions it wrote and what
+   the audit printed, never a right box or why it is right. Give it a smaller model than the writer's unless the batch
+   is large or touches security or data. After a fix, send the same reviewer the change: it checks that its quiz still
+   holds for a fraction of a fresh one.
 7. Hand off: purpose, the decisions you took alone, evidence, limits and a short "understand this" for the human, and at
-   high risk the advice to have a second human read the diff. The human reads the diff, answers `QUIZ.md` and commits
-   with `git commit -F .git/sdd/message`. Start the next batch in a fresh session: a long one reads its whole history
-   again with every call. Then run `bash sdd/bin/cockpit hints`: it prints a line only when this dev's costs show
-   something new to cut, or their quiz answers in a module were flagged twice. Put each to the human as a question,
-   with the change you would make (turn off a plugin or an MCP server, fold an output, write a rule in the contract, the
-   coding style or the quiz instructions), and make it only on a yes, in a batch of its own.
+   high risk the advice to have a second human read the diff. It says how many questions the quiz has and gives away
+   none of their answers. The human reads the diff, answers `QUIZ.md` and commits with `git commit -F .git/sdd/message`.
+   Start the next batch in a fresh session: a long one reads its whole history again with every call. Then run
+   `bash sdd/bin/cockpit hints`: it prints a line only when this dev's costs show something new to cut, or their quiz
+   answers in a module were flagged twice. Put each to the human as a question, with the change you would make (turn off
+   a plugin or an MCP server, fold an output, write a rule in the contract, the coding style or the quiz instructions),
+   and make it only on a yes, in a batch of its own.
 
 Wherever a fresh reviewer is asked for (plan, batch, module), a tool that cannot spawn one does its part itself and
 says so; one that cannot pick a model or resume a sub-agent skips that.

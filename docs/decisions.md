@@ -615,3 +615,16 @@ summary of its commits' trailers in CI, never a second quiz.
 _Rejected:_ a quiz per role and the roles in the config (above); a cursor between commit and merge request (two full
 modes to keep, and a quiz at the merge request is what others already offer); the PO's functional level outside git,
 and run, UX and QA as levels of their own (a tool beside the repo, and question kinds cover what they would ask).
+
+## 66. The quiz's answers stay with the reviewer until the commit (2026-11-08)
+
+On `9852c39` the quiz proved nothing: Kilo's reviewer gave the writer each right answer in its report, the writer
+printed the key while checking the state, and an agent that fixed the quiz listed its letters and why in the handoff.
+Nothing forbade it. The reviewer now reports how many questions it wrote and what the audit printed, the handoff says
+how many questions the quiz has, a house rule in `AGENTS.md` keeps every right box and its reason out of what reaches
+the human before the commit, and only the agent that writes the quiz opens the key (the reviewer, or the writer of a
+tool that cannot spawn one). *Quiz feedback* talks the questions through as the hint does: where to look, never which
+box or why it is right.
+_Rejected:_ hiding the key from the agents (the reviewer writes it and the hook reads it from the same clone, so any
+agent there can read it too); a check that greps the handoff for letters (the handoff is not in git, and a reason
+gives the answer away as well as a letter).
