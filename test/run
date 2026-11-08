@@ -257,6 +257,38 @@ test_code_marked_binary_still_counts() {
   lacks 'NOTE src/search/logo.png'
 }
 
+test_a_rename_counts_only_its_edits() {
+  seq 1 300 > src/search/big.py
+  seq 1 300 > notes.md
+  git add -A
+  git commit -qm 'Add a big file' 2> /dev/null
+  echo 'More intent.' >> sdd/modules/search.md
+  git mv src/search/big.py src/search/large.py
+  git add -A
+  succeeds bash sdd/bin/sdd audit
+  seq 1 211 >> src/search/large.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
+  echo '*.py binary' > .gitattributes
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 211 changed lines of code and tests"
+  says 'NOTE src/search/large.py: an attribute marks it binary, but it is text.'
+  # Prose renamed to code counts whole.
+  git reset -q --hard
+  git clean -qfd
+  echo 'More intent.' >> sdd/modules/search.md
+  git mv notes.md src/search/notes.py
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 300 changed lines of code and tests"
+  echo '*.py binary' > .gitattributes
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 300 changed lines of code and tests"
+}
+
 test_two_modules_block_an_agent() {
   echo 'More intent.' >> sdd/modules/search.md
   echo 'More intent.' >> sdd/modules/import.md

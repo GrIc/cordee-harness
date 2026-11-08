@@ -27,20 +27,24 @@ def not_code(base, tree):
 
 def size(batch, base, tree, message):
     """Notes in batch what is over the limits from base to tree, counting the modules drift found touched."""
-    count = 0
-    for line in lines(git("diff", "--numstat", "--no-renames", base, tree)):
-        added, deleted, path = line.split("\t", 2)
-        if batch.not_code(path):
+    count, specs = 0, []
+    for added, deleted, old, new in numstat(base, tree):
+        if batch.not_code(old) and batch.not_code(new):
             continue
-        if added != "-":
+        if batch.not_code(old) != batch.not_code(new):
+            # Prose renamed to code, or back, counts whole, as two files would, even marked binary.
+            count += len(lines(git("cat-file", "blob", f"{tree}:{new}" if batch.not_code(old) else f"{base}:{old}")))
+        elif added == "-":
+            if not binary(base, old, tree, new):
+                batch.hidden.append(new)
+                specs += [old, new]
+        else:
             count += int(added) + int(deleted)
-        elif not binary(base, tree, path):
-            batch.hidden.append(path)
     # binary or -diff in .gitattributes, even the batch's own, hides the lines of code from the human and from numstat,
     # --text or not: only the patch shows them, its hunk headers giving their number.
-    if batch.hidden:
-        patch = git("--literal-pathspecs", "diff", "--text", "-U0", "--no-renames", "--no-color", "--no-ext-diff", base,
-                    tree, "--", *batch.hidden)
+    if specs:
+        patch = git("--literal-pathspecs", "diff", "--text", "-U0", "-M", "--no-color", "--no-ext-diff", base, tree,
+                    "--", *specs)
         for line in lines(patch):
             if line.startswith("@@ "):
                 count += sum(int(side.partition(",")[2] or "1") for side in line.split(" ")[1:3])
@@ -64,9 +68,20 @@ def size(batch, base, tree, message):
                            "      Split it by module, or the human adds 'Large-Batch: <reason>' to the message.\n")
 
 
-def binary(base, tree, path):
+def numstat(base, tree):
+    """(added, deleted, old path, new path) for each file from base to tree, renames found: "-" for a binary file."""
+    fields = iter(git("diff", "--numstat", "-z", "-M", base, tree).split("\0"))
+    for field in fields:
+        if field:
+            added, deleted, path = field.split("\t", 2)
+            old, new = (next(fields), next(fields)) if not path else (path, path)
+            yield added, deleted, old, new
+
+
+def binary(base, old, tree, new):
     """Whether a side of the file holds a NUL in its first 8000 bytes: binary as git judges it without attributes."""
-    return any(b"\0" in run(["cat-file", "blob", f"{side}:{path}"], quiet=True).stdout[:8000] for side in (base, tree))
+    return any(b"\0" in run(["cat-file", "blob", revision], quiet=True).stdout[:8000]
+               for revision in (f"{base}:{old}", f"{tree}:{new}"))
 
 
 def batch_lines(batch, base, tree):

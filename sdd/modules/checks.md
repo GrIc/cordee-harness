@@ -47,6 +47,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   `.gitkeep` and lock files do not count:
   [test_markdown_git_files_and_lockfiles_do_not_count](/test/run). `not-code` in `sdd/config.yml` replaces the lock
   files, and a batch that widens it is judged by its parent's list: [test_the_config_lists_what_is_not_code](/test/run).
+  A rename counts only its edits, and prose renamed to code, or back, counts whole:
+  [test_a_rename_counts_only_its_edits](/test/run).
   A file is binary by its content, a NUL in its first 8000 bytes, never by `.gitattributes`: code marked `binary` or
   `-diff` counts, with a note that says how to read it: [test_code_marked_binary_still_counts](/test/run).
   Up to 5% over only gets a note:
