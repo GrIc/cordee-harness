@@ -10,10 +10,14 @@ def drift(batch, base, tree, message):
     """Notes in batch the modules whose code or contract changed from base to tree (hit), the risk of each (risks),
     the contracts whose code changed (coded), the changed paths they govern (governed), and how many changed code that
     no Spec-Unchanged spares (touched)."""
-    for line in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):", message, re.M):
-        for name in line.split():
-            if not exists(f"{tree}:cordee/modules/{name}.md"):
-                batch.errors += f"ERROR Spec-Unchanged({name}): no such module. Modules: {modules(tree)}.\n"
+    # The rule that spares a module below: one name, then a reason on its line.
+    for name, reason in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):(.*)", message, re.M):
+        if re.search(r"\s", name):
+            batch.errors += f"ERROR Spec-Unchanged({name}): name one module, one line each.\n"
+        elif not exists(f"{tree}:cordee/modules/{name}.md"):
+            batch.errors += f"ERROR Spec-Unchanged({name}): no such module. Modules: {modules(tree)}.\n"
+        elif not reason.strip():
+            batch.errors += f"ERROR Spec-Unchanged({name}): no reason. Say after the colon why the behavior holds.\n"
     # The base's contracts too: a batch that deletes a contract is judged at its risk.
     for contract in dict.fromkeys(contracts(tree) + contracts(base)):
         name, path = module(contract), None

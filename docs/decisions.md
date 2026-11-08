@@ -783,3 +783,12 @@ false tag in `cordee/README.md`. Run in the kit from `template/`, it overwrote t
 now stops first, when the template is the repo or a folder in it, and says to run it from a clone elsewhere.
 _Rejected:_ dropping `deploy` from the copy (the upgrade runs the new kit's script, so the copy costs nothing and keeps
 one tree); checking that the template holds `cordee/WORKFLOW.md` (every template does, the repo's copy too).
+
+## 83. `Spec-Unchanged` names one module and gives a reason, or stops the commit (2026-11-08)
+
+The check of the message split `Spec-Unchanged(a b): ...` into two modules and passed it, and passed
+`Spec-Unchanged(a):` with nothing after the colon, while the rule that spares a module wants one name and a reason:
+both ended in a DRIFT that told the author to add the very line they had written. The check now applies that rule and
+stops the commit with an ERROR that names the fault: more than one name, no such module, or no reason.
+_Rejected:_ sparing every module of a list (two ways to write one thing, and the workflow, the reference and the CI
+already show one per line); a note that lets the commit go on (the module is still unspared, so the DRIFT follows).

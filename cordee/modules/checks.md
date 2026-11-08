@@ -30,8 +30,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_a_sensitive_file_always_asks_a_quiz](/test/run).
 - Drift: a commit that changes a module's governed paths changes its contract too, or names the module in
   `Spec-Unchanged(<module>): <reason>`, which also leaves it out of the one-module limit. A `Spec-Unchanged` naming no
-  contract, or a contract with an empty `governs`, stops every commit:
+  contract, more than one or no reason, or a contract with an empty `governs`, stops every commit:
   [test_spec_unchanged_spares_its_module_only](/test/run),
+  [test_spec_unchanged_names_one_module_with_a_reason](/test/run),
   [test_a_spared_module_does_not_count_toward_the_module_limit](/test/run),
   [test_errors_stop_even_a_human_commit](/test/run).
 - Size: at most `batch-lines` changed lines of code and tests, and one module, unless `Large-Batch: <reason>`, which
@@ -52,7 +53,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
 - `install-hook` writes the `commit-msg` and `post-commit` hooks (and, when `tokens: true` in `cordee/config.yml`,
   adds the ledger to `post-commit`, writes `pre-push` and says how to turn the ledger off; when off, it removes its own
   `pre-push` and the core runs even without the cockpit and ledger files), or prints the line to add to a hook it did
-  not write; each line passes in a repo without the harness:
+  not write; each line passes in a repo without the harness. It adds `/QUIZ.md` to `.git/info/exclude` on a line of
+  its own: [test_install_hook_keeps_the_last_line_of_exclude](/test/run),
   [test_install_hook_respects_an_existing_hook](/test/run),
   [test_install_hook_adds_the_ledger_hooks_that_pass_without_it](/test/run),
   [test_the_line_for_a_shared_hook](/test/run).
@@ -76,7 +78,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   a `cordee/README.md` deployed from another version than the kit's files: [test_doctor_says_what_to_fix](/test/run).
   The version is raised before each tag: [test_the_version_is_the_last_tag_or_newer](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
-  [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
+  [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run). A command missing an argument, or with
+  one it does not know, prints the usage: [test_a_command_missing_an_argument_prints_the_usage](/test/run).
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). It skips
   the commits made before the harness came, not the one that removes it:
   [test_range_ignores_commits_before_adoption](/test/run),

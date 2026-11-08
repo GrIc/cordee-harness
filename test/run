@@ -81,6 +81,18 @@ test_errors_stop_even_a_human_commit() {
   says 'ERROR cordee/modules/import.md: governs is empty.'
 }
 
+test_spec_unchanged_names_one_module_with_a_reason() {
+  echo two >> src/search/a.py
+  echo two >> src/import/a.py
+  git add -A
+  printf 'Rename\n\nAgent-Assisted: yes\nSpec-Unchanged(search import): renames only\n' > "$msg"
+  fails bash cordee/bin/cordee audit --message "$msg"
+  says 'ERROR Spec-Unchanged(search import): name one module'
+  printf 'Rename\n\nAgent-Assisted: yes\nSpec-Unchanged(search):\nSpec-Unchanged(import): renames only\n' > "$msg"
+  fails bash cordee/bin/cordee audit --message "$msg"
+  says 'ERROR Spec-Unchanged(search): no reason'
+}
+
 test_multiline_governs_is_read_fully() {
   printf -- '---\ngoverns:\n  [\n    src/search/a.py,\n    lib/search/,\n  ]\ndepends: [import]\n---\n# search\n' \
     > cordee/modules/search.md
@@ -123,6 +135,13 @@ test_install_hook_respects_an_existing_hook() {
   lacks 'cordee.ledger'
   [ ! -e "$hooks/pre-push" ]
   grep -qx '/QUIZ.md' "$(git rev-parse --git-path info/exclude)"
+}
+
+test_install_hook_keeps_the_last_line_of_exclude() {
+  exclude=$(git rev-parse --git-path info/exclude)
+  printf '*.log' > "$exclude"
+  succeeds bash cordee/bin/cordee install-hook
+  [ "$(cat "$exclude")" = "$(printf '*.log\n/QUIZ.md')" ]
 }
 
 test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
@@ -567,6 +586,13 @@ test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one() {
   [ "$(cat "$out")" = 'ok: seq 100 (100 lines hidden)' ]
   fails bash cordee/bin/cordee quiet sh -c 'seq 100; exit 3'
   [ "$(head -n 1 "$out")" = 71 ] && [ "$(tail -n 1 "$out")" = "FAIL (3): sh -c seq 100; exit 3" ]
+}
+
+test_a_command_missing_an_argument_prints_the_usage() {
+  for command in hook 'audit --message' 'audit --range' 'audit --bogus' quiet; do
+    fails bash cordee/bin/cordee $command
+    says 'usage: bash cordee/bin/cordee'
+  done
 }
 
 test_audit_notes_the_markdown_ratio() {

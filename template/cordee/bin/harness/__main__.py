@@ -39,15 +39,15 @@ def misuse(text):
 
 def cordee_command(args):
     command = args[0] if args else ""
-    if command == "hook":
+    if command == "hook" and len(args) == 2:
         hooks.hook(args[1])
     elif command == "committed":
         journal.committed()
-    elif command == "audit" and args[1:2] == ["--message"]:
+    elif command == "audit" and len(args) == 3 and args[1] == "--message":
         return checks.audit_staged(args[2])
-    elif command == "audit" and args[1:2] == ["--range"]:
+    elif command == "audit" and len(args) == 3 and args[1] == "--range":
         return checks.audit_range(args[2])
-    elif command == "audit":
+    elif args == ["audit"]:
         return checks.audit_staged()
     elif command == "fingerprint":
         journal.committed()
@@ -69,7 +69,7 @@ def cordee_command(args):
         brief.brief(args[1] if len(args) > 1 else "")
     elif command == "next":
         brief.next_step()
-    elif command == "quiet":
+    elif command == "quiet" and len(args) > 1:
         return quiet(args[1:])
     elif command == "doctor":
         doctor()
