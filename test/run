@@ -318,6 +318,26 @@ test_a_batch_of_many_files_counts_them_all() {
   says "SIZE 220 changed lines of code and tests"
 }
 
+# Each contract costs a few git calls, much slower on Windows: over 3 s there, contracts.py is to cache git show.
+test_audit_takes_under_3_s_with_40_contracts() {
+  local n LC_ALL=C TIMEFORMAT=%R
+  mkdir tests
+  for n in $(seq 1 38); do
+    mkdir "src/m$n"
+    echo one > "src/m$n/a.py"
+    echo "def test_m$n(): pass" > "tests/test_m$n.py"
+    contract "m$n" "src/m$n/, tests/test_m$n.py"
+    echo "- Works: [test_m$n](/tests/test_m$n.py)" >> "cordee/modules/m$n.md"
+  done
+  git add -A
+  git commit -qm 'Add 38 modules' 2> /dev/null
+  echo two >> src/m7/a.py
+  echo 'More intent.' >> cordee/modules/m7.md
+  git add -A
+  { time bash cordee/bin/cordee audit > /dev/null 2>&1; } 2> "$out"
+  awk '{ exit !($1 < 3) }' "$out" || { echo "    audit took $(cat "$out") s with 40 contracts"; return 1; }
+}
+
 test_two_modules_block_an_agent() {
   echo 'More intent.' >> cordee/modules/search.md
   echo 'More intent.' >> cordee/modules/import.md

@@ -719,3 +719,12 @@ nothing to send. `sync` now keeps, per remote, the tree of the ledger it last to
 their next own note, so a local `ledger report` can lag behind the remote's; `git fetch` of the ref catches it up.
 _Rejected:_ `git ls-remote` before each push (still a round trip); one state for all remotes (a second remote would
 never get the ledger); fetching anyway and pushing only on change (the fetch is the cost).
+
+## 75. A test times `audit` with 40 contracts before any cache (2026-11-08)
+
+`audit` reads each contract with its own `git show`, several times: 508 git calls, 252 of them `git show`, for one
+staged batch in a repo of 40 contracts, 0.9 s on Linux. A process costs much more on Windows, where no one has timed
+it. `test/run`, which CI runs on Linux, macOS and Windows, now fails when `audit` takes 3 s or more there; the cache of
+`git show` by tree and path in `contracts.py` comes only if Windows goes over.
+_Rejected:_ the cache now (code for a cost no one has seen); a timing job of its own in CI (a fourth suite to run
+before each batch, for one test); the time printed without a limit (a number no one reads on a green run).

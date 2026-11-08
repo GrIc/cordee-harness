@@ -80,8 +80,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_audit_points_out_governs_paths_that_match_nothing](/test/run).
 
 Constraints: Python 3.10, standard library only, behind a `sh` launcher, and git, on Linux, macOS and Windows (Git
-Bash). Without it, `install-hook` and the hook say what to install, and `--no-verify` still commits:
-[test_without_python_only_the_commit_msg_hook_stops](/test/cockpit). Non-goals: locks, an LLM at commit time, drift
-below the file level, CI for forges other than GitHub and GitLab (they run the same command). Formats and usage:
-[WORKFLOW.md](../../template/cordee/WORKFLOW.md). The script's other parts: [contracts](contracts.md), [quiz](quiz.md),
-[brief](brief.md).
+Bash). `audit` of one batch takes under 3 s in a repo of 40 contracts:
+[test_audit_takes_under_3_s_with_40_contracts](/test/run). Without Python, `install-hook` and the hook say what to
+install, and `--no-verify` still commits: [test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
+Non-goals: locks, an LLM at commit time, drift below the file level, CI for forges other than GitHub and GitLab (they
+run the same command). Formats and usage: [WORKFLOW.md](../../template/cordee/WORKFLOW.md). The script's other parts:
+[contracts](contracts.md), [quiz](quiz.md), [brief](brief.md).
