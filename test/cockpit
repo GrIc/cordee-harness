@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs template/sdd/bin/cockpit against fake agent logs. Usage: bash test/cockpit [test_name...]
+# Runs template/cordee/bin/cockpit against fake agent logs. Usage: bash test/cockpit [test_name...]
 set -u
 
 kit=$(cd "$(dirname "$0")/.." && pwd)
@@ -27,7 +27,7 @@ ago() {
   date -u -d "@$when" +%Y-%m-%dT%H:%M:%SZ 2> /dev/null || date -u -r "$when" +%Y-%m-%dT%H:%M:%SZ
 }
 
-usage() { bash "$kit/template/sdd/bin/cockpit" usage "$repo" 1792749600 1792753200 | tr '\t' ' '; }
+usage() { bash "$kit/template/cordee/bin/cockpit" usage "$repo" 1792749600 1792753200 | tr '\t' ' '; }
 fails() { if [ "$1" != "$2" ]; then printf '    expected: %s\n    got:      %s\n' "$2" "$1"; return 1; fi; }
 
 # A Claude Code reply, its keys in Claude Code's order: id, time, model, input, output, cache read, cache write.
@@ -65,16 +65,16 @@ test_without_python_only_the_commit_msg_hook_stops() {
   git init -q --bare "$tmp/origin.git"
   git clone -q "$tmp/origin.git" "$repo" 2> /dev/null && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev
-  mkdir sdd && cp -R "$kit/template/sdd/bin" sdd/
-  bash sdd/bin/sdd install-hook > /dev/null
+  mkdir cordee && cp -R "$kit/template/cordee/bin" cordee/
+  bash cordee/bin/cordee install-hook > /dev/null
   mkdir "$tmp/bin"
   for python in python3 python py; do
     printf '#!/bin/sh\necho Python was not found >&2\nexit 9009\n' > "$tmp/bin/$python"
     chmod +x "$tmp/bin/$python"
   done
   PATH=$tmp/bin:$PATH
-  text='SDD-Fabrik needs Python 3.10 or later: install it (https://www.python.org/downloads/), then try again.'
-  if bash sdd/bin/sdd install-hook 2> "$tmp/err"; then return 1; fi
+  text='Cordee needs Python 3.10 or later: install it (https://www.python.org/downloads/), then try again.'
+  if bash cordee/bin/cordee install-hook 2> "$tmp/err"; then return 1; fi
   fails "$(cat "$tmp/err")" "$text"
   git add -A
   if git commit -qm Start 2> "$tmp/err"; then return 1; fi
@@ -83,7 +83,7 @@ test_without_python_only_the_commit_msg_hook_stops() {
   fails "$(git commit -q --no-verify -m Start 2>&1)" ''
   fails "$(git push -q origin HEAD:main 2>&1)" ''
   fails "$(usage 2>&1)" ''
-  fails "$(bash sdd/bin/cockpit hints 2>&1)" ''
+  fails "$(bash cordee/bin/cockpit hints 2>&1)" ''
 }
 
 # An opencode base at $1, with a writer session and its reviewer child, one reply each, in $repo.
@@ -131,7 +131,7 @@ test_report_weighs_roles_and_what_is_sent_along() {
   } > "$claude/s1.jsonl"
   reply r1 2026-10-23T10:50:00Z claude-sonnet-5-5 0 0 0 500 > "$claude/s1/subagents/agent-a.jsonl"
   echo '{"agentType":"general-purpose","description":"Review batch 2"}' > "$claude/s1/subagents/agent-a.meta.json"
-  bash "$kit/template/sdd/bin/cockpit" report "$repo" 1792749600 1792753200 | tr -s ' ' > "$tmp/out"
+  bash "$kit/template/cordee/bin/cockpit" report "$repo" 1792749600 1792753200 | tr -s ' ' > "$tmp/out"
   for line in 'writer opus 2 1.7k 73%' 'reviewer sonnet 1 625 27%' 'A session starts with 1.0k tokens of context' \
     'The longest reached 1.2k after 2 calls; cache reads are 4% of the cost.' 'tool results Bash 250 11%' \
     'skill listing 135 6%'; do
@@ -169,7 +169,7 @@ test_hints_say_what_to_cut_once_in_ten_batches() {
     reply m1 "$now" claude-opus-5-5 0 10 0 100 | sed "s/\"content\":\[\]/\"content\":[$calls]/"
     reply m2 "$now" claude-opus-5-5 0 10 100 0
   } > "$claude/s1.jsonl"
-  hints() { bash "$kit/template/sdd/bin/cockpit" hints; }
+  hints() { bash "$kit/template/cordee/bin/cockpit" hints; }
   hints > "$tmp/out"
   grep -q "^HINT MCP servers never called in this repo's logs, .* tokens a batch: docs\.$" "$tmp/out"
   grep -q '^HINT The skill listing costs .* tokens a batch .*, the largest: big\.$' "$tmp/out"
@@ -189,7 +189,7 @@ test_report_reads_the_last_ten_batches_by_default() {
   reply m1 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
   # From a folder below the root, as $PWD may differ from the real path.
   mkdir sub && cd sub
-  bash "$kit/template/sdd/bin/cockpit" report "$PWD" | tr -s ' ' > "$tmp/out"
+  bash "$kit/template/cordee/bin/cockpit" report "$PWD" | tr -s ' ' > "$tmp/out"
   grep -q '^writer opus 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
 }
 
@@ -206,7 +206,7 @@ test_hints_name_what_else_is_sent_along_and_a_long_context() {
     reply m1 "$now" claude-opus-5-5 0 10 0 100
     reply m2 "$now" claude-opus-5-5 0 10 150001 0
   } > "$claude/s1.jsonl"
-  bash "$kit/template/sdd/bin/cockpit" hints > "$tmp/out"
+  bash "$kit/template/cordee/bin/cockpit" hints > "$tmp/out"
   grep -q '^HINT Hook SessionStart cost .* tokens a batch (.*%), sent again with every later call\.$' "$tmp/out"
   grep -q '^HINT A log reached 150\.0k tokens of context, read again with each call' "$tmp/out"
   fails "$(wc -l < "$tmp/out" | tr -d ' ')" 2
@@ -220,23 +220,22 @@ test_report_and_hints_say_when_the_format_is_not_read() {
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   reply m1 "$now" claude-opus-5-5 0 10 0 100 | sed 's/"usage"/"tokenUsage"/' > "$claude/s1.jsonl"
   # Nothing left to weigh: report fails, after the note.
-  if bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
+  if bash "$kit/template/cordee/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
   grep -q "^NOTE Claude Code's logs with entries in this window hold no reply the cockpit reads: its format may" "$tmp/out"
-  bash "$kit/template/sdd/bin/cockpit" hints > "$tmp/out"
+  bash "$kit/template/cordee/bin/cockpit" hints > "$tmp/out"
   grep -q "^HINT Claude Code's logs with entries in this window hold no reply the cockpit reads" "$tmp/out"
   reply m2 "$now" claude-opus-5-5 0 10 0 100 | sed 's/_tokens"/_count"/g' > "$claude/s1.jsonl"
-  if bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
+  if bash "$kit/template/cordee/bin/cockpit" report "$repo" > "$tmp/out" 2>&1; then return 1; fi
   grep -q "^NOTE 1 of Claude Code's replies in this window hold no token count the cockpit reads" "$tmp/out"
   # A session closed before its first prompt, and one resumed without one, owe the last hour no reply.
   : > "$claude/s1.jsonl"
   reply m0 "$(ago 172800)" claude-opus-5-5 0 10 0 100 > "$claude/s2.jsonl"
-  if bash "$kit/template/sdd/bin/cockpit" report "$repo" $(($(date +%s) - 3600)) "$(date +%s)" > "$tmp/out" 2>&1; then
-    return 1
-  fi
+  hour=$(($(date +%s) - 3600))
+  if bash "$kit/template/cordee/bin/cockpit" report "$repo" "$hour" "$(date +%s)" > "$tmp/out" 2>&1; then return 1; fi
   if grep -q '^NOTE' "$tmp/out"; then sed 's/^/    | /' "$tmp/out"; return 1; fi
   # Well-formed logs say nothing of the kind.
   reply m3 "$now" claude-opus-5-5 0 10 0 100 > "$claude/s1.jsonl"
-  bash "$kit/template/sdd/bin/cockpit" report "$repo" > "$tmp/out" 2>&1
+  bash "$kit/template/cordee/bin/cockpit" report "$repo" > "$tmp/out" 2>&1
   if grep -q '^NOTE' "$tmp/out"; then sed 's/^/    | /' "$tmp/out"; return 1; fi
 }
 
@@ -244,7 +243,7 @@ test_hints_name_a_module_whose_quiz_is_flagged_twice() {
   git init -q "$repo" && cd "$repo"
   git config user.email dev@example.test && git config user.name Dev
   for i in 1 2 3 4 5 6 7 8 9 10 11; do batch "@$(($(date +%s) - 86400 + i)) +0000"; done
-  mkdir -p .git/sdd
+  mkdir -p .git/cordee
   # Quiz journal lines: v2, time, modules, causes, title, free text.
   journal() { printf 'v2\t%s\t%s\t%s\t%s\t-\n' "$(($(date +%s) - $1))" "$2" "$3" "$4"; }
   {
@@ -259,8 +258,8 @@ test_hints_name_a_module_whose_quiz_is_flagged_twice() {
     journal 3600 import unclear Five
     # A batch that touched no module.
     journal 3600 - unclear,not-wanted Six
-  } > .git/sdd/quiz-journal
-  hints() { bash "$kit/template/sdd/bin/cockpit" hints; }
+  } > .git/cordee/quiz-journal
+  hints() { bash "$kit/template/cordee/bin/cockpit" hints; }
   text='were flagged unclear or not what you wanted'
   fails "$(hints)" "HINT Quiz answers in import $text 2 times: propose the rule you would write.
 HINT Quiz answers in search $text 4 times: propose the rule you would write."
@@ -279,9 +278,9 @@ test_hints_find_a_dev_with_a_plus_or_a_mailmap() {
   # The batch's address and the one the dev commits with now map to the same, in two cases.
   printf '%s\n' '<Dev+sdd@example.test> <old@example.test>' '<dev+sdd@example.test> <older@example.test>' > .mailmap
   git -c user.email=old@example.test commit -q --allow-empty -m Batch -m 'Agent-Assisted: yes'
-  mkdir -p .git/sdd
-  printf 'v2\t%s\tsearch\tunclear\t%s\t-\n' "$(date +%s)" One "$(date +%s)" Two > .git/sdd/quiz-journal
-  fails "$(bash "$kit/template/sdd/bin/cockpit" hints)" \
+  mkdir -p .git/cordee
+  printf 'v2\t%s\tsearch\tunclear\t%s\t-\n' "$(date +%s)" One "$(date +%s)" Two > .git/cordee/quiz-journal
+  fails "$(bash "$kit/template/cordee/bin/cockpit" hints)" \
     'HINT Quiz answers in search were flagged unclear or not what you wanted 2 times: propose the rule you would write.'
 }
 

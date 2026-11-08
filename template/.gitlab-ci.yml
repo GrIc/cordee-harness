@@ -1,4 +1,4 @@
-sdd-audit:
+cordee-audit:
   # Has git and bash; the harness needs Python 3.10 or later.
   image: python:3.12
   variables:
@@ -13,4 +13,4 @@ sdd-audit:
         git fetch -q origin "$CI_DEFAULT_BRANCH"
         BASE=FETCH_HEAD
       fi
-    - bash sdd/bin/sdd audit --range "$BASE..$CI_COMMIT_SHA"
+    - bash cordee/bin/cordee audit --range "$BASE..$CI_COMMIT_SHA"

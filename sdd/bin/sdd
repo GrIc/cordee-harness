@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# The kit runs its harness with the script it ships (decision 18).
-exec bash template/sdd/bin/sdd "$@"

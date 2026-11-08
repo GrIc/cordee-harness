@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs template/sdd/bin/ledger against throwaway repos and a fake cockpit. Usage: bash test/ledger [test_name...]
+# Runs template/cordee/bin/ledger against throwaway repos and a fake cockpit. Usage: bash test/ledger [test_name...]
 set -u
 
 kit=$(cd "$(dirname "$0")/.." && pwd)
@@ -13,14 +13,14 @@ setup() {
   trap 'rm -rf "$tmp"' EXIT
   git -c init.defaultBranch=main init -q --bare "$tmp/origin.git"
   git clone -q "$tmp/origin.git" "$tmp/a" 2> /dev/null && cd "$tmp/a"
-  mkdir -p sdd/bin sdd/modules src/search src/import
-  cp -R "$kit/template/sdd/bin/." sdd/bin/
-  printf 'echo "$@" > "%s/args"\ncat "%s/usage"\n' "$tmp" "$tmp" > sdd/bin/cockpit
-  printf -- '---\ngoverns: [src/search]\n---\n# search\n' > sdd/modules/search.md
-  printf -- '---\ngoverns: [src/import]\n---\n# import\n' > sdd/modules/import.md
+  mkdir -p cordee/bin cordee/modules src/search src/import
+  cp -R "$kit/template/cordee/bin/." cordee/bin/
+  printf 'echo "$@" > "%s/args"\ncat "%s/usage"\n' "$tmp" "$tmp" > cordee/bin/cockpit
+  printf -- '---\ngoverns: [src/search]\n---\n# search\n' > cordee/modules/search.md
+  printf -- '---\ngoverns: [src/import]\n---\n# import\n' > cordee/modules/import.md
   echo one | tee src/search/a.py > src/import/a.py
   git add -A
-  GIT_COMMITTER_DATE=2026-10-23T10:00:00Z git commit -qm 'Adopt SDD-Fabrik'
+  GIT_COMMITTER_DATE=2026-10-23T10:00:00Z git commit -qm 'Adopt Cordee'
   git push -q origin HEAD:main
 }
 
@@ -31,10 +31,10 @@ batch() {
   [ "$2" -eq 0 ] || seq "$2" >> src/import/a.py
   git add -A
   GIT_COMMITTER_DATE=$3 git commit -qm batch -m 'Agent-Assisted: yes'
-  bash sdd/bin/ledger record
+  bash cordee/bin/ledger record
 }
 
-ledger() { git ls-tree -r "${1:-refs/notes/sdd-ledger}" | awk '{ print $3 }' | git cat-file --batch | grep '^v1'; }
+ledger() { git ls-tree -r "${1:-refs/notes/cordee-ledger}" | awk '{ print $3 }' | git cat-file --batch | grep '^v1'; }
 fails() { if [ "$1" != "$2" ]; then printf '    expected: %s\n    got:      %s\n' "$2" "$1"; return 1; fi; }
 
 test_record_splits_a_batch_by_module_on_no_commit() {
@@ -43,8 +43,8 @@ test_record_splits_a_batch_by_module_on_no_commit() {
   fails "$(ledger | tr '\t' ' ')" 'v1 2026-10 import writer opus 1 10 100 1000 2
 v1 2026-10 search writer opus 3 30 300 3000 6'
   # Epoch seconds: git 2.55 writes UTC as Z, older versions as +00:00.
-  fails "$(git log -1 --format='%an %at %ct' refs/notes/sdd-ledger)" 'sdd-fabrik 1790812800 1790812800'
-  ! git notes --ref sdd-ledger list HEAD 2> /dev/null
+  fails "$(git log -1 --format='%an %at %ct' refs/notes/cordee-ledger)" 'cordee 1790812800 1790812800'
+  ! git notes --ref cordee-ledger list HEAD 2> /dev/null
 }
 
 # Each count splits whole: a module gets one more by the largest remainder, the first in the list on a tie, so the
@@ -65,7 +65,7 @@ test_a_batch_outside_the_modules_goes_to_a_dash() {
   echo doc > README.md
   git add -A
   git commit -qm doc
-  bash sdd/bin/ledger record
+  bash cordee/bin/ledger record
   fails "$(ledger | cut -f3)" '-'
 }
 
@@ -74,27 +74,27 @@ test_record_never_notes_the_quiz() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   seq 3 >> src/search/a.py
   git add -A
-  fp=$(bash sdd/bin/sdd fingerprint | sed -n 's/^fingerprint: //p')
-  mkdir -p .git/sdd
-  printf 'v1\t1792752000\tpass\t%s\tsearch\t1\t2\tunclear\tHow?\ttoo long\n' "$fp" > .git/sdd/quiz-journal
+  fp=$(bash cordee/bin/cordee fingerprint | sed -n 's/^fingerprint: //p')
+  mkdir -p .git/cordee
+  printf 'v1\t1792752000\tpass\t%s\tsearch\t1\t2\tunclear\tHow?\ttoo long\n' "$fp" > .git/cordee/quiz-journal
   batch 0 0 2026-10-23T11:00:00Z
   fails "$(ledger | cut -f3)" 'search'
-  ! git ls-tree -r refs/notes/sdd-ledger | awk '{ print $3 }' | git cat-file --batch | grep -e How -e unclear
+  ! git ls-tree -r refs/notes/cordee-ledger | awk '{ print $3 }' | git cat-file --batch | grep -e How -e unclear
 }
 
 test_an_amend_counts_from_the_last_record() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   batch 1 0 2026-10-23T11:00:00Z
   GIT_COMMITTER_DATE=2026-10-23T12:00:00Z git commit -q --amend -m again
-  bash sdd/bin/ledger record
+  bash cordee/bin/ledger record
   fails "$(cut -d' ' -f3-4 "$tmp/args")" '1792753200 1792756800'
 }
 
 test_a_failed_cockpit_loses_no_window() {
-  cp sdd/bin/cockpit "$tmp/cockpit"
-  echo 'exit 1' > sdd/bin/cockpit
+  cp cordee/bin/cockpit "$tmp/cockpit"
+  echo 'exit 1' > cordee/bin/cockpit
   if batch 1 0 2026-10-23T11:00:00Z; then return 1; fi
-  cp "$tmp/cockpit" sdd/bin/cockpit
+  cp "$tmp/cockpit" cordee/bin/cockpit
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   batch 1 0 2026-10-23T12:00:00Z
   fails "$(cut -d' ' -f3-4 "$tmp/args")" '1792749600 1792756800'
@@ -102,63 +102,63 @@ test_a_failed_cockpit_loses_no_window() {
 
 test_a_dev_who_turns_it_off_notes_nothing() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
-  git config sdd.ledger false
+  git config cordee.ledger false
   batch 1 0 2026-10-23T11:00:00Z
-  ! git rev-parse -q --verify refs/notes/sdd-ledger
+  ! git rev-parse -q --verify refs/notes/cordee-ledger
 }
 
 test_sync_merges_two_devs_ledgers() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   batch 1 0 2026-10-23T11:00:00Z
   git clone -q "$tmp/origin.git" "$tmp/b" 2> /dev/null
-  bash sdd/bin/ledger sync
+  bash cordee/bin/ledger sync
   cd "$tmp/b"
   printf 'reviewer\tsonnet\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   batch 0 1 2026-10-23T12:00:00Z
-  bash sdd/bin/ledger sync
-  git fetch -q origin refs/notes/sdd-ledger:refs/remotes/ledger
+  bash cordee/bin/ledger sync
+  git fetch -q origin refs/notes/cordee-ledger:refs/remotes/ledger
   fails "$(ledger refs/remotes/ledger | cut -f3-4 | sort | tr '\t' ' ')" 'import reviewer
 search writer'
   # One commit with no parent: nothing tells whose notes came first.
   fails "$(git rev-list --parents refs/remotes/ledger)" "$(git rev-parse refs/remotes/ledger)"
   # The other dev merges it back without a shared history.
   cd "$tmp/a"
-  bash sdd/bin/ledger sync
-  fails "$(ledger refs/notes/sdd-ledger | wc -l | tr -d ' ')" 2
+  bash cordee/bin/ledger sync
+  fails "$(ledger refs/notes/cordee-ledger | wc -l | tr -d ' ')" 2
 }
 
 # Keys are random, but if one ever held two notes, the merge keeps both and the next syncs still go through.
 test_sync_merges_two_notes_on_one_key() {
   key=$(echo key | git hash-object --stdin)
-  git notes --ref sdd-ledger add -m "$(printf 'v1\t2026-10\tsearch\twriter\topus\t1\t1\t1\t1\t1')" "$key"
+  git notes --ref cordee-ledger add -m "$(printf 'v1\t2026-10\tsearch\twriter\topus\t1\t1\t1\t1\t1')" "$key"
   git clone -q "$tmp/origin.git" "$tmp/b" 2> /dev/null
-  bash sdd/bin/ledger sync
+  bash cordee/bin/ledger sync
   cd "$tmp/b"
-  git notes --ref sdd-ledger add -m "$(printf 'v1\t2026-10\timport\twriter\topus\t1\t1\t1\t1\t1')" "$key"
-  fails "$(bash sdd/bin/ledger sync 2>&1)" ''
+  git notes --ref cordee-ledger add -m "$(printf 'v1\t2026-10\timport\twriter\topus\t1\t1\t1\t1\t1')" "$key"
+  fails "$(bash cordee/bin/ledger sync 2>&1)" ''
   fails "$(ledger | cut -f3 | tr '\n' ' ')" 'import search '
   cd "$tmp/a"
-  fails "$(bash sdd/bin/ledger sync 2>&1)" ''
+  fails "$(bash cordee/bin/ledger sync 2>&1)" ''
   fails "$(ledger | wc -l | tr -d ' ')" 2
 }
 
 test_sync_without_a_ledger_fetches_nothing() {
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   batch 1 0 2026-10-23T11:00:00Z
-  bash sdd/bin/ledger sync
+  bash cordee/bin/ledger sync
   git clone -q "$tmp/origin.git" "$tmp/b" 2> /dev/null && cd "$tmp/b"
-  bash sdd/bin/ledger sync
-  ! git rev-parse -q --verify refs/notes/sdd-ledger-remote
+  bash cordee/bin/ledger sync
+  ! git rev-parse -q --verify refs/notes/cordee-ledger-remote
 }
 
 test_installed_hooks_record_and_share_the_ledger() {
-  bash sdd/bin/sdd install-hook > /dev/null
+  bash cordee/bin/cordee install-hook > /dev/null
   printf 'writer\topus\t1\t1\t1\t1\t1\n' > "$tmp/usage"
   echo two >> src/search/a.py
   git add -A
   git commit -qm 'Change search' 2> /dev/null
   git push -q origin HEAD:main
-  git ls-remote --exit-code origin refs/notes/sdd-ledger > /dev/null
+  git ls-remote --exit-code origin refs/notes/cordee-ledger > /dev/null
 }
 
 test_report_sums_by_month_module_role_and_model_then_shows_coverage() {
@@ -171,7 +171,8 @@ test_report_sums_by_month_module_role_and_model_then_shows_coverage() {
   GIT_COMMITTER_DATE=2026-11-02T11:00:00Z git commit -q --allow-empty -m 'Not noted' -m 'Agent-Assisted: yes'
   GIT_COMMITTER_DATE=2026-11-02T12:00:00Z git commit -q --allow-empty -m 'Not noted' \
     -m 'Co-Authored-By: Claude <noreply@anthropic.com>'
-  fails "$(bash sdd/bin/ledger report | tr '\t' ' ')" 'month module role model calls input output cache_read cache_write
+  fails "$(bash cordee/bin/ledger report | tr '\t' ' ')" \
+    'month module role model calls input output cache_read cache_write
 2026-10 import writer opus 1 10 100 1000 2
 2026-10 search writer opus 4 31 301 3001 7
 2026-11 search reviewer sonnet 1 2 3 4 5
@@ -182,8 +183,8 @@ month batches agent_commits
 }
 
 test_report_without_a_ledger_says_how_to_fetch_it() {
-  if bash sdd/bin/ledger report 2> "$tmp/err"; then return 1; fi
-  grep -qF 'git fetch origin refs/notes/sdd-ledger:refs/notes/sdd-ledger' "$tmp/err"
+  if bash cordee/bin/ledger report 2> "$tmp/err"; then return 1; fi
+  grep -qF 'git fetch origin refs/notes/cordee-ledger:refs/notes/cordee-ledger' "$tmp/err"
 }
 
 test_ledger_survives_a_crlf_checkout() {
@@ -191,9 +192,9 @@ test_ledger_survives_a_crlf_checkout() {
   git add -A
   git commit -qm 'Pin line ends'
   git config core.autocrlf true
-  rm sdd/bin/ledger
-  git checkout -- sdd/bin/ledger
-  if bash sdd/bin/ledger report 2> "$tmp/err"; then return 1; fi
+  rm cordee/bin/ledger
+  git checkout -- cordee/bin/ledger
+  if bash cordee/bin/ledger report 2> "$tmp/err"; then return 1; fi
   grep -qF 'No token ledger here.' "$tmp/err"
 }
 

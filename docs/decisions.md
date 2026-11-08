@@ -696,3 +696,17 @@ sessions closed before a prompt) or resumed without a prompt, with no entry date
 _Rejected:_ counting the entry types the reader does not know (most of them it has no use for, so it would fire on
 every version); the logs' mtime (it gave those four false alarms); the same guard for opencode and Kilo Code (they
 have no report yet, and `doctor` shows their replies read).
+
+## 73. SDD-Fabrik becomes Cordee (2026-11-08)
+
+"SDD" put the kit among the spec tools and "Fabrik" said to produce more, the opposite of its stance: agent code
+enters history only as fast as a human understands it. A *cordée* is a rope team of climbers, who move at the pace of
+the one who follows. `cordee` and `cordee-harness` are free on PyPI and npm (checked 2026-11-08), trademarks not
+checked. The folder `sdd/` becomes `cordee/`, the command `cordee/bin/cordee`, the Python package `harness` (a package
+named `cordee` would sit next to the launcher of the same name), and with them `.git/cordee/`,
+`refs/notes/cordee-ledger`, `cordee.ledger`, the `# cordee` and `<!-- cordee -->` markers and the `cordee-audit` job.
+Every repo running the kit belongs to its maintainer, so the kit reads no old name: `guide/from-sdd-fabrik.md` tells
+an agent how to switch a repo, and the earlier decisions keep the names they were taken under.
+_Rejected:_ a version that reads both names (code to keep for repos one person switches by hand); keeping
+`sdd/bin/sdd` as the command (a name the kit drops, kept only to type less); `grasp`, `belay` (taken, see the notes
+of 2026-11-08), `teachback`, `gotit` (free, but they name the quiz, not the pace).

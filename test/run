@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Runs template/sdd/bin/sdd against throwaway git repos. Usage: bash test/run [test_name...]
+# Runs template/cordee/bin/cordee against throwaway git repos. Usage: bash test/run [test_name...]
 set -u
 
 kit=$(cd "$(dirname "$0")/.." && pwd)
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 export GIT_AUTHOR_NAME=Dev GIT_AUTHOR_EMAIL=dev@example.test GIT_COMMITTER_NAME=Dev GIT_COMMITTER_EMAIL=dev@example.test
 
-contract() { printf -- '---\ngoverns: [%s]\n---\n# %s\n' "$2" "$1" > "sdd/modules/$1.md"; }
+contract() { printf -- '---\ngoverns: [%s]\n---\n# %s\n' "$2" "$1" > "cordee/modules/$1.md"; }
 
 # An empty repo in $tmp/$1, the working directory from then on.
 new_repo() { mkdir "$tmp/$1" && cd "$tmp/$1" && git -c init.defaultBranch=main init -q; }
@@ -17,15 +17,15 @@ setup() {
   trap 'rm -rf "$tmp"' EXIT
   new_repo repo
   git config core.autocrlf false
-  mkdir -p sdd/bin sdd/modules src/search src/import
-  cp -R "$kit/template/sdd/bin/." sdd/bin/
+  mkdir -p cordee/bin cordee/modules src/search src/import
+  cp -R "$kit/template/cordee/bin/." cordee/bin/
   contract search src/search/
   contract import src/import
   echo one > src/search/a.py
   echo one > src/import/a.py
   git add -A
-  git commit -qm 'Adopt SDD-Fabrik'
-  bash sdd/bin/sdd install-hook > /dev/null
+  git commit -qm 'Adopt Cordee'
+  bash cordee/bin/cordee install-hook > /dev/null
   msg=$tmp/msg
   out=$tmp/out
 }
@@ -40,14 +40,14 @@ test_agent_drift_blocks() {
   echo two >> src/search/a.py
   git add -A
   fails agent_commit 'Change search'
-  says 'DRIFT sdd/modules/search.md: src/search/a.py changed, its contract did not.'
+  says 'DRIFT cordee/modules/search.md: src/search/a.py changed, its contract did not.'
 }
 
 test_human_drift_warns_and_commits() {
   echo two >> src/search/a.py
   git add -A
   succeeds git commit -qm 'Change search'
-  says 'DRIFT sdd/modules/search.md'
+  says 'DRIFT cordee/modules/search.md'
   [ "$(git log -1 --format=%s)" = 'Change search' ]
 }
 
@@ -56,18 +56,18 @@ test_spec_unchanged_spares_its_module_only() {
   echo two >> src/import/a.py
   git add -A
   printf 'Rename\n\nAgent-Assisted: yes\nSpec-Unchanged(search): renames only\n' > "$msg"
-  fails bash sdd/bin/sdd audit --message "$msg"
-  says 'DRIFT sdd/modules/import.md'
-  lacks 'DRIFT sdd/modules/search.md'
+  fails bash cordee/bin/cordee audit --message "$msg"
+  says 'DRIFT cordee/modules/import.md'
+  lacks 'DRIFT cordee/modules/search.md'
 }
 
 test_a_spared_module_does_not_count_toward_the_module_limit() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   echo two >> src/search/a.py
   echo two >> src/import/a.py
   git add -A
   printf 'Change search\n\nAgent-Assisted: yes\nSpec-Unchanged(import): renames only\n' > "$msg"
-  succeeds bash sdd/bin/sdd audit --message "$msg"
+  succeeds bash cordee/bin/cordee audit --message "$msg"
 }
 
 test_errors_stop_even_a_human_commit() {
@@ -78,19 +78,19 @@ test_errors_stop_even_a_human_commit() {
   contract import ''
   git add -A
   fails git commit -qm 'Change search'
-  says 'ERROR sdd/modules/import.md: governs is empty.'
+  says 'ERROR cordee/modules/import.md: governs is empty.'
 }
 
 test_multiline_governs_is_read_fully() {
   printf -- '---\ngoverns:\n  [\n    src/search/a.py,\n    lib/search/,\n  ]\ndepends: [import]\n---\n# search\n' \
-    > sdd/modules/search.md
+    > cordee/modules/search.md
   git add -A
   git commit -qm 'Reshape the contract'
   mkdir -p lib/search
   echo one > lib/search/b.py
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: lib/search/b.py changed'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: lib/search/b.py changed'
 }
 
 test_merge_is_not_checked() {
@@ -107,9 +107,9 @@ test_merge_is_not_checked() {
 
 test_first_commit_of_a_repo() {
   new_repo new
-  mkdir -p sdd/bin
-  cp -R "$kit/template/sdd/bin/." sdd/bin/
-  bash sdd/bin/sdd install-hook > /dev/null
+  mkdir -p cordee/bin
+  cp -R "$kit/template/cordee/bin/." cordee/bin/
+  bash cordee/bin/cordee install-hook > /dev/null
   git add -A
   succeeds git commit -qm 'Start'
 }
@@ -117,18 +117,19 @@ test_first_commit_of_a_repo() {
 test_install_hook_respects_an_existing_hook() {
   hook=$(git rev-parse --git-path hooks)/commit-msg
   printf '#!/bin/sh\nexit 0\n' > "$hook"
-  fails bash sdd/bin/sdd install-hook
-  says 'bash sdd/bin/sdd hook "$1"'
+  fails bash cordee/bin/cordee install-hook
+  says 'bash cordee/bin/cordee hook "$1"'
   says "Installed $(git rev-parse --git-path hooks)/pre-push."
-  says 'git config sdd.ledger false stops it.'
+  says 'git config cordee.ledger false stops it.'
   grep -qx '/QUIZ.md' "$(git rev-parse --git-path info/exclude)"
 }
 
 test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
   hooks=$(git rev-parse --git-path hooks)
-  line='[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record'
+  line='[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed;'
+  line="$line [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record"
   grep -qxF "$line" "$hooks/post-commit"
-  grep -qxF '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"' "$hooks/pre-push"
+  grep -qxF '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"' "$hooks/pre-push"
   git init -q --bare "$tmp/origin.git"
   succeeds git push -q "$tmp/origin.git" HEAD:main
 }
@@ -136,10 +137,11 @@ test_install_hook_adds_the_ledger_hooks_that_pass_without_it() {
 # A shared hook (core.hooksPath) runs in every repo: the line install-hook prints must block here and pass elsewhere.
 test_the_line_for_a_shared_hook() {
   git config core.hooksPath "$tmp/hooks"
-  fails bash sdd/bin/sdd install-hook
+  fails bash cordee/bin/cordee install-hook
   says "Your commit-msg hook is $(git rev-parse --git-path hooks)/commit-msg"
-  says '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record'
-  says '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"'
+  line='[ ! -f cordee/bin/cordee ] || bash cordee/bin/cordee committed;'
+  says "$line [ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record"
+  says '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger sync "$1"'
   mkdir "$tmp/hooks"
   { echo '#!/bin/sh'; sed -n '/commit-msg hook/{n;p;}' "$out"; echo 'echo other checks pass'; } \
     > "$tmp/hooks/commit-msg"
@@ -154,104 +156,104 @@ test_the_line_for_a_shared_hook() {
 }
 
 test_over_max_lines_blocks_an_agent_warns_a_human() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 211 > src/search/big.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
   succeeds git commit -qm 'Add a big search'
   says 'Warnings only'
 }
 
 test_up_to_five_percent_over_only_notes() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 210 > src/search/big.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   says "NOTE 210 changed lines of code and tests, over 200 (the kit's default) but within 5%."
 }
 
 test_the_config_sets_the_batch_lines_of_the_repo() {
-  echo 'batch-lines: 100  # small steps' > sdd/config.yml
+  echo 'batch-lines: 100  # small steps' > cordee/config.yml
   git add -A
   git commit -qm 'Keep batches small' 2> /dev/null
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 105 > src/search/big.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE 105 changed lines of code and tests, over 100 (batch-lines in sdd/config.yml) but within 5%.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE 105 changed lines of code and tests, over 100 (batch-lines in cordee/config.yml) but within 5%.'
   seq 1 300 > src/search/big.py
-  echo 'batch-lines: 500' > sdd/config.yml
+  echo 'batch-lines: 500' > cordee/config.yml
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE sdd/config.yml: batch-lines goes from 100 to 500 in this batch.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE cordee/config.yml: batch-lines goes from 100 to 500 in this batch.'
   git commit -q --no-verify -m 'Add a big search, allow bigger batches'
   seq 1 600 > src/search/big.py
-  echo 'More.' >> sdd/modules/search.md
+  echo 'More.' >> cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   lacks 'batch-lines goes from'
-  echo 'batch-lines: lots' > sdd/config.yml
+  echo 'batch-lines: lots' > cordee/config.yml
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'ERROR sdd/config.yml: batch-lines is lots. Write a number of lines, such as 200.'
+  fails bash cordee/bin/cordee audit
+  says 'ERROR cordee/config.yml: batch-lines is lots. Write a number of lines, such as 200.'
   git commit -q --no-verify -m 'Allow lots'
-  echo 'batch-lines: 150' > sdd/config.yml
+  echo 'batch-lines: 150' > cordee/config.yml
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE sdd/config.yml: batch-lines goes from 200 to 150 in this batch.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE cordee/config.yml: batch-lines goes from 200 to 150 in this batch.'
 }
 
 test_a_contract_sets_the_batch_lines_of_its_module() {
-  echo 'batch-lines: 300' > sdd/config.yml
-  printf -- '---\ngoverns: [src/search/]\nbatch-lines: 50\n---\n# search\n' > sdd/modules/search.md
-  printf -- '---\ngoverns: [src/import]\nbatch-lines: 400\n---\n# import\n' > sdd/modules/import.md
+  echo 'batch-lines: 300' > cordee/config.yml
+  printf -- '---\ngoverns: [src/search/]\nbatch-lines: 50\n---\n# search\n' > cordee/modules/search.md
+  printf -- '---\ngoverns: [src/import]\nbatch-lines: 400\n---\n# import\n' > cordee/modules/import.md
   git add -A
   git commit -qm 'Set the batch size of each module' 2> /dev/null
-  echo 'More intent.' >> sdd/modules/import.md
+  echo 'More intent.' >> cordee/modules/import.md
   seq 1 350 > src/import/big.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   git reset -q --hard
   git clean -qfd
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 60 > src/search/big.py
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'SIZE 60 changed lines of code and tests, over 50 (batch-lines in sdd/modules/search.md) by more than 5%.'
+  fails bash cordee/bin/cordee audit
+  says 'SIZE 60 changed lines of code and tests, over 50 (batch-lines in cordee/modules/search.md) by more than 5%.'
   # Raised in the batch itself, it holds at once, with a note for the human.
-  sed 's/batch-lines: 50/batch-lines: 100/' sdd/modules/search.md > sdd/modules/search.tmp
-  mv sdd/modules/search.tmp sdd/modules/search.md
+  sed 's/batch-lines: 50/batch-lines: 100/' cordee/modules/search.md > cordee/modules/search.tmp
+  mv cordee/modules/search.tmp cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE sdd/modules/search.md: batch-lines goes from 50 to 100 in this batch.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE cordee/modules/search.md: batch-lines goes from 50 to 100 in this batch.'
   # Raised alone, it gets the note too.
   git reset -q --hard
   git clean -qfd
-  sed 's/batch-lines: 50/batch-lines: 1000/' sdd/modules/search.md > sdd/modules/search.tmp
-  mv sdd/modules/search.tmp sdd/modules/search.md
+  sed 's/batch-lines: 50/batch-lines: 1000/' cordee/modules/search.md > cordee/modules/search.tmp
+  mv cordee/modules/search.tmp cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE sdd/modules/search.md: batch-lines goes from 50 to 1000 in this batch.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE cordee/modules/search.md: batch-lines goes from 50 to 1000 in this batch.'
 }
 
 test_markdown_git_files_and_lockfiles_do_not_count() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   echo two >> src/search/a.py
   seq 1 300 > notes.md
   seq 1 300 > poetry.lock
   seq 1 300 > .gitignore
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
 }
 
 test_code_marked_binary_still_counts() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   echo '*.py binary' > .gitattributes
   seq 1 211 > src/search/big.py
   head -c 3000 /dev/zero > src/search/logo.png
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
   says 'NOTE src/search/big.py: an attribute marks it binary, but it is text.'
   lacks 'NOTE src/search/logo.png'
@@ -262,45 +264,45 @@ test_a_rename_counts_only_its_edits() {
   seq 1 300 > notes.md
   git add -A
   git commit -qm 'Add a big file' 2> /dev/null
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git mv src/search/big.py src/search/large.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   seq 1 211 >> src/search/large.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
   echo '*.py binary' > .gitattributes
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 211 changed lines of code and tests"
   says 'NOTE src/search/large.py: an attribute marks it binary, but it is text.'
   # Prose renamed to code counts whole.
   git reset -q --hard
   git clean -qfd
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git mv notes.md src/search/notes.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 300 changed lines of code and tests"
   echo '*.py binary' > .gitattributes
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 300 changed lines of code and tests"
 }
 
 test_blank_lines_do_not_count() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 211 | awk '{ print; print ""; print "  " }' > src/search/big.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
   git commit -qm 'Add a big search' 2> /dev/null
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   grep -v '^ *$' src/search/big.py > "$tmp/big.py"
   mv "$tmp/big.py" src/search/big.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   lacks 'changed lines'
 }
 
@@ -308,44 +310,44 @@ test_a_batch_of_many_files_counts_them_all() {
   for n in $(seq 1 120); do seq "$n" $((n + 20)) > "src/search/f$n.py"; done
   git add -A
   git commit -qm 'Add many files' 2> /dev/null
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   for n in $(seq 1 120); do git mv "src/search/f$n.py" "src/search/g$n.py"; echo more >> "src/search/g$n.py"; done
   seq 1 100 > src/search/more.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says "SIZE 220 changed lines of code and tests"
 }
 
 test_two_modules_block_an_agent() {
-  echo 'More intent.' >> sdd/modules/search.md
-  echo 'More intent.' >> sdd/modules/import.md
+  echo 'More intent.' >> cordee/modules/search.md
+  echo 'More intent.' >> cordee/modules/import.md
   echo two >> src/search/a.py
   echo two >> src/import/a.py
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'SIZE the batch changes code of 2 modules.'
 }
 
 test_large_batch_lifts_both_limits() {
-  echo 'More intent.' >> sdd/modules/search.md
-  echo 'More intent.' >> sdd/modules/import.md
+  echo 'More intent.' >> cordee/modules/search.md
+  echo 'More intent.' >> cordee/modules/import.md
   seq 1 211 > src/search/big.py
   echo two >> src/import/a.py
   git add -A
   printf 'Big\n\nAgent-Assisted: yes\nLarge-Batch: one rename across both modules\n' > "$msg"
-  succeeds bash sdd/bin/sdd audit --message "$msg"
+  succeeds bash cordee/bin/cordee audit --message "$msg"
   says "NOTE 212 changed lines of code and tests, over 200 (the kit's default): Large-Batch lifts it."
   says 'NOTE the batch changes code of 2 modules: Large-Batch lifts it.'
 }
 
 test_touched_lists_each_module_with_its_lines() {
   printf 'two\nthree\n' >> src/search/a.py
-  echo '# search' >> sdd/modules/search.md
+  echo '# search' >> cordee/modules/search.md
   echo two >> src/import/a.py
   echo doc > README.md
   git add -A
   git commit -qm 'Change both' 2> /dev/null
-  [ "$(bash sdd/bin/sdd touched)" = "$(printf 'import\t1\nsearch\t3')" ]
+  [ "$(bash cordee/bin/cordee touched)" = "$(printf 'import\t1\nsearch\t3')" ]
 }
 
 # Commits a line in module $1's code as author $2.
@@ -364,7 +366,7 @@ test_brief_spots_a_dev_s_first_batch_in_a_module() {
   commit_as search Carl
   commit_as search Dan
   commit_as import Dev
-  succeeds bash sdd/bin/sdd brief search
+  succeeds bash cordee/bin/cordee brief search
   [ "$(cat "$out")" = 'First batch of yours in search.
 Who delivered there most: Carl, Bob Roy, Ann Lee.' ]
 }
@@ -376,24 +378,24 @@ test_brief_is_silent_in_a_known_module() {
   echo dev >> src/search/a.py
   git add -A
   GIT_AUTHOR_EMAIL=DEV@example.test git commit -qm 'Change search' 2> /dev/null
-  succeeds bash sdd/bin/sdd brief search
+  succeeds bash cordee/bin/cordee brief search
   [ ! -s "$out" ]
   # A mailmap that moves the dev to a new address maps their own identity too.
   echo 'Dev <dev@new.test> <dev@example.test>' > .mailmap
-  succeeds bash sdd/bin/sdd brief search
+  succeeds bash cordee/bin/cordee brief search
   [ ! -s "$out" ]
-  succeeds bash sdd/bin/sdd brief nothing
+  succeeds bash cordee/bin/cordee brief nothing
   [ ! -s "$out" ]
 }
 
 test_brief_shows_quizzes_waiting_in_other_worktrees() {
   git worktree add -q "$tmp/other" -b other
   git worktree add -q "$tmp/third" -b third
-  succeeds bash sdd/bin/sdd brief
+  succeeds bash cordee/bin/cordee brief
   [ ! -s "$out" ]
   # The dev's own quiz, in the worktree they run brief from, does not wait.
   touch "$tmp/other/QUIZ.md" QUIZ.md
-  succeeds bash sdd/bin/sdd brief
+  succeeds bash cordee/bin/cordee brief
   [ "$(wc -l < "$out")" -eq 1 ] && says 'A quiz waits for your answers in ' && says '/other.'
 }
 
@@ -425,10 +427,10 @@ test_brief_shows_branches_waiting_for_review_with_their_author() {
   push_branch abandoned Carl 337
   push_branch deps 'dependabot[bot]' 10
   push_branch renovate 'Renovate Bot' 10
-  succeeds bash sdd/bin/sdd brief
+  succeeds bash cordee/bin/cordee brief
   [ ! -s "$out" ]
   git remote set-head origin main
-  succeeds bash sdd/bin/sdd brief
+  succeeds bash cordee/bin/cordee brief
   [ "$(cat "$out")" = 'origin/stale waits for a review for 3 days, see Bob Roy.
 origin/late waits for a review for 4 hours, see Carl.' ]
 }
@@ -438,16 +440,16 @@ test_the_config_sets_how_long_a_branch_waits() {
   git remote set-head origin main
   push_branch fresh Carl 3
   push_branch stale 'Bob Roy' 72
-  printf 'review-wait-hours: 2\nabandoned-days: 2  # a two-day sprint\n' > sdd/config.yml
+  printf 'review-wait-hours: 2\nabandoned-days: 2  # a two-day sprint\n' > cordee/config.yml
   git add -A
   git commit -qm 'Wait less' 2> /dev/null
-  succeeds bash sdd/bin/sdd brief
+  succeeds bash cordee/bin/cordee brief
   [ "$(cat "$out")" = 'origin/fresh waits for a review for 3 hours, see Carl.' ]
-  echo 'abandoned-days: two' > sdd/config.yml
+  echo 'abandoned-days: two' > cordee/config.yml
   git add -A
   git commit -qm 'Mistype the setting' 2> /dev/null
-  fails bash sdd/bin/sdd brief
-  says 'ERROR sdd/config.yml: abandoned-days is two. Write a whole number, such as 14.'
+  fails bash cordee/bin/cordee brief
+  says 'ERROR cordee/config.yml: abandoned-days is two. Write a whole number, such as 14.'
 }
 
 test_brief_says_three_lines_at_most() {
@@ -459,7 +461,7 @@ test_brief_says_three_lines_at_most() {
   git worktree add -q "$tmp/other" -b other
   git worktree add -q "$tmp/third" -b third
   touch "$tmp/other/QUIZ.md" "$tmp/third/QUIZ.md"
-  succeeds bash sdd/bin/sdd brief search
+  succeeds bash cordee/bin/cordee brief search
   [ "$(sed -n 3p "$out")" = 'origin/stale waits for a review for 3 days, see Bob Roy.' ]
   lacks 'origin/late'
   # The dev's first batch in search comes after what waits.
@@ -467,36 +469,36 @@ test_brief_says_three_lines_at_most() {
 }
 
 test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one() {
-  succeeds bash sdd/bin/sdd quiet seq 100
+  succeeds bash cordee/bin/cordee quiet seq 100
   [ "$(cat "$out")" = 'ok: seq 100 (100 lines hidden)' ]
-  fails bash sdd/bin/sdd quiet sh -c 'seq 100; exit 3'
+  fails bash cordee/bin/cordee quiet sh -c 'seq 100; exit 3'
   [ "$(head -n 1 "$out")" = 71 ] && [ "$(tail -n 1 "$out")" = "FAIL (3): sh -c seq 100; exit 3" ]
 }
 
 test_audit_notes_the_markdown_ratio() {
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   says 'NOTE 8 lines of markdown for 2 lines of governed code, ratio 4.00 (guideline: at most 1).'
 }
 
 test_audit_points_out_governs_paths_that_match_nothing() {
   contract search src/serch/
   git add -A
-  succeeds bash sdd/bin/sdd audit
-  says 'NOTE sdd/modules/search.md: src/serch/ matches no tracked file, a typo or code still to come.'
+  succeeds bash cordee/bin/cordee audit
+  says 'NOTE cordee/modules/search.md: src/serch/ matches no tracked file, a typo or code still to come.'
 }
 
 # YAML's other ways to write a list: one path, or "- path" lines, flush or indented. The next key is no path.
 test_governs_reads_a_scalar_or_a_block_list() {
-  printf -- '---\ngoverns: src/search/\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: src/search/\nrisk: high\n---\n# search\n' > cordee/modules/search.md
   printf -- '---\ngoverns:\n# owned here\n  - src/import/a.py  # the code\n- lib/\nrisk: high\n---\n# import\n' \
-    > sdd/modules/import.md
+    > cordee/modules/import.md
   git add -A
   git commit -qm 'Write governs as YAML lists' 2> /dev/null
   echo two >> src/import/a.py
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/import.md: src/import/a.py changed'
-  says 'NOTE sdd/modules/import.md: lib/ matches no tracked file'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/import.md: src/import/a.py changed'
+  says 'NOTE cordee/modules/import.md: lib/ matches no tracked file'
   lacks 'risk: matches'
   lacks 'high matches'
   lacks 'here matches'
@@ -507,20 +509,20 @@ test_a_governs_path_outside_the_repo_says_what_to_do() {
   contract search ../shared/
   git add -A
   fails git commit -qm 'Share search'
-  says 'ERROR sdd/modules/search.md: governs ../shared/, outside the repo. Write each path from the repo root.'
+  says 'ERROR cordee/modules/search.md: governs ../shared/, outside the repo. Write each path from the repo root.'
   lacks 'fatal'
   contract search /shared/
   git add -A
   fails git commit -qm 'Share search'
-  says 'ERROR sdd/modules/search.md: governs /shared/, outside the repo.'
+  says 'ERROR cordee/modules/search.md: governs /shared/, outside the repo.'
 }
 
 test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing() {
   new_repo empty
-  mkdir sdd && cp -R "$kit/template/sdd/bin" sdd/
-  fails bash sdd/bin/sdd touched
+  mkdir cordee && cp -R "$kit/template/cordee/bin" cordee/
+  fails bash cordee/bin/cordee touched
   says 'No commit HEAD here: commit first, or name a commit.'
-  succeeds bash sdd/bin/cockpit hints
+  succeeds bash cordee/bin/cockpit hints
   [ ! -s "$out" ]
 }
 
@@ -531,20 +533,20 @@ test_governs_takes_git_pathspecs() {
   git add -A
   git commit -qm 'Glob the paths' 2> /dev/null
   git rm -q src/search/b.py
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: src/search/b.py changed'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: src/search/b.py changed'
 }
 
 # A contract for search whose criterion links to $1.
 linked_contract() {
-  printf -- '---\ngoverns: [src/search/]\n---\n# search\n\n- Some behavior: %s\n' "$1" > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\n---\n# search\n\n- Some behavior: %s\n' "$1" > cordee/modules/search.md
 }
 
 test_a_link_to_a_missing_file_is_drift() {
   linked_contract '[test_x](/tests/test_missing.py).'
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: links "test_x" to /tests/test_missing.py, a file the commit does not have.'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: links "test_x" to /tests/test_missing.py, a file the commit does not have.'
 }
 
 test_a_link_to_a_missing_test_name_is_drift() {
@@ -553,9 +555,9 @@ test_a_link_to_a_missing_test_name_is_drift() {
   linked_contract '[test_x](/tests/test_search.py), [a missing
   name](/tests/test_search.py).'
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: links "test_x", not found in tests/test_search.py.'
-  says 'DRIFT sdd/modules/search.md: links "a missing name", not found in tests/test_search.py.'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: links "test_x", not found in tests/test_search.py.'
+  says 'DRIFT cordee/modules/search.md: links "a missing name", not found in tests/test_search.py.'
   succeeds git commit -qm 'Link the tests'
   says 'Warnings only'
 }
@@ -570,21 +572,21 @@ test_audit_accepts_links_to_names_groups_and_files() {
   [tests/test_search.py](../../tests/test_search.py), [the docs](https://example.com/docs), [workflow](../WORKFLOW.md),
   [the search code](/src/search/), [the tests](/tests).'
   # Written on Windows: CRLF must not split the wrapped link.
-  awk '{ printf "%s\r\n", $0 }' sdd/modules/search.md > crlf.md && mv crlf.md sdd/modules/search.md
+  awk '{ printf "%s\r\n", $0 }' cordee/modules/search.md > crlf.md && mv crlf.md cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   lacks 'DRIFT'
 }
 
 test_markdown_ratio_leaves_out_the_kit_docs() {
-  seq 1 50 > sdd/WORKFLOW.md
-  mkdir sdd/guide
-  seq 1 50 > sdd/guide/start.md
-  printf '# Agents\n\n<!-- sdd-fabrik -->\nkit\n\nkit\n<!-- /sdd-fabrik -->\nours\n' > AGENTS.md
+  seq 1 50 > cordee/WORKFLOW.md
+  mkdir cordee/guide
+  seq 1 50 > cordee/guide/start.md
+  printf '# Agents\n\n<!-- cordee -->\nkit\n\nkit\n<!-- /cordee -->\nours\n' > AGENTS.md
   printf '# Style\n| Errors | to settle |\n| Naming | snake_case |\n| Tests | to fill at GENESIS or ADOPT |\n' \
-    > sdd/coding-style.md
+    > cordee/coding-style.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   says 'NOTE 12 lines of markdown'
 }
 
@@ -593,11 +595,11 @@ test_range_checks_each_commit() {
   echo two >> src/search/a.py
   git add -A
   git commit -q --no-verify -m 'Change search' -m 'Agent-Assisted: yes'
-  echo 'Later intent.' >> sdd/modules/search.md
+  echo 'Later intent.' >> cordee/modules/search.md
   git add -A
   git commit -q --no-verify -m 'Touch the contract later' -m 'Agent-Assisted: yes'
-  fails bash sdd/bin/sdd audit --range "$start..HEAD"
-  says 'DRIFT sdd/modules/search.md'
+  fails bash cordee/bin/cordee audit --range "$start..HEAD"
+  says 'DRIFT cordee/modules/search.md'
   says 'FAIL'
   # An agent batch with no quiz passes: CI never asks for one.
   says 'OK   '
@@ -605,7 +607,7 @@ test_range_checks_each_commit() {
   git add -A
   git commit -q --no-verify -m 'Change search again'
   # An unknown base audits the tip only: the human's drift warns.
-  succeeds bash sdd/bin/sdd audit --range "1234567890123456789012345678901234567890..HEAD"
+  succeeds bash cordee/bin/cordee audit --range "1234567890123456789012345678901234567890..HEAD"
   says 'Warnings only'
 }
 
@@ -619,27 +621,27 @@ test_range_ignores_commits_before_adoption() {
   seq 1 500 > src/big.py
   git add -A
   git commit -qm 'Before adoption' -m 'Agent-Assisted: yes'
-  mkdir -p sdd/bin sdd/modules
-  cp -R "$kit/template/sdd/bin/." sdd/bin/
-  printf -- '---\ngoverns: [src/]\n---\n# app\n' > sdd/modules/app.md
+  mkdir -p cordee/bin cordee/modules
+  cp -R "$kit/template/cordee/bin/." cordee/bin/
+  printf -- '---\ngoverns: [src/]\n---\n# app\n' > cordee/modules/app.md
   git add -A
   git commit -qm 'Adopt'
-  succeeds bash sdd/bin/sdd audit --range "$start..HEAD"
+  succeeds bash cordee/bin/cordee audit --range "$start..HEAD"
 }
 
 # A ready agent batch on search: code and contract.
 batch() {
   echo two >> src/search/a.py
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
 }
 
 # The reviewer's side: QUIZ.md citing file $1, and the key with answers $2 (like "A B C"), one question each.
 write_quiz() {
   local key a i=0
-  key=$(bash sdd/bin/sdd fingerprint | sed -n 's/^key: //p')
+  key=$(bash cordee/bin/cordee fingerprint | sed -n 's/^key: //p')
   {
-    bash sdd/bin/sdd fingerprint | sed -n 's/^fingerprint: //p'
+    bash cordee/bin/cordee fingerprint | sed -n 's/^fingerprint: //p'
     for a in $2; do echo "$a Because of $a."; done
   } > "$key"
   {
@@ -682,7 +684,7 @@ test_bypass_quiz_with_a_reason_skips_the_quiz() {
 }
 
 test_bypass_quiz_holds_at_high_risk() {
-  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > cordee/modules/search.md
   git add -A
   git commit -qm 'Search is risky'
   batch
@@ -693,11 +695,11 @@ test_bypass_quiz_still_checks_drift() {
   echo two >> src/search/a.py
   git add -A
   fails git commit -q -m 'Change search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: urgent'
-  says 'DRIFT sdd/modules/search.md'
+  says 'DRIFT cordee/modules/search.md'
 }
 
 test_bypass_quiz_still_checks_size() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 300 > src/search/big.py
   git add -A
   fails git commit -q -m 'Add a big search' -m 'Agent-Assisted: yes' -m 'Bypass-Quiz: urgent'
@@ -713,70 +715,70 @@ test_bypass_quiz_without_a_reason_asks_the_quiz() {
 
 # The message the agent proposes at step 5, one line per argument.
 propose() {
-  mkdir -p "$(dirname "$(git rev-parse --git-path sdd/message)")"
-  printf '%s\n' "$@" > "$(git rev-parse --git-path sdd/message)"
+  mkdir -p "$(dirname "$(git rev-parse --git-path cordee/message)")"
+  printf '%s\n' "$@" > "$(git rev-parse --git-path cordee/message)"
 }
 
 test_next_leads_a_batch_to_its_quiz() {
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   [ "$(cat "$out")" = 'Nothing to propose: no tracked file changed.' ]
   touch notes.txt
   echo two >> src/search/a.py
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 5: stage the batch, these files changed and are not staged: src/search/a.py.'
   says 'Untracked, stage those of the batch: notes.txt.'
   git add src/search/a.py
-  succeeds bash sdd/bin/sdd next
-  says 'step 5: write the proposed message, with Agent-Assisted: yes, to .git/sdd/message.'
+  succeeds bash cordee/bin/cordee next
+  says 'step 5: write the proposed message, with Agent-Assisted: yes, to .git/cordee/message.'
   propose 'Change search' '' 'Agent-Assisted: yes'
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 3: fix what the audit finds.'
-  says 'DRIFT sdd/modules/search.md'
-  echo 'More intent.' >> sdd/modules/search.md
+  says 'DRIFT cordee/modules/search.md'
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 6: a fresh reviewer'
   write_quiz README.md 'A B C'
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 6: the reviewer fixes its quiz. Question 1 needs a See line'
   write_quiz src/search/a.py 'A B C'
-  succeeds bash sdd/bin/sdd next
-  says 'step 7: hand off, then the human answers QUIZ.md and commits with git commit -F .git/sdd/message.'
+  succeeds bash cordee/bin/cordee next
+  says 'step 7: hand off, then the human answers QUIZ.md and commits with git commit -F .git/cordee/message.'
   echo three >> src/search/a.py
   git add -A
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 6: the batch changed since the quiz'
 }
 
 test_next_points_to_doctor_for_hooks_out_of_date() {
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   lacks 'doctor'
-  echo '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' > "$(git rev-parse --git-path hooks)/post-commit"
+  echo '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record' > "$(git rev-parse --git-path hooks)/post-commit"
   rm "$(git rev-parse --git-path hooks)/pre-push"
-  succeeds bash sdd/bin/sdd next
-  says 'NOTE hooks out of date: post-commit, pre-push. bash sdd/bin/sdd doctor says what to do.'
+  succeeds bash cordee/bin/cordee next
+  says 'NOTE hooks out of date: post-commit, pre-push. bash cordee/bin/cordee doctor says what to do.'
 }
 
 test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked() {
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   seq 1 300 > src/search/a.py
   git add -A
   propose 'Change search' '' 'Agent-Assisted: yes'
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 5: fix what the audit finds.'
   says 'SIZE 301 changed lines of code and tests'
   propose 'Change search' '' 'Agent-Assisted: yes' 'Large-Batch: generated' 'Bypass-Quiz: redone after a passed quiz'
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 7: hand off, then the human commits with'
-  git commit -q -F .git/sdd/message 2> /dev/null
+  git commit -q -F .git/cordee/message 2> /dev/null
   echo 'Notes.' > NOTES.md
   git add -A
   # The message of the last commit, left behind.
-  touch -t 200001010000 .git/sdd/message
-  succeeds bash sdd/bin/sdd next
+  touch -t 200001010000 .git/cordee/message
+  succeeds bash cordee/bin/cordee next
   says 'step 5: write the proposed message'
   propose 'Add notes' '' 'Agent-Assisted: yes'
-  succeeds bash sdd/bin/sdd next
+  succeeds bash cordee/bin/cordee next
   says 'step 7: hand off, then the human commits with'
 }
 
@@ -788,16 +790,16 @@ test_quiz_passed_adds_the_trailer_and_cleans_up() {
   lacks 'The batch changed'
   git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
   [ ! -e QUIZ.md ]
-  [ ! -e "$(git rev-parse --git-path sdd/quiz-key)" ]
+  [ ! -e "$(git rev-parse --git-path cordee/quiz-key)" ]
 }
 
 test_below_high_risk_a_quiz_asks_one_to_three_questions() {
   batch
   write_quiz src/search/a.py 'A B C D'
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'QUIZ.md needs 1 to 3 questions'
   write_quiz src/search/a.py 'B'
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   lacks 'vary it'
   answer B
   succeeds agent_commit 'Change search'
@@ -814,7 +816,7 @@ test_the_trailer_says_how_much_the_quiz_covers() {
   git config diff.interHunkContext 3
   sed -e 's/^2$/two/' -e '/^5$/d' -e 's/^8$/eight/' src/search/a.py > a.tmp && mv a.tmp src/search/a.py
   echo new > src/search/b.py
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
   write_quiz src/search/a.py 'A B C'
   see 1 src/search/a.py:1
@@ -876,7 +878,7 @@ test_the_block_speaks_the_key_s_language() {
   write_quiz src/search/a.py 'A B C'
   printf '%s\n' 'Faux.' 'Indice :' 'Tape *quiz feedback* pour en parler avec ton agent.' \
     'Facultatif, pourquoi ? (reste sur cette machine)' "Je n'avais pas compris le code" 'La question est floue' \
-    'Le code ne fait pas ce que je voulais' 'Autre :' >> "$(git rev-parse --git-path sdd/quiz-key)"
+    'Le code ne fait pas ce que je voulais' 'Autre :' >> "$(git rev-parse --git-path cordee/quiz-key)"
   answer A C C
   fails agent_commit 'Change search'
   question 2 | grep -qxF '> Faux. Indice : Because of B.'
@@ -885,7 +887,7 @@ test_the_block_speaks_the_key_s_language() {
     -e 's/^> - Autre :$/> - Autre : trop long/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
   answer A B C
   succeeds agent_commit 'Change search'
-  [ "$(cut -f 4,6 "$(git rev-parse --git-common-dir)/sdd/quiz-journal")" = "unclear	trop long" ]
+  [ "$(cut -f 4,6 "$(git rev-parse --git-common-dir)/cordee/quiz-journal")" = "unclear	trop long" ]
 }
 
 test_a_new_try_keeps_the_feedback_ticked() {
@@ -914,7 +916,7 @@ test_feedback_never_changes_the_grade() {
   git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
 }
 
-journal() { cat "$(git rev-parse --git-common-dir)/sdd/quiz-journal"; }
+journal() { cat "$(git rev-parse --git-common-dir)/cordee/quiz-journal"; }
 
 # Fails questions 2 and 3, ticks "unclear" under 2 and writes words with a tab under 3, fails again, then passes.
 flag_and_pass() {
@@ -925,7 +927,7 @@ flag_and_pass() {
     n == 3 { sub(/^> - Other:$/, "> - Other: too\tlong") }
     { print }' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
   fails agent_commit 'Change search'
-  [ ! -s "$(git rev-parse --git-common-dir)/sdd/quiz-journal" ]
+  [ ! -s "$(git rev-parse --git-common-dir)/cordee/quiz-journal" ]
   answer A B C
   succeeds agent_commit 'Change search'
 }
@@ -945,34 +947,34 @@ test_worktrees_share_the_quiz_journal() {
   batch
   write_quiz src/search/a.py 'A B C'
   flag_and_pass
-  [ "$(grep -c '^v2' "$tmp/repo/.git/sdd/quiz-journal")" -eq 2 ]
+  [ "$(grep -c '^v2' "$tmp/repo/.git/cordee/quiz-journal")" -eq 2 ]
 }
 
 test_a_high_risk_quiz_covers_every_hunk() {
-  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > cordee/modules/search.md
   git add -A
   git commit -qm 'Search is at high risk'
   batch
   echo new > src/search/b.py
   git add -A
   write_quiz src/search/a.py 'A B'
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'NOTE search: high risk, the quiz cites every hunk of code and a second human'
   says 'QUIZ.md needs 3 questions or more'
   write_quiz src/search/a.py 'A B C A'
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'QUIZ.md cites 1 of 2 hunks of code; at high risk, its See lines cite them all. Missed: src/search/b.py:1.'
   see 1 'src/search/a.py:2, src/search/b.py:1'
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   answer A B C A
   succeeds agent_commit 'Change search'
   git log -1 --format=%B | grep -qx 'Quiz: 4/4, covers 2/2'
   # The batch that drops risk: high is still judged at high risk, and the hook never checks what the quiz covers.
-  printf -- '---\ngoverns: [src/search/]\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\n---\n# search\n' > cordee/modules/search.md
   echo three >> src/search/b.py
   git add -A
-  write_quiz sdd/modules/search.md 'A B C'
-  fails bash sdd/bin/sdd audit
+  write_quiz cordee/modules/search.md 'A B C'
+  fails bash cordee/bin/cordee audit
   says 'NOTE search: high risk'
   answer A B C
   succeeds agent_commit 'Lower the risk of search'
@@ -980,59 +982,59 @@ test_a_high_risk_quiz_covers_every_hunk() {
 }
 
 test_the_config_sets_the_risk_a_contract_overrides() {
-  printf '# Every module handles money.\nrisk: "high"  # until the audit\n' > sdd/config.yml
+  printf '# Every module handles money.\nrisk: "high"  # until the audit\n' > cordee/config.yml
   git add -A
   git commit -qm 'Put the repo at high risk'
   batch
   echo two >> src/import/a.py
   git add -A
   printf 'Change both\n\nAgent-Assisted: yes\nSpec-Unchanged(import): renames only\nLarge-Batch: one rename\n' > "$msg"
-  succeeds bash sdd/bin/sdd audit --message "$msg"
+  succeeds bash cordee/bin/cordee audit --message "$msg"
   says 'NOTE import, search: high risk'
-  printf -- '---\ngoverns: [src/search/]\nrisk: normal\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: normal\n---\n# search\n' > cordee/modules/search.md
   git add -A
   git commit -q --no-verify -m 'Keep search at normal risk'
   echo three >> src/search/a.py
   echo three >> src/import/a.py
-  echo 'More.' >> sdd/modules/search.md
+  echo 'More.' >> cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit --message "$msg"
+  succeeds bash cordee/bin/cordee audit --message "$msg"
   says 'NOTE import: high risk'
 }
 
 test_a_risk_is_one_of_four_values() {
-  printf -- '---\ngoverns: [src/search/]\nrisk: High\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: High\n---\n# search\n' > cordee/modules/search.md
   git add -A
   fails git commit -qm 'Search is risky'
-  says 'ERROR sdd/modules/search.md: risk is High. Write low, intent, normal or high.'
+  says 'ERROR cordee/modules/search.md: risk is High. Write low, intent, normal or high.'
   git commit -q --no-verify -m 'Search is risky'
-  printf -- '---\ngoverns: [src/search/]\nrisk: intent\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: intent\n---\n# search\n' > cordee/modules/search.md
   git add -A
   succeeds git commit -qm 'Search moves by its intent'
-  printf 'risk: medium\n' > sdd/config.yml
+  printf 'risk: medium\n' > cordee/config.yml
   echo two >> src/import/a.py
   git add -A
   fails git commit -qm 'Change import'
-  says 'ERROR sdd/config.yml: risk is medium. Write low, intent, normal or high.'
+  says 'ERROR cordee/config.yml: risk is medium. Write low, intent, normal or high.'
 }
 
 test_low_risk_asks_no_quiz() {
-  printf 'risk: low\n' > sdd/config.yml
-  printf -- '---\ngoverns: [src/import/]\nrisk: normal\n---\n# import\n' > sdd/modules/import.md
+  printf 'risk: low\n' > cordee/config.yml
+  printf -- '---\ngoverns: [src/import/]\nrisk: normal\n---\n# import\n' > cordee/modules/import.md
   git add -A
   git commit -qm 'Put the repo at low risk, import at normal'
   echo two >> src/search/a.py
   echo two > tools.py
   git add -A
-  printf 'Fix search\n\nAgent-Assisted: yes\nSpec-Unchanged(search): a fix\n' > .git/sdd/message
-  succeeds bash sdd/bin/sdd next
+  printf 'Fix search\n\nAgent-Assisted: yes\nSpec-Unchanged(search): a fix\n' > .git/cordee/message
+  succeeds bash cordee/bin/cordee next
   says 'step 7: hand off, then the human commits'
-  succeeds git commit -q -F .git/sdd/message
+  succeeds git commit -q -F .git/cordee/message
   [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
   echo three >> src/search/a.py
   git add -A
   fails agent_commit 'Change search'
-  says 'DRIFT sdd/modules/search.md'
+  says 'DRIFT cordee/modules/search.md'
   git reset -q --hard
   # The batch that lowers a module's risk is judged at the risk it had.
   contract import src/import/
@@ -1042,7 +1044,7 @@ test_low_risk_asks_no_quiz() {
 }
 
 test_intent_risk_asks_a_quiz_when_a_contract_moves() {
-  printf 'risk: intent\n' > sdd/config.yml
+  printf 'risk: intent\n' > cordee/config.yml
   git add -A
   git commit -qm 'Put the repo at intent risk'
   echo two >> src/search/a.py
@@ -1051,7 +1053,7 @@ test_intent_risk_asks_a_quiz_when_a_contract_moves() {
   succeeds git commit -q -m 'Fix search' -m 'Agent-Assisted: yes' -m 'Spec-Unchanged(search): a fix'
   [ -z "$(git log -1 --format=%B | grep '^Quiz:')" ]
   echo three >> src/search/a.py
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
   fails agent_commit 'Change search'
   says 'No quiz for this agent-assisted batch'
@@ -1074,7 +1076,7 @@ test_a_markdown_only_batch_needs_no_quiz() {
   fails agent_commit 'Explain more'
   says 'Question 3 is wrong'
   rm QUIZ.md
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
   fails agent_commit 'Explain more'
   says 'No quiz for this agent-assisted batch'
@@ -1103,35 +1105,35 @@ test_a_governed_markdown_batch_asks_a_quiz() {
 }
 
 test_a_deleted_high_risk_contract_is_high_risk() {
-  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: [src/search/]\nrisk: high\n---\n# search\n' > cordee/modules/search.md
   git add -A
   git commit -qm 'Search is at high risk'
-  git rm -q sdd/modules/search.md
-  bash sdd/bin/sdd audit > "$out" 2>&1 || true
+  git rm -q cordee/modules/search.md
+  bash cordee/bin/cordee audit > "$out" 2>&1 || true
   says 'NOTE search: high risk'
 }
 
 test_a_sensitive_file_always_asks_a_quiz() {
-  printf 'risk: low\n' > sdd/config.yml
+  printf 'risk: low\n' > cordee/config.yml
   git add -A
   git commit -qm 'Put the repo at low risk'
-  echo 'Layers.' > sdd/architecture.md
+  echo 'Layers.' > cordee/architecture.md
   git add -A
   fails agent_commit 'Draw the layers'
   says 'No quiz for this agent-assisted batch'
   git reset -q --hard
   # The batch that empties the list is judged by the base's.
-  printf 'risk: low\nsensitive: []\n' > sdd/config.yml
+  printf 'risk: low\nsensitive: []\n' > cordee/config.yml
   git add -A
   fails agent_commit 'List no sensitive file'
   says 'No quiz for this agent-assisted batch'
   git commit -qm 'List no sensitive file'
-  echo 'Layers.' > sdd/architecture.md
+  echo 'Layers.' > cordee/architecture.md
   git add -A
   succeeds agent_commit 'Draw the layers'
   # A contract's list adds to the repo's, for any file of the batch.
   printf -- '---\ngoverns: [src/import/]\nsensitive:\n  - "db/"  # the schema\n- /\\.sql$/\n---\n# import\n' \
-    > sdd/modules/import.md
+    > cordee/modules/import.md
   git add -A
   git commit -qm 'Keep the schema and the queries under a quiz'
   mkdir db
@@ -1146,7 +1148,7 @@ test_a_sensitive_file_always_asks_a_quiz() {
   says 'No quiz for this agent-assisted batch'
   git reset -q --hard
   # The batch's own list counts too.
-  printf -- '---\ngoverns: [src/import/]\nsensitive: notes.txt\n---\n# import\n' > sdd/modules/import.md
+  printf -- '---\ngoverns: [src/import/]\nsensitive: notes.txt\n---\n# import\n' > cordee/modules/import.md
   echo 'Why.' > notes.txt
   git add -A
   fails agent_commit 'Keep the notes under a quiz'
@@ -1154,7 +1156,7 @@ test_a_sensitive_file_always_asks_a_quiz() {
 }
 
 test_the_kit_lists_what_steers_agents() {
-  printf 'risk: low\n' > sdd/config.yml
+  printf 'risk: low\n' > cordee/config.yml
   git add -A
   git commit -qm 'Put the repo at low risk'
   for file in src/AGENTS.md docs/claude.md .claude/settings.json .github/workflows/ci.yml .gitlab-ci.yml \
@@ -1169,7 +1171,7 @@ test_the_kit_lists_what_steers_agents() {
 }
 
 test_sensitive_takes_files_folders_and_expressions() {
-  printf 'risk: low\nsensitive: tools  # a file, not the folder\n' > sdd/config.yml
+  printf 'risk: low\nsensitive: tools  # a file, not the folder\n' > cordee/config.yml
   mkdir tools
   echo one > tools/a.sh
   git add -A
@@ -1177,23 +1179,23 @@ test_sensitive_takes_files_folders_and_expressions() {
   echo two >> tools/a.sh
   git add -A
   succeeds agent_commit 'Change a tool'
-  printf 'risk: low\nsensitive: [tools/, db/]\n' > sdd/config.yml
+  printf 'risk: low\nsensitive: [tools/, db/]\n' > cordee/config.yml
   git add -A
   fails git commit -qm 'Settings'
-  says 'ERROR sdd/config.yml: sensitive is [tools/, db/]. Write one entry per line below the key, as "  - tools/".'
-  printf 'risk: low\nsensitive:\n  - /(/\n' > sdd/config.yml
+  says 'ERROR cordee/config.yml: sensitive is [tools/, db/]. Write one entry per line below the key, as "  - tools/".'
+  printf 'risk: low\nsensitive:\n  - /(/\n' > cordee/config.yml
   git add -A
   fails git commit -qm 'Settings'
-  says 'ERROR sdd/config.yml: sensitive lists /(/, a regular expression that does not compile'
+  says 'ERROR cordee/config.yml: sensitive lists /(/, a regular expression that does not compile'
   git commit -q --no-verify -m 'Settings'
   # In the base it is left out, so that the commit fixing it passes.
-  printf 'risk: low\nsensitive:\n  - tools/, db/\n' > sdd/config.yml
+  printf 'risk: low\nsensitive:\n  - tools/, db/\n' > cordee/config.yml
   git add -A
   succeeds git commit -qm 'Fix the settings'
   echo three >> tools/a.sh
   git add -A
   succeeds agent_commit 'Change a tool'
-  printf 'risk: low\nsensitive:\n  - tools/\n' > sdd/config.yml
+  printf 'risk: low\nsensitive:\n  - tools/\n' > cordee/config.yml
   git add -A
   git commit -qm 'Settings'
   echo four >> tools/a.sh
@@ -1209,7 +1211,7 @@ test_sensitive_takes_files_folders_and_expressions() {
 # A contract for search at risk $1, governing its tests and linking to one.
 tested_contract() {
   printf -- '---\ngoverns: [src/search/, tests/]\nrisk: %s\n---\n# search\n\n- X: [test_x](%s).\n' \
-    "$1" /tests/test_search.py > sdd/modules/search.md
+    "$1" /tests/test_search.py > cordee/modules/search.md
 }
 
 test_a_batch_of_tests_alone_asks_one_step_less() {
@@ -1223,26 +1225,26 @@ test_a_batch_of_tests_alone_asks_one_step_less() {
   git add -A
   printf 'Test more\n\nAgent-Assisted: yes\nSpec-Unchanged(search): tests only\n' > "$msg"
   write_quiz tests/test_search.py 'A B'
-  succeeds bash sdd/bin/sdd audit --message "$msg"
+  succeeds bash cordee/bin/cordee audit --message "$msg"
   lacks 'high risk'
   # Code beside the tests keeps the module's risk.
   echo two >> src/search/a.py
   git add -A
-  fails bash sdd/bin/sdd audit --message "$msg"
+  fails bash cordee/bin/cordee audit --message "$msg"
   says 'QUIZ.md needs 3 questions or more'
   git reset -q --hard
   # A test that only another module's contract links to keeps the risk of its own module.
   mkdir lib
   echo 'def test_i(): pass' > lib/test_index.py
-  printf -- '---\ngoverns: [lib/]\nrisk: high\n---\n# index\n' > sdd/modules/index.md
-  echo '- I: [test_i](/lib/test_index.py).' >> sdd/modules/search.md
+  printf -- '---\ngoverns: [lib/]\nrisk: high\n---\n# index\n' > cordee/modules/index.md
+  echo '- I: [test_i](/lib/test_index.py).' >> cordee/modules/search.md
   git add -A
   git commit -qm 'Search links a test of index'
   echo 'def test_j(): pass' >> lib/test_index.py
   git add -A
   printf 'Test index\n\nAgent-Assisted: yes\nSpec-Unchanged(index): tests only\n' > "$tmp/index-msg"
   write_quiz lib/test_index.py 'A B'
-  fails bash sdd/bin/sdd audit --message "$tmp/index-msg"
+  fails bash cordee/bin/cordee audit --message "$tmp/index-msg"
   says 'QUIZ.md needs 3 questions or more'
   git reset -q --hard HEAD~1
   rm QUIZ.md
@@ -1260,12 +1262,12 @@ test_a_batch_of_tests_alone_asks_one_step_less() {
   git reset -q --hard
   # At intent, a contract that moves with its tests keeps its risk, even out of the sensitive list; a sensitive test
   # still asks a quiz.
-  printf 'sensitive: []\n' > sdd/config.yml
+  printf 'sensitive: []\n' > cordee/config.yml
   tested_contract intent
   git add -A
   git commit -qm 'Search moves by its intent'
   echo 'def test_v(): pass' >> tests/test_search.py
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
   fails agent_commit 'Test more'
   says 'No quiz for this agent-assisted batch'
@@ -1273,28 +1275,28 @@ test_a_batch_of_tests_alone_asks_one_step_less() {
   # Nor beside a test that a contract left as it was links to.
   mkdir e2e
   echo 'def test_t(): pass' > e2e/test_t.py
-  printf -- '---\ngoverns: [src/import/]\n---\n# import\n\n- T: [test_t](/e2e/test_t.py).\n' > sdd/modules/import.md
+  printf -- '---\ngoverns: [src/import/]\n---\n# import\n\n- T: [test_t](/e2e/test_t.py).\n' > cordee/modules/import.md
   git add -A
   git commit -qm 'Import links a test'
   echo 'def test_s(): pass' >> e2e/test_t.py
-  echo 'More intent.' >> sdd/modules/search.md
+  echo 'More intent.' >> cordee/modules/search.md
   git add -A
   fails agent_commit 'Test more'
   says 'No quiz for this agent-assisted batch'
   git reset -q --hard HEAD~1
   # Nor does code outside every module that a link the batch adds points to.
-  printf 'risk: high\nsensitive: []\n' > sdd/config.yml
+  printf 'risk: high\nsensitive: []\n' > cordee/config.yml
   tested_contract low
   git commit -qam 'The repo is at high risk'
   echo deploy > deploy.sh
-  echo '- D: [deploy](/deploy.sh).' >> sdd/modules/search.md
+  echo '- D: [deploy](/deploy.sh).' >> cordee/modules/search.md
   git add -A
   write_quiz deploy.sh 'A B'
-  fails bash sdd/bin/sdd audit --message "$msg"
+  fails bash cordee/bin/cordee audit --message "$msg"
   says 'QUIZ.md needs 3 questions or more'
   git reset -q --hard
   rm QUIZ.md
-  printf 'sensitive:\n  - tests/\n' > sdd/config.yml
+  printf 'sensitive:\n  - tests/\n' > cordee/config.yml
   git commit -qam 'Keep the tests under a quiz'
   echo 'def test_u(): pass' >> tests/test_search.py
   git add -A
@@ -1306,7 +1308,7 @@ test_a_worktree_hook_reads_relative_links() {
   mkdir tests
   echo 'def test_x(): pass' > tests/test_search.py
   printf -- '---\ngoverns: [src/search/]\n---\n# search\n\n- X: [test_x](../../tests/test_search.py).\n' \
-    > sdd/modules/search.md
+    > cordee/modules/search.md
   git add -A
   git commit -qm 'Link a test'
   git worktree add -q "$tmp/other" -b other
@@ -1341,7 +1343,7 @@ test_a_failing_later_hook_keeps_the_quiz() {
   write_quiz src/search/a.py 'A B C'
   answer A B C
   fails agent_commit 'Change search'
-  [ -f QUIZ.md ] && [ -f "$(git rev-parse --git-path sdd/quiz-key)" ]
+  [ -f QUIZ.md ] && [ -f "$(git rev-parse --git-path cordee/quiz-key)" ]
   sed '$d' "$hook" > "$tmp/hook" && cat "$tmp/hook" > "$hook"
   succeeds agent_commit 'Change search'
   [ ! -e QUIZ.md ]
@@ -1355,9 +1357,9 @@ test_a_commit_without_the_hook_leaves_no_quiz() {
   echo '> - [x] The question is unclear' >> QUIZ.md
   git commit -q --no-verify -m 'Change search'
   [ ! -e QUIZ.md ]
-  [ ! -e "$(git rev-parse --git-common-dir)/sdd/quiz-journal" ]
+  [ ! -e "$(git rev-parse --git-common-dir)/cordee/quiz-journal" ]
   echo three >> src/search/a.py
-  echo 'More.' >> sdd/modules/search.md
+  echo 'More.' >> cordee/modules/search.md
   git add -A
   fails agent_commit 'Change search again'
   says 'No quiz for this agent-assisted batch'
@@ -1369,7 +1371,7 @@ test_an_amend_clears_its_quiz() {
   answer A B C
   agent_commit 'Change search'
   echo three >> src/search/a.py
-  echo 'More.' >> sdd/modules/search.md
+  echo 'More.' >> cordee/modules/search.md
   git add -A
   write_quiz src/search/a.py 'A B C'
   answer A B C
@@ -1385,7 +1387,7 @@ test_the_next_fingerprint_clears_a_quiz_left_behind() {
   answer A B C
   agent_commit 'Change search'
   [ -f QUIZ.md ]
-  bash sdd/bin/sdd fingerprint > /dev/null
+  bash cordee/bin/cordee fingerprint > /dev/null
   [ ! -e QUIZ.md ]
 }
 
@@ -1398,7 +1400,7 @@ test_a_reworked_batch_journals_the_old_quiz_s_flags() {
   sed 's/^> - \[ \] The code does not do/> - [x] The code does not do/' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
   echo three >> src/search/a.py
   git add -A
-  bash sdd/bin/sdd fingerprint > /dev/null
+  bash cordee/bin/cordee fingerprint > /dev/null
   write_quiz src/search/a.py 'A B C'
   answer A B C
   succeeds agent_commit 'Change search'
@@ -1414,11 +1416,11 @@ test_a_merge_on_top_of_the_batch_still_clears_its_quiz() {
   flag_and_pass
   git checkout -q main
   echo two >> src/import/a.py
-  echo 'More intent.' >> sdd/modules/import.md
+  echo 'More intent.' >> cordee/modules/import.md
   git commit -qam 'Change import'
   git merge -q --no-ff --no-verify --no-edit feature
   [ -f QUIZ.md ]
-  bash sdd/bin/sdd fingerprint > /dev/null
+  bash cordee/bin/cordee fingerprint > /dev/null
   [ ! -e QUIZ.md ]
   [ "$(journal | cut -f 3,5)" = 'search	Question 2?
 search	Question 3?' ]
@@ -1431,9 +1433,9 @@ test_audit_clears_the_last_commit_s_quiz() {
   answer A B C
   agent_commit 'Change search'
   echo three >> src/search/a.py
-  echo 'More.' >> sdd/modules/search.md
+  echo 'More.' >> cordee/modules/search.md
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   [ ! -e QUIZ.md ]
 }
 
@@ -1467,16 +1469,16 @@ test_an_incomplete_quiz_is_refused() {
 test_audit_checks_the_quiz_before_the_human() {
   batch
   write_quiz README.md 'A B C'
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'Question 1 needs a See line citing one to three places of this batch'
   write_quiz src/search/a.py 'A B D'
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'Question 3 has no right box in the key'
   write_quiz src/search/a.py 'B B B'
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   says 'NOTE QUIZ.md: the right answer is box B every time, vary it.'
-  rm "$(git rev-parse --git-path sdd/quiz-key)"
-  fails bash sdd/bin/sdd audit
+  rm "$(git rev-parse --git-path cordee/quiz-key)"
+  fails bash cordee/bin/cordee audit
   says 'QUIZ.md has no key'
 }
 
@@ -1484,7 +1486,7 @@ test_a_see_line_cites_three_places_at_most() {
   batch
   write_quiz src/search/a.py 'A B C'
   answer A B C
-  sed '/^See /s/$/, sdd\/modules\/search.md:2-3, src\/search\/a.py:1, src\/search\/a.py:3/' QUIZ.md > QUIZ.tmp
+  sed '/^See /s/$/, cordee\/modules\/search.md:2-3, src\/search\/a.py:1, src\/search\/a.py:3/' QUIZ.md > QUIZ.tmp
   mv QUIZ.tmp QUIZ.md
   fails agent_commit 'Change search'
   says 'Question 1 needs a See line citing one to three places of this batch'
@@ -1496,7 +1498,7 @@ test_quiz_files_with_crlf() {
   batch
   write_quiz src/search/a.py 'A B C'
   answer A B C
-  key=$(git rev-parse --git-path sdd/quiz-key)
+  key=$(git rev-parse --git-path cordee/quiz-key)
   awk '{ printf "%s\r\n", $0 }' QUIZ.md > QUIZ.tmp && mv QUIZ.tmp QUIZ.md
   awk '{ printf "%s\r\n", $0 }' "$key" > key.tmp && mv key.tmp "$key"
   succeeds agent_commit 'Change search'
@@ -1517,9 +1519,9 @@ test_script_survives_a_crlf_checkout() {
   git add -A
   git commit -qm 'Pin line ends' 2> /dev/null
   git config core.autocrlf true
-  rm sdd/bin/sdd
-  git checkout -- sdd/bin/sdd
-  echo 'More intent.' >> sdd/modules/search.md
+  rm cordee/bin/cordee
+  git checkout -- cordee/bin/cordee
+  echo 'More intent.' >> cordee/modules/search.md
   echo two >> src/search/a.py
   git add -A 2> /dev/null
   succeeds git commit -qm 'Change search'
@@ -1528,8 +1530,8 @@ test_script_survives_a_crlf_checkout() {
 test_non_ascii_file_names() {
   echo one > src/search/café.py
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: src/search/café.py changed'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: src/search/café.py changed'
 }
 
 test_rewording_an_agent_commit() {
@@ -1541,13 +1543,13 @@ test_rewording_an_agent_commit() {
 }
 
 test_quoted_governs_paths() {
-  printf -- '---\ngoverns: ["src/search/", '"'"'src/import'"'"']\n---\n# search\n' > sdd/modules/search.md
+  printf -- '---\ngoverns: ["src/search/", '"'"'src/import'"'"']\n---\n# search\n' > cordee/modules/search.md
   git add -A
   git commit -qm 'Quote the paths' 2> /dev/null
   echo two >> src/import/a.py
   git add -A
-  fails bash sdd/bin/sdd audit
-  says 'DRIFT sdd/modules/search.md: src/import/a.py changed'
+  fails bash cordee/bin/cordee audit
+  says 'DRIFT cordee/modules/search.md: src/import/a.py changed'
 }
 
 test_an_agent_co_author_marks_an_agent_batch() {
@@ -1569,7 +1571,7 @@ test_a_quiz_written_for_the_batch_marks_an_agent_batch() {
   git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
   # A key written for an earlier state of the batch marks nothing: the human's own commit.
   echo three >> src/search/a.py
-  echo 'Even more intent.' >> sdd/modules/search.md
+  echo 'Even more intent.' >> cordee/modules/search.md
   git add -A
   write_quiz src/search/a.py 'A'
   echo four >> src/search/a.py
@@ -1579,7 +1581,7 @@ test_a_quiz_written_for_the_batch_marks_an_agent_batch() {
 }
 
 test_the_config_lists_the_agent_emails() {
-  printf 'agent-emails:\n  - agent+bot@example.test\n' > sdd/config.yml
+  printf 'agent-emails:\n  - agent+bot@example.test\n' > cordee/config.yml
   git add -A
   git commit -qm 'Name our agent' 2> /dev/null
   echo two >> src/search/a.py
@@ -1591,56 +1593,56 @@ test_the_config_lists_the_agent_emails() {
   [ "$(git log -1 --format=%s)" = 'Change search' ]
   # A batch that takes the address out is still judged by the list it had.
   echo three >> src/search/a.py
-  echo 'agent-emails: []' > sdd/config.yml
+  echo 'agent-emails: []' > cordee/config.yml
   git add -A
   fails git commit -qm 'Forget our agent' -m 'Co-Authored-By: Our Agent <agent+bot@example.test>'
   says 'Refused, agent-assisted batch'
 }
 
 test_the_config_lists_what_is_not_code() {
-  printf 'not-code:\n  - generated/\n' > sdd/config.yml
+  printf 'not-code:\n  - generated/\n' > cordee/config.yml
   git add -A
   git commit -qm 'Generated code is no code' 2> /dev/null
   mkdir generated
   seq 1 300 > generated/schema.py
   git add -A
-  succeeds bash sdd/bin/sdd audit
+  succeeds bash cordee/bin/cordee audit
   lacks 'SIZE'
   # The kit's lock files count again: the list replaces the kit's.
   seq 1 300 > Gemfile.lock
   git add -A
-  fails bash sdd/bin/sdd audit
+  fails bash cordee/bin/cordee audit
   says 'SIZE 300 changed lines of code and tests'
   # A batch that widens the list is judged by the list it had.
   git rm -q --cached Gemfile.lock
-  printf 'not-code:\n  - generated/\n  - src/\n' > sdd/config.yml
+  printf 'not-code:\n  - generated/\n  - src/\n' > cordee/config.yml
   seq 1 300 > src/search/big.py
-  echo 'More intent.' >> sdd/modules/search.md
-  git add sdd src
-  fails bash sdd/bin/sdd audit
+  echo 'More intent.' >> cordee/modules/search.md
+  git add cordee src
+  fails bash cordee/bin/cordee audit
   says 'SIZE 301 changed lines of code and tests'
 }
 
 test_doctor_says_what_to_fix() {
   export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
-  succeeds bash sdd/bin/sdd doctor
+  succeeds bash cordee/bin/cordee doctor
   lacks 'NOTE'
   says 'ledger: on'
   says 'replies read in 30 days: claude_code 0, kilo_code 0, opencode 0'
   says 'audit: '
   hooks=$(git rev-parse --git-path hooks)
-  echo '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' > "$hooks/post-commit"
+  echo '[ ! -f cordee/bin/ledger ] || bash cordee/bin/ledger record' > "$hooks/post-commit"
   rm "$hooks/pre-push"
   : > "$(git rev-parse --git-path info/exclude)"
-  echo 'Deployed from https://example.test/kit v0.1.0.' > sdd/README.md
-  git config sdd.ledger false
-  succeeds bash sdd/bin/sdd doctor
-  says 'NOTE the post-commit hook does not run sdd/bin/sdd committed'
-  says 'NOTE the pre-push hook does not run sdd/bin/ledger sync'
+  echo 'Deployed from https://example.test/kit v0.1.0.' > cordee/README.md
+  git config cordee.ledger false
+  succeeds bash cordee/bin/cordee doctor
+  says 'NOTE the post-commit hook does not run cordee/bin/cordee committed'
+  says 'NOTE the pre-push hook does not run cordee/bin/ledger sync'
   lacks 'NOTE the commit-msg hook'
-  lacks 'does not run sdd/bin/ledger record'
+  lacks 'does not run cordee/bin/ledger record'
   says 'NOTE QUIZ.md is not kept out of git'
-  says 'NOTE sdd/README.md says it was deployed from v0.1.0'
+  says 'NOTE cordee/README.md says it was deployed from v0.1.0'
   says 'ledger: off'
 }
 
@@ -1648,7 +1650,7 @@ test_doctor_says_what_to_fix() {
 test_the_version_is_the_last_tag_or_newer() {
   local tag version
   tag=$(git -C "$kit" describe --tags --abbrev=0 --match 'v[0-9]*')
-  version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' "$kit/template/sdd/bin/fabrik/__init__.py")
+  version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' "$kit/template/cordee/bin/harness/__init__.py")
   [ "$(printf '%s\n' "${tag#v}" "$version" | sort -t . -n -k 1,1 -k 2,2 -k 3,3 | head -1)" = "${tag#v}" ] || {
     echo "    VERSION $version is older than the tag $tag"; return 1; }
 }

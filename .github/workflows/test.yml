@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - run: bash sdd/bin/sdd audit --range "$BASE..$TIP"
+      - run: bash cordee/bin/cordee audit --range "$BASE..$TIP"
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           TIP: ${{ github.event.pull_request.head.sha || github.sha }}
