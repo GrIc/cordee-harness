@@ -220,6 +220,15 @@ test_deploy_asks_the_forge_when_origin_names_none() {
   [ -f .gitlab-ci.yml ] && [ ! -e .github ]
 }
 
+test_deploy_refuses_a_kit_inside_the_repo() {
+  fails bash cordee/bin/cordee deploy https://example.test/kit v9.9.9 --forge github
+  says "the kit's own clone"
+  cp -R "$kit/template" kit
+  fails bash kit/cordee/bin/cordee deploy https://example.test/kit v9.9.9 --forge github
+  rm -rf kit
+  [ -z "$(git status --porcelain)" ]
+}
+
 test_over_max_lines_blocks_an_agent_warns_a_human() {
   echo 'More intent.' >> cordee/modules/search.md
   seq 1 211 > src/search/big.py

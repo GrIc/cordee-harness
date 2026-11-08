@@ -774,3 +774,12 @@ environmental impact, or a price, needs the exact model: two versions of one fam
 _Rejected:_ the family in the cockpit's local `report` only (a second name for one model, and the dev pays the
 version, not the family); `v2` notes that `report` reads apart from `v1` (code to read old notes for a few weeks of
 history); a call to an impact API (the data first, the tooling when someone needs it).
+
+## 82. `deploy` refuses to run from a kit inside the repo (2026-11-08)
+
+`deploy` ships in every repo's `cordee/bin/`. Run from there, `bash cordee/bin/cordee deploy`, it took the repo for the
+kit: it deleted `cordee/bin/` and `cordee/guide/`, then stopped on a file copied onto itself, the harness gone and a
+false tag in `cordee/README.md`. Run in the kit from `template/`, it overwrote the kit's launchers without a word. It
+now stops first, when the template is the repo or a folder in it, and says to run it from a clone elsewhere.
+_Rejected:_ dropping `deploy` from the copy (the upgrade runs the new kit's script, so the copy costs nothing and keeps
+one tree); checking that the template holds `cordee/WORKFLOW.md` (every template does, the repo's copy too).

@@ -63,7 +63,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   `cordee/README.md`, and installs the hooks. It lists the other files already in the repo, which the agent merges, and
   stops, touching nothing, when the host of `origin` names neither GitHub nor GitLab and no `--forge` says which:
   [test_deploy_copies_what_is_missing_and_lists_the_rest](/test/run),
-  [test_deploy_asks_the_forge_when_origin_names_none](/test/run).
+  [test_deploy_asks_the_forge_when_origin_names_none](/test/run). Run from a kit inside the repo, the repo's own
+  `cordee/bin/` or the kit's `template/` in the kit, it stops before touching anything and says to run it from a clone
+  elsewhere: [test_deploy_refuses_a_kit_inside_the_repo](/test/run).
 - `touched` lists the modules a commit changes, in code or contract, each with its changed lines, so that the token
   ledger can split a batch's cost: [test_touched_lists_each_module_with_its_lines](/test/run). Before the first commit,
   it says to commit first, and `cockpit hints` says nothing:

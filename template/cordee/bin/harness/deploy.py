@@ -14,8 +14,14 @@ STAMP = r"^Deployed from [^\n]*"
 
 
 def deploy(source, tag, forge=None):
-    template = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-    os.chdir(git("rev-parse", "--show-toplevel"))
+    template = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
+    top = os.path.realpath(git("rev-parse", "--show-toplevel"))
+    # Run from the repo's own cordee/bin, or from the kit in the kit, it would delete the very files it copies. Not
+    # commonpath: it fails on Windows when the kit's clone is on another drive.
+    if os.path.normcase(os.path.join(template, "")).startswith(os.path.normcase(os.path.join(top, ""))):
+        sys.exit("deploy copies the kit into this repo, so it runs from the kit's own clone, outside it: clone the kit"
+                 " elsewhere, then run bash <clone>/template/cordee/bin/cordee deploy <source> <tag> here.")
+    os.chdir(top)
     forge = forge or forge_of(try_git("remote", "get-url", "origin") or "")
     if forge not in CI:
         sys.exit("Cannot tell the forge from origin: ask the human whether it is GitHub or GitLab, then run deploy again"
