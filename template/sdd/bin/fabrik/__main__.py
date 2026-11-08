@@ -9,6 +9,7 @@ import sys
 sys.path[0] = os.path.dirname(os.path.abspath(sys.path[0]))
 
 from fabrik import brief, checks, cockpit, hooks, journal, ledger, quiz
+from fabrik.doctor import doctor
 from fabrik.drift import touched
 
 
@@ -66,10 +67,12 @@ def sdd_command(args):
         brief.next_step()
     elif command == "quiet":
         return quiet(args[1:])
+    elif command == "doctor":
+        doctor()
     else:
         return misuse("usage: bash sdd/bin/sdd hook <message-file> | audit [--message <file> | --range <base>..<tip>]\n"
                       "       bash sdd/bin/sdd fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
-                      "       bash sdd/bin/sdd next | quiet <command>...")
+                      "       bash sdd/bin/sdd next | quiet <command>... | doctor")
 
 
 def ledger_command(args):

@@ -10,6 +10,8 @@ Intent governs purpose; code and tests establish facts. Once the code and its te
 
 What the harness gives you, besides the checks the workflow runs:
 
+- `bash sdd/bin/sdd doctor` says what is out of date in this clone, and prints what a bug report about the harness
+  needs: do what its NOTE lines say, and paste it in the report.
 - `bash sdd/bin/sdd quiet <command>` prints one line when a command passes, its end when it fails.
 - `bash sdd/bin/cockpit report "$PWD"` shows where this dev's tokens went: [sdd/guide/tokens.md](sdd/guide/tokens.md).
 - A guide for each rarer case (first batch, plan, upgrade), listed at the top of the workflow.

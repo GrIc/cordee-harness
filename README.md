@@ -160,6 +160,7 @@ flowchart LR
 | Command | Purpose |
 |---|---|
 | `bash sdd/bin/sdd audit [--message <file>]` | Check staged changes (drift, contract links, size, `QUIZ.md` form if present, markdown-to-code ratio). |
+| `bash sdd/bin/sdd doctor` | Print what a bug report needs (kit, Python, git and OS versions, hooks, ledger, logs read, an audit's time), with a NOTE for each thing to fix. |
 | `bash sdd/bin/sdd brief [<module>]` | Show pending quizzes, branches awaiting review, or whether a module is new to you. |
 | `bash sdd/bin/cockpit report "$PWD"` | Inspect your local Claude Code token breakdown: roles, models, cache, MCP, plugins, tool output. |
 | `bash sdd/bin/ledger report` | View the team's anonymous feature costs. |

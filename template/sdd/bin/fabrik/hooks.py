@@ -9,6 +9,13 @@ from fabrik.git import commit_or, empty_tree, git, is_agent, try_git
 from fabrik.journal import committed
 
 
+# Each hook's line, and the commands in it that a hook written by hand or by a hook manager must run too.
+HOOKS = [("commit-msg", '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd hook "$1" || exit 1', ["sdd/bin/sdd hook"]),
+         ("post-commit", "[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed; [ ! -f sdd/bin/ledger ] || bash"
+                         " sdd/bin/ledger record", ["sdd/bin/sdd committed", "sdd/bin/ledger record"]),
+         ("pre-push", '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"', ["sdd/bin/ledger sync"])]
+
+
 def hook(message_file):
     # Finishing a merge or a cherry-pick: their commits were checked when first made.
     if any(os.path.isfile(git("rev-parse", "--git-path", head)) for head in ("MERGE_HEAD", "CHERRY_PICK_HEAD")):
@@ -54,10 +61,7 @@ def install():
     if not os.path.isfile(exclude) or "/QUIZ.md" not in quiz.read_lines(exclude):
         with open(exclude, "a", newline="") as file:
             file.write("/QUIZ.md\n")
-    done = [install_one("commit-msg", '[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd hook "$1" || exit 1'),
-            install_one("post-commit", "[ ! -f sdd/bin/sdd ] || bash sdd/bin/sdd committed;"
-                                       " [ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record"),
-            install_one("pre-push", '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger sync "$1"')]
+    done = [install_one(name, line) for name, line, _ in HOOKS]
     print("The token ledger notes what agents spend on each module, never who: git config sdd.ledger false stops it.")
     return 0 if all(done) else 1
 

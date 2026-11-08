@@ -662,3 +662,16 @@ checked: the demo's opencode sessions are not on this machine.
 _Rejected:_ a `reworked` mark in a v3 line (a new format and two readers in the cockpit, for a reason the box already
 gives); journaling at each failed commit (the boxes are ticked after the hook writes the block, so the dev's last word
 comes later).
+
+## 70. `sdd doctor` says what is out of date, and the kit carries its version (2026-11-08)
+
+The two bugs of the first field use came from a clone, not from the kit: a shared `post-commit` that predates the
+`committed` line, found by reading the hooks by hand. `doctor` prints in one paste what a bug report needs: the kit's
+version, Python, git and the OS, the hooks folder, the ledger on or off, the replies each log reader found in 30 days
+and an audit's time. A NOTE names what to fix, and a hook counts as up to date when it runs each command of the kit's
+line, so a line a hook manager rewrote still passes. `VERSION` in `fabrik/__init__.py` is raised by the human before
+each tag; `doctor` compares it with the tag on the first line of `sdd/README.md` to catch an upgrade half done, and
+a kit test fails when it is older than the last tag, so the test job fetches the tags.
+_Rejected:_ the first line of `sdd/README.md` alone (nothing to raise, but a partial copy of the files goes unseen);
+reading the version from the kit's git tags (a deployed repo has none); a doctor that fixes what it finds (the hooks
+may be shared or built by a manager, and `install-hook` already writes what it may).

@@ -1612,6 +1612,38 @@ test_the_config_lists_what_is_not_code() {
   says 'SIZE 301 changed lines of code and tests'
 }
 
+test_doctor_says_what_to_fix() {
+  export CLAUDE_CONFIG_DIR=$tmp/claude XDG_DATA_HOME=$tmp/share
+  succeeds bash sdd/bin/sdd doctor
+  lacks 'NOTE'
+  says 'ledger: on'
+  says 'replies read in 30 days: claude_code 0, kilo_code 0, opencode 0'
+  says 'audit: '
+  hooks=$(git rev-parse --git-path hooks)
+  echo '[ ! -f sdd/bin/ledger ] || bash sdd/bin/ledger record' > "$hooks/post-commit"
+  rm "$hooks/pre-push"
+  : > "$(git rev-parse --git-path info/exclude)"
+  echo 'Deployed from https://example.test/kit v0.1.0.' > sdd/README.md
+  git config sdd.ledger false
+  succeeds bash sdd/bin/sdd doctor
+  says 'NOTE the post-commit hook does not run sdd/bin/sdd committed'
+  says 'NOTE the pre-push hook does not run sdd/bin/ledger sync'
+  lacks 'NOTE the commit-msg hook'
+  lacks 'does not run sdd/bin/ledger record'
+  says 'NOTE QUIZ.md is not kept out of git'
+  says 'NOTE sdd/README.md says it was deployed from v0.1.0'
+  says 'ledger: off'
+}
+
+# doctor reads the kit's version from VERSION, which the human raises before each tag.
+test_the_version_is_the_last_tag_or_newer() {
+  local tag version
+  tag=$(git -C "$kit" describe --tags --abbrev=0 --match 'v[0-9]*')
+  version=$(sed -n 's/^VERSION = "\(.*\)"$/\1/p' "$kit/template/sdd/bin/fabrik/__init__.py")
+  [ "$(printf '%s\n' "${tag#v}" "$version" | sort -t . -n -k 1,1 -k 2,2 -k 3,3 | head -1)" = "${tag#v}" ] || {
+    echo "    VERSION $version is older than the tag $tag"; return 1; }
+}
+
 test_a_human_co_author_named_claude_is_human() {
   echo two >> src/search/a.py
   git add -A

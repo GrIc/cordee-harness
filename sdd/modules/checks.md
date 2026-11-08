@@ -2,6 +2,7 @@
 governs: [template/sdd/bin/sdd, template/sdd/bin/fabrik/__init__.py, template/sdd/bin/fabrik/__main__.py,
   template/sdd/bin/fabrik/git.py, template/sdd/bin/fabrik/drift.py,
   template/sdd/bin/fabrik/size.py, template/sdd/bin/fabrik/checks.py, template/sdd/bin/fabrik/hooks.py,
+  template/sdd/bin/fabrik/doctor.py,
   template/.github/workflows/sdd.yml, template/.gitlab-ci.yml, test/run]
 ---
 # checks
@@ -65,6 +66,11 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   ledger can split a batch's cost: [test_touched_lists_each_module_with_its_lines](/test/run). Before the first commit,
   it says to commit first, and `cockpit hints` says nothing:
   [test_before_the_first_commit_touched_says_so_and_the_hints_say_nothing](/test/run).
+- `doctor` prints what a bug report needs: the kit's version, Python, git and the OS, the hooks folder, the ledger on
+  or off, the replies each log reader found in 30 days and an audit's time. A NOTE says what to fix: a hook that does
+  not run one of the kit's commands, `QUIZ.md` not kept out of git, or a `sdd/README.md` deployed from another
+  version than the kit's files: [test_doctor_says_what_to_fix](/test/run). The version is raised before each tag:
+  [test_the_version_is_the_last_tag_or_newer](/test/run).
 - `quiet <command>` prints one line when the command passes and its last 30 lines when it fails, with its status:
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run).
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). On
