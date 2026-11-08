@@ -638,3 +638,15 @@ or not; prose renamed to code counts its lines that are not blank.
 _Rejected:_ `--ignore-blank-lines` (it drops only hunks whose lines are all blank, a hunk mixing code and blank lines
 still counts them); counting comments out too (a comment is read, and telling one from code takes a parser per
 language).
+
+## 68. A quiz left behind is found among the commits made since its key (2026-11-08)
+
+On 2026-11-04 the quiz of 12558ff stayed in `QUIZ.md` after a pull: the clone's shared `post-commit` predates the line
+that calls `committed`, and its fallback only matched the key against HEAD's tree on `HEAD^` or `HEAD@{1}`, so a merge
+on top hid the batch for good and its flagged questions never reached the journal. `committed` now reads, in one
+`git log --since`, the commits made since the key was written, and matches each one's own tree and first parent. The
+fingerprint is worked out in Python as the same hash `git hash-object` gave, so keys already written still match and
+a pull of 200 commits costs no 200 processes. A pull with rebase rewrites the batch's parent: its quiz still stays.
+_Rejected:_ the last N commits (a pull brings others' newer commits first, so any N can miss the batch); only the
+commits that carry `Quiz:` (a batch committed with `--no-verify` must leave no quiz either); telling the dev the
+hooks are out of date (a batch of its own, and the quiz would stay until they act).

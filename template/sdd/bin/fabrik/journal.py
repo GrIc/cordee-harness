@@ -7,7 +7,7 @@ import time
 from collections import Counter
 
 from fabrik.drift import touched
-from fabrik.git import commit_or, git, shared_path
+from fabrik.git import commit_or, git, lines, shared_path
 from fabrik.quiz import QUIZ, fingerprint, key_path, read_lines
 
 CAUSES = ["not-understood", "unclear", "not-wanted"]
@@ -20,15 +20,26 @@ def committed():
     key = key_path()
     if not (os.path.isfile(QUIZ) and os.path.isfile(key) and commit_or("HEAD", None)):
         return
-    tree = git("rev-parse", "HEAD^{tree}")
-    # An amend builds on what HEAD was before it, not on HEAD^.
-    if read_lines(key)[:1] not in ([fingerprint(tree, commit_or("HEAD^", "none"))],
-                                   [fingerprint(tree, commit_or("HEAD@{1}", "none"))]):
+    commit = quizzed(read_lines(key)[:1], int(os.path.getmtime(key)))
+    if commit is None:
         return
-    if any(line.startswith("Quiz:") for line in git("log", "-1", "--format=%B").split("\n")):
-        write(",".join(module for module, _ in touched("HEAD")))
+    if any(line.startswith("Quiz:") for line in git("log", "-1", "--format=%B", commit).split("\n")):
+        write(",".join(module for module, _ in touched(commit)))
     os.remove(QUIZ)
     os.remove(key)
+
+
+def quizzed(key, written):
+    """The commit of the batch the key is for, made since the key was written: HEAD, or below a merge or a pull that
+    came on top without the post-commit hook. None for a batch not committed yet."""
+    # An amend builds on what HEAD was before it, not on HEAD^.
+    if key == [fingerprint(git("rev-parse", "HEAD^{tree}"), commit_or("HEAD@{1}", "none"))]:
+        return "HEAD"
+    for line in lines(git("log", f"--since=@{written}", "--format=%H %T %P")):
+        commit, tree, *parents = line.split(" ")
+        if key == [fingerprint(tree, parents[0] if parents else "none")]:
+            return commit
+    return None
 
 
 def write(modules):

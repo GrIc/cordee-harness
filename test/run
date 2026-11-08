@@ -1380,6 +1380,25 @@ test_the_next_fingerprint_clears_a_quiz_left_behind() {
   [ ! -e QUIZ.md ]
 }
 
+# The same clone, then a pull that brings the batch back under a merge made elsewhere: no hook ran on top of it.
+test_a_merge_on_top_of_the_batch_still_clears_its_quiz() {
+  rm "$(git rev-parse --git-path hooks)/post-commit"
+  git checkout -q -b feature
+  batch
+  write_quiz src/search/a.py 'A B C'
+  flag_and_pass
+  git checkout -q main
+  echo two >> src/import/a.py
+  echo 'More intent.' >> sdd/modules/import.md
+  git commit -qam 'Change import'
+  git merge -q --no-ff --no-verify --no-edit feature
+  [ -f QUIZ.md ]
+  bash sdd/bin/sdd fingerprint > /dev/null
+  [ ! -e QUIZ.md ]
+  [ "$(journal | cut -f 3,5)" = 'search	Question 2?
+search	Question 3?' ]
+}
+
 test_audit_clears_the_last_commit_s_quiz() {
   rm "$(git rev-parse --git-path hooks)/post-commit"
   batch

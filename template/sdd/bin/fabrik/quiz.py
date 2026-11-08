@@ -1,4 +1,5 @@
 """The quiz: its form, its grade, the block under a wrong answer, and how much of the batch it covers."""
+import hashlib
 import os
 import re
 import sys
@@ -81,8 +82,10 @@ def staged():
 
 
 def fingerprint(tree, parent):
-    """The batch a quiz is for: a tree on top of a commit, "none" for a first commit."""
-    return git("hash-object", "--stdin", input=f"{tree} {parent}")
+    """The batch a quiz is for: a tree on top of a commit, "none" for a first commit. The hash git gives that text as
+    a blob, worked out here: the journal hashes every commit made since the quiz."""
+    text = f"{tree} {parent}".encode()
+    return hashlib.sha1(b"blob %d\0" % len(text) + text).hexdigest()
 
 
 def questions():

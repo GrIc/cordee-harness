@@ -24,10 +24,12 @@ The questions that make the human understand an agent batch before it is committ
   the quiz goes: [test_a_passed_quiz_journals_its_flagged_questions](/test/run),
   [test_worktrees_share_the_quiz_journal](/test/run). So a later commit-msg hook that fails keeps the quiz, a commit
   without the hook leaves none behind, and a clone whose hooks predate this clears it at the next audit or
-  fingerprint: [test_a_failing_later_hook_keeps_the_quiz](/test/run),
+  fingerprint, even once a merge or a pull put commits on top of the batch:
+  [test_a_failing_later_hook_keeps_the_quiz](/test/run),
   [test_a_commit_without_the_hook_leaves_no_quiz](/test/run), [test_an_amend_clears_its_quiz](/test/run),
   [test_audit_clears_the_last_commit_s_quiz](/test/run),
-  [test_the_next_fingerprint_clears_a_quiz_left_behind](/test/run).
+  [test_the_next_fingerprint_clears_a_quiz_left_behind](/test/run),
+  [test_a_merge_on_top_of_the_batch_still_clears_its_quiz](/test/run).
 - `audit` checks its form, so that the reviewer, not the human, meets a malformed quiz:
   [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_see_line_cites_three_places_at_most](/test/run).
   It only notes a quiz older than its batch and, past one question, a right answer always in the same place:

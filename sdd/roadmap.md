@@ -3,7 +3,6 @@
 ## Fixes
 
 - [The journal may lose the feedback that led to a rework](issues/journal-loses-reworked-feedback.md).
-- [A quiz outlives its commit once HEAD moves on](issues/stale-quiz-after-pull.md).
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).
 - The ledger syncs on push only when it holds notes the remote has not seen, not a fetch and a push every time.
 - `audit` caches `git show` by tree and path in `contracts.py`, if it takes over 3 s with 40 contracts on Windows.
