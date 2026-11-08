@@ -151,8 +151,8 @@ Reads local agent logs on the developer's machine (Claude Code, opencode, and Ki
 the network:
 
 - `bash cordee/bin/cockpit report "$PWD" [<since> <until>]`: over the developer's last 10 agent batches by default,
-  reports Claude Code's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`) and model
-  family, median starting context for sessions and sub-agents, longest context reached, cache-read share, and estimated
+  reports Claude Code's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`) and exact
+  model, median starting context for sessions and sub-agents, longest context reached, cache-read share, and estimated
   cost of attachments sent along with calls (tool results, skill listings, hooks, MCP instructions, memory files).
 - `bash cordee/bin/cockpit hints`: run at handoff when `tokens: true`; prints a hint at most once per 10 agent batches
   when MCP servers or plugins go unused above the cost threshold, when context exceeds 150k tokens, when a log format
@@ -169,7 +169,7 @@ Tracks what each product module costs in tokens per month, never per developer:
 - `pre-push` runs `bash cordee/bin/ledger sync [<remote>]`, which fetches and merges `refs/notes/cordee-ledger` from
   the remote and pushes the result as a single parentless commit (so the shared history never reveals whose note came
   first), only when the local ledger tree has changed since the last sync with that remote.
-- `bash cordee/bin/ledger report` sums tokens by month, module, role, and model family, and shows the share of agent
+- `bash cordee/bin/ledger report` sums tokens by month, module, role, and exact model, and shows the share of agent
   commits covered each month.
 - Any developer can opt out locally at any time with `git config cordee.ledger false` (`--global` for all repositories).
 

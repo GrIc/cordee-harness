@@ -8,9 +8,9 @@ The dev's own view of where their agent tokens go, on their machine. It ships wi
 replaces it without an agent reading its diff, so that supporting a new tool costs agents nothing. The only thing it
 gives away is `usage`, the sums the [ledger](ledger.md) asks for.
 
-- `usage <repo> <since> <until>` sums the tokens spent in a repo over a window by role and model family (`opus` for
-  `claude-opus-5-5`), with output including reasoning, for each tool below, one reader each. Without Python, it says
-  nothing: [test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
+- `usage <repo> <since> <until>` sums the tokens spent in a repo over a window by role and exact model
+  (`claude-opus-5-5`, as the tool's log names it), with output including reasoning, for each tool below, one reader
+  each. Without Python, it says nothing: [test_without_python_only_the_commit_msg_hook_stops](/test/cockpit).
 - Claude Code: each reply counts once, a half-written last line, a sub-agent's result and what a tool call's input
   holds are no reply; the session is the writer, a sub-agent whose description names a review or a quiz is the
   reviewer: [test_claude_code_splits_writer_and_reviewer_once_per_reply](/test/cockpit). A sub-agent revived in

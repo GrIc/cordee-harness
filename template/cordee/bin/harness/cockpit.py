@@ -1,7 +1,6 @@
 """The cockpit: where a dev's agent tokens go, read from the agents' own logs on this machine. Nothing leaves it but
 what the token ledger asks for."""
 import os
-import re
 import statistics
 import sys
 import time
@@ -21,23 +20,17 @@ SHARE, LONG = 0.05, 150_000
 
 
 def usage(repo, start, end):
-    """For the ledger, the tokens spent in a repo between two epoch seconds: one tab-separated line per role and model
-    family, with calls, input, output (reasoning included), cache read and cache write tokens."""
+    """For the ledger, the tokens spent in a repo between two epoch seconds: one tab-separated line per role and exact
+    model, with calls, input, output (reasoning included), cache read and cache write tokens."""
     rows = defaultdict(lambda: dict.fromkeys(["calls"] + FIELDS, 0))
     for reader in READERS:
         for role, model, tokens in reader.usage(repo, start, end):
-            row = rows[role, family(model)]
+            row = rows[role, model]
             row["calls"] += 1
             for field in FIELDS:
                 row[field] += tokens[field]
     for key in sorted(rows):
         print("\t".join(list(key) + [str(rows[key][field]) for field in ["calls"] + FIELDS]))
-
-
-def family(model):
-    """claude-opus-5-5 is opus: the shared ledger need not tell apart who runs which version."""
-    match = re.search(r"opus|sonnet|haiku|fable", model)
-    return match.group() if match else model
 
 
 def report(repo, start=None, end=None):
@@ -61,9 +54,9 @@ def report(repo, start=None, end=None):
 
 def show(repo, seen):
     print(f"{seen.reader.NAME} in {repo}: {short(seen.total)} input-equivalent tokens ({seen.reader.PRICES}).\n")
-    print(f"{'role':24}{'model':10}{'calls':>7}{'tokens':>9}{'share':>7}")
+    print(f"{'role':24}{'model':26}{'calls':>7}{'tokens':>9}{'share':>7}")
     for (role, model), (calls, cost) in sorted(seen.roles.items(), key=lambda item: -item[1][1]):
-        print(f"{role:24}{model:10}{calls:>7}{short(cost):>9}{cost / seen.total:>7.0%}")
+        print(f"{role:24}{model:26}{calls:>7}{short(cost):>9}{cost / seen.total:>7.0%}")
     print()
     for kind, contexts in seen.starts.items():
         print(f"A {kind} starts with {short(statistics.median(contexts))} tokens of context (median of"
@@ -86,8 +79,8 @@ def measure(reader, repo, start, end):
     seen = SimpleNamespace(reader=reader, roles=defaultdict(lambda: [0, 0]), starts=defaultdict(list), sent=Sent(),
                            total=0, reads=0, longest=(0, 0))
     for call in reader.calls(repo, start, end, seen.sent):
-        seen.roles[call.role, family(call.model)][0] += 1
-        seen.roles[call.role, family(call.model)][1] += call.cost
+        seen.roles[call.role, call.model][0] += 1
+        seen.roles[call.role, call.model][1] += call.cost
         seen.total, seen.reads = seen.total + call.cost, seen.reads + call.read
         seen.longest = max(seen.longest, (call.context, call.rank))
         if call.opens:

@@ -54,8 +54,8 @@ test_claude_code_splits_writer_and_reviewer_once_per_reply() {
   reply r1 2026-10-23T10:50:00Z claude-sonnet-5-5 2 20 200 2000 > "$claude/s1/subagents/agent-a.jsonl"
   echo '{"agentType":"general-purpose","description":"Review batch 2, write quiz"}' \
     > "$claude/s1/subagents/agent-a.meta.json"
-  fails "$(usage)" 'reviewer sonnet 1 2 20 200 2000
-writer opus 2 2 20 200 2000'
+  fails "$(usage)" 'reviewer claude-sonnet-5-5 1 2 20 200 2000
+writer claude-opus-5-5 2 2 20 200 2000'
 }
 
 # A session that revives a sub-agent of another session links its log; once the folder moves, the link breaks.
@@ -72,7 +72,7 @@ test_claude_code_reads_a_revived_sub_agent_once() {
   MSYS=winsymlinks:nativestrict ln -s "$tmp/moved/agent-b.jsonl" "$claude/s2/subagents/agent-b.jsonl"
   rm "$tmp/moved/agent-b.jsonl"
   bash "$kit/template/cordee/bin/cockpit" report "$repo" 1792749600 1792753200 | tr -s ' ' > "$tmp/out"
-  grep -q '^reviewer sonnet 1 ' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
+  grep -q '^reviewer claude-sonnet-5-5 1 ' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
 }
 
 # As Windows answers before Python is installed: the commit-msg hook stops and says what to install, as install-hook
@@ -149,7 +149,8 @@ test_report_weighs_roles_and_what_is_sent_along() {
   reply r1 2026-10-23T10:50:00Z claude-sonnet-5-5 0 0 0 500 > "$claude/s1/subagents/agent-a.jsonl"
   echo '{"agentType":"general-purpose","description":"Review batch 2"}' > "$claude/s1/subagents/agent-a.meta.json"
   bash "$kit/template/cordee/bin/cockpit" report "$repo" 1792749600 1792753200 | tr -s ' ' > "$tmp/out"
-  for line in 'writer opus 2 1.7k 73%' 'reviewer sonnet 1 625 27%' 'A session starts with 1.0k tokens of context' \
+  for line in 'writer claude-opus-5-5 2 1.7k 73%' 'reviewer claude-sonnet-5-5 1 625 27%' \
+    'A session starts with 1.0k tokens of context' \
     'The longest reached 1.2k after 2 calls; cache reads are 4% of the cost.' 'tool results Bash 250 11%' \
     'skill listing 135 6%'; do
     grep -qF -- "$line" "$tmp/out" || { echo "    output lacks: $line"; sed 's/^/    | /' "$tmp/out"; return 1; }
@@ -207,7 +208,7 @@ test_report_reads_the_last_ten_batches_by_default() {
   # From a folder below the root, as $PWD may differ from the real path.
   mkdir sub && cd sub
   bash "$kit/template/cordee/bin/cockpit" report "$PWD" | tr -s ' ' > "$tmp/out"
-  grep -q '^writer opus 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
+  grep -q '^writer claude-opus-5-5 1 175 100%$' "$tmp/out" || { sed 's/^/    | /' "$tmp/out"; return 1; }
 }
 
 # Anything else sent along at 5% or more, not below, and a context over 150k tokens. The long call makes most of the

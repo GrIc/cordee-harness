@@ -19,7 +19,5 @@
 - [Hunks that only change comments count as code in the quiz](issues/comment-only-hunks.md).
 - A queue of slow decisions: a reversible one is taken as provisional with a review date, its age shown by `brief`.
 - Copilot in the cockpit, specified from its real logs.
-- The ledger notes the exact model (`claude-opus-5-5`, not `opus`): the data an API of environmental impact needs,
-  without the tooling to call it.
 - Someday: publish the exchanges between humans and agents (quiz feedback, hints, trailers) as an open protocol, so
   that a team or a tool can adopt it without the kit.

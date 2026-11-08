@@ -764,3 +764,13 @@ which an agent's fails on its size, a human's only warns. A tip without the harn
 script.
 _Rejected:_ refusing any commit that removes `cordee/bin/` (removing the kit is a guided step, `guide/upgrade.md`); a
 hook that fails when the script is missing (it runs in older branches and in other repos sharing the hook).
+
+## 81. The ledger and the cockpit name the exact model (2026-11-08)
+
+`usage` gave the ledger the model family, `opus` for `claude-opus-5-5`, and `report` showed the family too. An API of
+environmental impact, or a price, needs the exact model: two versions of one family differ in both. `usage` and
+`report` now name the model as the tool's log does, and `family()` goes. The notes already shared keep `opus`, and
+`ledger report` shows them on lines of their own: a few weeks of history, which a reader sums by hand.
+_Rejected:_ the family in the cockpit's local `report` only (a second name for one model, and the dev pays the
+version, not the family); `v2` notes that `report` reads apart from `v1` (code to read old notes for a few weeks of
+history); a call to an impact API (the data first, the tooling when someone needs it).
