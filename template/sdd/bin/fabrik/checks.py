@@ -64,12 +64,13 @@ def audit_range(span):
 def check(base, tree, message):
     """Checks the change from base to tree (commits or trees) under a commit message. Returns the batch: its changed
     files, hit, high, level (low, normal or high), errors (fatal for everyone), findings (fatal for agents only),
-    notes, the addresses that mark an agent (emails) and what counts as no code (not_code)."""
+    notes, the addresses that mark an agent (emails), what counts as no code (not_code) and the code git shows as
+    binary (hidden)."""
     # The base's addresses too, so that the batch removing one is still judged as an agent's.
     emails = listed(tree, "agent-emails", AGENT_EMAILS, True) + listed(base, "agent-emails", AGENT_EMAILS, False)
     batch = SimpleNamespace(changed=lines(git("diff", "--name-only", "--no-renames", base, tree)), errors="",
                             findings="", notes="", hit=[], risks={}, coded=[], governed=set(), linked=set(),
-                            proven=set(), touched=0, emails=emails, not_code=not_code(base, tree))
+                            proven=set(), touched=0, emails=emails, not_code=not_code(base, tree), hidden=[])
     drift(batch, base, tree, message)
     size(batch, base, tree, message)
     # A file that steers the project or the harness asks a quiz at any risk; the base's list too, so that the batch

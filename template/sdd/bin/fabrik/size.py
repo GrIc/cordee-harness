@@ -3,7 +3,7 @@ import re
 import sys
 
 from fabrik.contracts import config, listed, matches, own_setting
-from fabrik.git import git, lines
+from fabrik.git import git, lines, run
 
 # The lines of code and tests an agent batch may change when sdd/config.yml sets no batch-lines. Up to 5% over only
 # gets a note.
@@ -30,8 +30,22 @@ def size(batch, base, tree, message):
     count = 0
     for line in lines(git("diff", "--numstat", "--no-renames", base, tree)):
         added, deleted, path = line.split("\t", 2)
-        if added != "-" and not batch.not_code(path):
+        if batch.not_code(path):
+            continue
+        if added != "-":
             count += int(added) + int(deleted)
+        elif not binary(base, tree, path):
+            batch.hidden.append(path)
+    # binary or -diff in .gitattributes, even the batch's own, hides the lines of code from the human and from numstat,
+    # --text or not: only the patch shows them, its hunk headers giving their number.
+    if batch.hidden:
+        patch = git("--literal-pathspecs", "diff", "--text", "-U0", "--no-renames", "--no-color", "--no-ext-diff", base,
+                    tree, "--", *batch.hidden)
+        for line in lines(patch):
+            if line.startswith("@@ "):
+                count += sum(int(side.partition(",")[2] or "1") for side in line.split(" ")[1:3])
+        batch.notes += "".join(f"NOTE {path}: an attribute marks it binary, but it is text. It counts as code: read it"
+                               " with git diff --text.\n" for path in batch.hidden)
     limit, where = batch_lines(batch, base, tree)
     if re.search(r"^Large-Batch:[^\S\n]*\S", message, re.M):
         if count > limit:
@@ -48,6 +62,11 @@ def size(batch, base, tree, message):
     if batch.touched > 1:
         batch.findings += (f"SIZE the batch changes code of {batch.touched} modules.\n"
                            "      Split it by module, or the human adds 'Large-Batch: <reason>' to the message.\n")
+
+
+def binary(base, tree, path):
+    """Whether a side of the file holds a NUL in its first 8000 bytes: binary as git judges it without attributes."""
+    return any(b"\0" in run(["cat-file", "blob", f"{side}:{path}"], quiet=True).stdout[:8000] for side in (base, tree))
 
 
 def batch_lines(batch, base, tree):

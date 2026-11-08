@@ -47,6 +47,8 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   `.gitkeep` and lock files do not count:
   [test_markdown_git_files_and_lockfiles_do_not_count](/test/run). `not-code` in `sdd/config.yml` replaces the lock
   files, and a batch that widens it is judged by its parent's list: [test_the_config_lists_what_is_not_code](/test/run).
+  A file is binary by its content, a NUL in its first 8000 bytes, never by `.gitattributes`: code marked `binary` or
+  `-diff` counts, with a note that says how to read it: [test_code_marked_binary_still_counts](/test/run).
   Up to 5% over only gets a note:
   [test_over_max_lines_blocks_an_agent_warns_a_human](/test/run),
   [test_up_to_five_percent_over_only_notes](/test/run), [test_two_modules_block_an_agent](/test/run),

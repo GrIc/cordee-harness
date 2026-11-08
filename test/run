@@ -245,6 +245,18 @@ test_markdown_git_files_and_lockfiles_do_not_count() {
   succeeds bash sdd/bin/sdd audit
 }
 
+test_code_marked_binary_still_counts() {
+  echo 'More intent.' >> sdd/modules/search.md
+  echo '*.py binary' > .gitattributes
+  seq 1 211 > src/search/big.py
+  head -c 3000 /dev/zero > src/search/logo.png
+  git add -A
+  fails bash sdd/bin/sdd audit
+  says "SIZE 211 changed lines of code and tests, over 200 (the kit's default) by more than 5%."
+  says 'NOTE src/search/big.py: an attribute marks it binary, but it is text.'
+  lacks 'NOTE src/search/logo.png'
+}
+
 test_two_modules_block_an_agent() {
   echo 'More intent.' >> sdd/modules/search.md
   echo 'More intent.' >> sdd/modules/import.md
