@@ -2,8 +2,8 @@
 import re
 import sys
 
-from harness.contracts import contracts, governs, highest, links, module, modules, risk
-from harness.git import commit_or, empty_tree, exists, git, lines
+from harness.contracts import contracts, governs, highest, in_tree, links, module, modules, risk
+from harness.git import commit_or, empty_tree, git, lines
 
 
 def drift(batch, base, tree, message):
@@ -14,14 +14,14 @@ def drift(batch, base, tree, message):
     for name, reason in re.findall(r"^Spec-Unchanged\(([^)\n]*)\):(.*)", message, re.M):
         if re.search(r"\s", name):
             batch.errors += f"ERROR Spec-Unchanged({name}): name one module, one line each.\n"
-        elif not exists(f"{tree}:cordee/modules/{name}.md"):
+        elif not in_tree(tree, f"cordee/modules/{name}.md"):
             batch.errors += f"ERROR Spec-Unchanged({name}): no such module. Modules: {modules(tree)}.\n"
         elif not reason.strip():
             batch.errors += f"ERROR Spec-Unchanged({name}): no reason. Say after the colon why the behavior holds.\n"
     # The base's contracts too: a batch that deletes a contract is judged at its risk.
     for contract in dict.fromkeys(contracts(tree) + contracts(base)):
         name, path = module(contract), None
-        if exists(f"{tree}:{contract}"):
+        if in_tree(tree, contract):
             paths = governs(f"{tree}:{contract}")
             if not paths:
                 batch.errors += f"ERROR {contract}: governs is empty. List the paths this module owns.\n"
@@ -29,7 +29,7 @@ def drift(batch, base, tree, message):
             broken = links(tree, contract)
             if broken:
                 batch.findings += "\n".join(broken) + "\n      Fix the link, or the name of the test it points to.\n"
-            governed = lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))
+            governed = governed_changes(batch.changed, base, tree, paths)
             batch.governed.update(governed)
             path = next(iter(governed), None)
         if path:
@@ -47,6 +47,16 @@ def drift(batch, base, tree, message):
                 f"DRIFT {contract}: {path} changed, its contract did not.\n"
                 "      Update the contract if the code is right, fix the code if it betrays the intent,\n"
                 f"      or add 'Spec-Unchanged({name}): <reason>' to the message if the behavior is unchanged.\n")
+
+
+def governed_changes(changed, base, tree, paths):
+    """The changed files from base to tree that paths govern."""
+    if not changed:
+        return []
+    if any(char in "".join(paths) for char in "*?[]:"):
+        return lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))
+    return [file for file in changed
+            if any(file == path or file.startswith(path.rstrip("/") + "/") for path in paths)]
 
 
 def touched(commit):

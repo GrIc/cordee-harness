@@ -4,7 +4,7 @@ import sys
 from types import SimpleNamespace
 
 from harness import quiz
-from harness.contracts import governs, highest, listed, matches, risk, sensitive
+from harness.contracts import contracts, governs, highest, in_tree, listed, matches, risk, sensitive
 from harness.drift import drift
 from harness.git import AGENT_EMAILS, commit_or, empty_tree, exists, git, is_agent, lines, try_git
 from harness.journal import committed
@@ -18,7 +18,8 @@ def audit_staged(message_file=None):
         with open(message_file, encoding="utf-8", errors="replace", newline="") as file:
             message = file.read()
     committed()
-    batch = check(commit_or("HEAD", empty_tree()), git("write-tree"), message)
+    tree = git("write-tree")
+    batch = check(commit_or("HEAD", empty_tree()), tree, message)
     status = 0 if report(batch, message) else 1
     if batch.high:
         print(f"NOTE {', '.join(batch.high)}: high risk, the quiz cites every hunk of code and a second human's reading"
@@ -35,7 +36,7 @@ def audit_staged(message_file=None):
             status = 1
     if status == 0:
         print("OK: the staged batch passes the checks.")
-    guidance()
+    guidance(tree)
     return status
 
 
@@ -113,14 +114,14 @@ def report(batch, message):
     return True
 
 
-def guidance():
+def guidance(tree):
     """Guidance for the agent, never a refusal: governs paths that match nothing, and the project's markdown against the
     code it governs (WORKFLOW.md, guide/ and kit_lines() are the kit's)."""
     paths = []
-    for contract in lines(git("ls-files", "cordee/modules/*.md")):
-        for path in governs(f":{contract}"):
+    for contract in contracts(tree):
+        for path in governs(f"{tree}:{contract}"):
             paths.append(path)
-            if not git("ls-files", "--", path):
+            if not in_tree(tree, path) and not git("ls-files", "--", path):
                 print(f"NOTE {contract}: {path} matches no tracked file, a typo or code still to come.")
     markdown = nonblank("cordee/*.md", "AGENTS.md", ":!cordee/WORKFLOW.md", ":!cordee/GETTING-STARTED.md",
                         ":!cordee/REFERENCE.md", ":!cordee/guide/") - kit_lines()

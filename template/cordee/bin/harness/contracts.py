@@ -1,9 +1,10 @@
 """What a contract says: the paths it governs, its settings, its links to tests."""
+import functools
 import posixpath
 import re
 import sys
 
-from harness.git import git, lines, try_git
+from harness.git import git, lines, run, try_git
 
 
 def governs(revision):
@@ -11,7 +12,7 @@ def governs(revision):
     list in brackets that may wrap, as "- path" lines below the key, or as one path; the next key ends them, comments are
     no paths. An absolute path or one outside the repo stops the command, since git would refuse every diff."""
     value, inside = [], False
-    for line in front_matter(re.sub("[\"']", "", git("show", revision))):
+    for line in front_matter(re.sub("[\"']", "", show(revision) or "")):
         # A YAML comment starts with a "#" at the start of the line or after a space.
         line = re.sub(r"(^|\s)#.*", "", line)
         if not line.strip():
@@ -49,7 +50,7 @@ def risk(tree, contract, checked):
     tree), and counts as normal otherwise (the base), so that the commit fixing it passes."""
     own = None
     if contract:
-        text = try_git("show", f"{tree}:{contract}")
+        text = show(f"{tree}:{contract}")
         if text is None:
             return None
         own = value(front_matter(text), "risk")
@@ -68,12 +69,12 @@ def highest(risks):
 
 def own_setting(revision, key):
     """A setting the contract at a revision path states itself, None when it does not or is not there."""
-    return value(front_matter(try_git("show", revision) or ""), key)
+    return value(front_matter(show(revision) or ""), key)
 
 
 def config(tree, key):
     """A setting of the repo in cordee/config.yml of the tree, None without one."""
-    return value(lines(try_git("show", f"{tree}:cordee/config.yml") or ""), key)
+    return value(lines(show(f"{tree}:cordee/config.yml") or ""), key)
 
 
 def value(text_lines, key):
@@ -97,13 +98,13 @@ def sensitive(tree, checked):
     passes."""
     found = listed(tree, "sensitive", SENSITIVE, checked)
     for contract in contracts(tree):
-        found += entries(front_matter(git("show", f"{tree}:{contract}")), contract, checked) or []
+        found += entries(front_matter(show(f"{tree}:{contract}") or ""), contract, checked) or []
     return found
 
 
 def listed(tree, key, default, checked):
     """The entries cordee/config.yml of a tree lists under a key, else the kit's default list."""
-    found = entries(lines(try_git("show", f"{tree}:cordee/config.yml") or ""), "cordee/config.yml", checked, key)
+    found = entries(lines(show(f"{tree}:cordee/config.yml") or ""), "cordee/config.yml", checked, key)
     return list(default) if found is None else found
 
 
@@ -152,8 +153,13 @@ def matches(entry, path):
 
 
 def contracts(tree):
-    return [path for path in lines(git("ls-tree", "-r", "--name-only", tree, "cordee/modules/"))
-            if path.endswith(".md")]
+    return [path for path, (kind, _) in tree_objects(tree).items()
+            if kind == "blob" and path.startswith("cordee/modules/") and path.endswith(".md")]
+
+
+def in_tree(tree, path):
+    """Whether path (a file or a folder) is in tree."""
+    return path.rstrip("/") in tree_objects(tree)
 
 
 def module(contract):
@@ -162,32 +168,79 @@ def module(contract):
 
 def modules(tree):
     """The modules of a tree, for a message."""
-    names = lines(git("ls-tree", "--name-only", tree, "cordee/modules/"))
-    return ", ".join(module(name) for name in names if name.endswith(".md"))
+    return ", ".join(module(path) for path in contracts(tree) if "/" not in path[len("cordee/modules/"):])
 
 
 def links(tree, contract):
     """The drift between a contract and the files it links to in a tree, other than Markdown and folders: a linked file
     the tree lacks, or a name the file lacks."""
-    found = []
-    text = re.sub(" +", " ", re.sub("[\r\n]", " ", git("show", f"{tree}:{contract}")))
+    objects, found = tree_objects(tree), []
+    for name, target, path in contract_links(tree, contract):
+        kind, sha = objects.get(path, (None, None))
+        if not kind:
+            found.append(f'DRIFT {contract}: links "{name}" to {target}, a file the commit does not have.')
+        elif kind == "blob":
+            if sha not in BLOBS:
+                load_blobs(objects.get(p, (None, None))[1] for other in contracts(tree)
+                           for _, _, p in contract_links(tree, other))
+            # The name as whole words, as grep -w finds it.
+            if name not in (posixpath.basename(path), path) and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)",
+                                                                              BLOBS[sha]):
+                found.append(f'DRIFT {contract}: links "{name}", not found in {path}.')
+    return found
+
+
+def contract_links(tree, contract):
+    text = re.sub(" +", " ", re.sub("[\r\n]", " ", show(f"{tree}:{contract}") or ""))
     for link in re.findall(r"\[[^]]*\]\([^)]*\)", text):
         name, target = link[1:].split("](", 1)
         target = target[:-1].split("#")[0]
-        if not target or ":" in target or target.endswith((".md", "/")):
-            continue
-        # A target starts at the repo root or is relative to the contract. Resolved here, not by git -C: in a
-        # worktree's hook, git -C takes the contract's folder for the work tree.
-        path = target[1:] if target.startswith("/") else resolve(posixpath.dirname(contract), target)
-        file = path and try_git("ls-tree", "--name-only", tree, "--", path)
-        if not file:
-            found.append(f'DRIFT {contract}: links "{name}" to {target}, a file the commit does not have.')
-        elif git("cat-file", "-t", f"{tree}:{file}") == "blob":
-            # The name as whole words, as grep -w finds it.
-            if name not in (posixpath.basename(file), file) and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)",
-                                                                              git("show", f"{tree}:{file}")):
-                found.append(f'DRIFT {contract}: links "{name}", not found in {file}.')
+        if target and ":" not in target and not target.endswith((".md", "/")):
+            # A target starts at the repo root or is relative to the contract. Resolved here, not by git -C: in a
+            # worktree's hook, git -C takes the contract's folder for the work tree.
+            path = target[1:] if target.startswith("/") else resolve(posixpath.dirname(contract), target)
+            yield name, target, path
+
+
+BLOBS = {}
+
+
+def show(revision):
+    """The text of a blob at a revision path such as HEAD:cordee/config.yml, or None when it is not there."""
+    tree, path = revision.split(":", 1)
+    if not tree:
+        return try_git("show", revision)
+    kind, sha = tree_objects(tree).get(path, (None, None))
+    if kind != "blob":
+        return None
+    load_blobs([sha])
+    return BLOBS[sha]
+
+
+@functools.cache
+def tree_objects(tree):
+    """The entries of a tree, as {path: (kind, sha)}, loading its config and contracts into BLOBS."""
+    found = {}
+    for line in lines(git("ls-tree", "--full-tree", "-r", "-t", tree)):
+        meta, path = line.split("\t", 1)
+        _, kind, sha = meta.split()
+        found[path] = (kind, sha)
+    load_blobs(sha for path, (kind, sha) in found.items()
+               if kind == "blob" and (path == "cordee/config.yml" or path.startswith("cordee/modules/")))
     return found
+
+
+def load_blobs(shas):
+    missing = [sha for sha in dict.fromkeys(shas) if sha and sha not in BLOBS]
+    if not missing:
+        return
+    out = run(["cat-file", "--batch"], input="\n".join(missing) + "\n").stdout
+    pos = 0
+    for sha in missing:
+        end = out.index(b"\n", pos)
+        size = int(out[pos:end].split()[2])
+        BLOBS[sha] = out[end + 1:end + 1 + size].decode(errors="replace").rstrip("\n")
+        pos = end + 1 + size + 1
 
 
 def resolve(folder, target):

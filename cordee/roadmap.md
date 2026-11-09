@@ -3,7 +3,6 @@
 ## Fixes
 
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).
-- `audit` caches `git show` by tree and path in `contracts.py`, if it takes over 3 s with 40 contracts on Windows.
 - [Split test/run by module](issues/split-test-run.md).
 - [A wrong answer is fixed by ticking another box of the same question](issues/retry-same-question.md).
 - [A flag is lost when the quiz is rewritten for the same batch](issues/unclear-flag-lost-same-batch.md).

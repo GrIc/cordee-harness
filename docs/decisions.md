@@ -819,3 +819,17 @@ all but 2 sessions name their model; on the two batches the review counted, the 
 tokens to the unit. It only weighs `usage`: `report` and cost hints stay Claude Code's.
 _Rejected:_ the model from `settings.json` (the dev's current pick, not the session's); the sub-agent's role from its
 prompt (a prompt names a review in passing); the protobuf blobs of `conversations/<id>.db` (no published format).
+
+## 86. `audit` reads trees and blobs in batch and reuses the staged tree (2026-11-09)
+
+In CI, `test_audit_takes_under_3_s_with_40_contracts` (75) took 5.53 s on macOS and 11.95 s on Windows: 508 git calls
+(254 `show`, 79 `ls-files`, 80 `cat-file`, 44 `ls-tree`, 42 `diff`), about 23.5 ms per process on Windows. Caching
+`git show` by `(tree, path)` alone leaves 416 calls (162 `show` across `tree`, `base`, `:` and the linked test files,
+plus the 254 others), still ~9.8 s on Windows and ~4.5 s on macOS. `contracts.py` now lists each tree once with `git
+ls-tree --full-tree -r -t` and reads its config, contracts and linked blobs with `git cat-file --batch`, cached by blob
+SHA across trees; `drift.py` and `guidance()` reuse that tree and filter `batch.changed` in memory when `governs` holds
+plain paths. On 40 contracts, `audit` drops from 508 git calls (0.76 s on Linux) to 16 (0.04 s on Linux, ~0.4 s at
+Windows process cost).
+_Rejected:_ `@cache` on `git show` by `(tree, path)` alone (416 git calls left, still over 3 s on both macOS and
+Windows); a persistent `git cat-file --batch` child process (pipe state and open handles on `.git` when tests remove a
+repo on Windows); raising the 3 s limit (12 s at every commit or audit is a real wait).
