@@ -833,3 +833,17 @@ Windows process cost).
 _Rejected:_ `@cache` on `git show` by `(tree, path)` alone (416 git calls left, still over 3 s on both macOS and
 Windows); a persistent `git cat-file --batch` child process (pipe state and open handles on `.git` when tests remove a
 repo on Windows); raising the 3 s limit (12 s at every commit or audit is a real wait).
+
+## 87. The cockpit reads Copilot's CLI and VS Code's agent host (2026-11-09)
+
+Copilot's CLI and VS Code's agent host log each session in `~/.copilot/session-state/<id>/events.jsonl` (1430 replies on
+the owner's machine): `session.start` names the repo (`data.context.gitRoot`, stored with Windows backslashes on
+Windows), `subagent.started` names each sub-agent's name and description by `agentId`, and `session.usage_record` gives
+each reply's model and tokens (`inputTokens` including cache reads and writes, `outputTokens`, `reasoningTokens`,
+`cacheReadTokens`, `cacheWriteTokens`). On the owner's machine, 135 of Gemini's 341 replies had more `reasoningTokens`
+than `outputTokens`, and none of Claude's or GPT's 1089: Gemini counts reasoning apart from output, the others within.
+`copilot.py` subtracts the cache from `inputTokens`, adds `reasoningTokens` for Gemini, matches `gitRoot` in any case
+and with either slash, and moves `entries()` and `epoch()` to `logs/__init__.py`. The classic Copilot Chat VS Code
+extension (`workspaceStorage/<hash>/chatSessions/<id>.jsonl`) will be specified separately from a team's log.
+_Rejected:_ reading `~/.copilot/session-store.db` (misses VS Code's agent host sessions); adding `reasoningTokens` to
+`outputTokens` for every model (double-counts reasoning on Claude and GPT).

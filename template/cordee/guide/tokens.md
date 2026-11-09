@@ -4,7 +4,8 @@ Optional (`tokens: true` in `cordee/config.yml`, then `bash cordee/bin/cordee in
 what agents spent on each module, by month, in the git notes `cordee-ledger`: the cost of the product's features, with
 no commit, author or date. The hooks `install-hook` writes note it at each commit and share it at each push, unless the
 dev sets `git config cordee.ledger false` (`--global` for every repo). The tokens come from `cordee/bin/cockpit`, which
-reads the agents' logs on this machine, Claude Code's, opencode's, Kilo Code's and Antigravity CLI's. `bash
+reads the agents' logs on this machine: Claude Code's, opencode's, Kilo Code's, Copilot's (its CLI and VS Code's agent
+host) and Antigravity CLI's. `bash
 cordee/bin/cockpit report "$PWD"`, from any folder of the repo, shows a dev where their own tokens went; `bash
 cordee/bin/cockpit hints` says what to cut, once in 10 batches at most, and `cordee hints` runs it at handoff. To audit
 a clone, `git fetch origin refs/notes/cordee-ledger:refs/notes/cordee-ledger`, then `bash cordee/bin/ledger report`: the

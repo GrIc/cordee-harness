@@ -17,6 +17,6 @@
 - A relay quiz: the dev who takes over a module answers the quiz of its last batches.
 - [Hunks that only change comments count as code in the quiz](issues/comment-only-hunks.md).
 - A queue of slow decisions: a reversible one is taken as provisional with a review date, its age shown by `brief`.
-- Copilot in the cockpit, specified from its real logs.
+- Copilot Chat (the classic VS Code extension) in the cockpit, specified from a team's real logs.
 - Someday: publish the exchanges between humans and agents (quiz feedback, hints, trailers) as an open protocol, so
   that a team or a tool can adopt it without the kit.

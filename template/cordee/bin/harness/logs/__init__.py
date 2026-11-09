@@ -7,9 +7,12 @@ included), cache_read and cache_write.
 A reader that can also weigh its calls, for the cockpit's report and hints, has NAME, PRICES (its provider's price
 ratios, in words) and calls(repo, start, end, sent): each reply in the window as a Call, adding to sent what the tool
 sends along with them, and what tells a format it no longer reads. sent is complete once every call is read."""
+import calendar
 import importlib
+import json
 import pkgutil
 import re
+import time
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import NamedTuple
@@ -50,6 +53,21 @@ class Sent:
 def label(source):
     kind, name = source
     return f"{kind} {name}" if name else kind
+
+
+def entries(path):
+    """The entries of a log of one JSON a line. A session still running may hold a half-written last line."""
+    with open(path, encoding="utf-8", errors="replace") as log:
+        for line in log:
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                pass
+
+
+def epoch(timestamp):
+    """The UTC timestamp to the second, its fraction dropped."""
+    return calendar.timegm(time.strptime(timestamp[:19], "%Y-%m-%dT%H:%M:%S"))
 
 
 READERS = [importlib.import_module(f"{__name__}.{found.name}") for found in pkgutil.iter_modules(__path__)]

@@ -47,7 +47,7 @@ it states what the batch does and carries any `Spec-Unchanged(<module>): <reason
   is too old: install one from python.org or Homebrew. On Windows, use Git for Windows (which provides `sh`).
 - Cockpit and token ledger (optional, enabled when `tokens: true` in `cordee/config.yml`): records anonymous monthly
   token spend per module in `refs/notes/cordee-ledger` on commit and syncs on push (Claude Code, opencode, Kilo Code,
-  Antigravity CLI). To turn the ledger off on your machine: `git config --global cordee.ledger false`.
+  Copilot, Antigravity CLI). To turn the ledger off on your machine: `git config --global cordee.ledger false`.
 
 ## When the harness refuses
 

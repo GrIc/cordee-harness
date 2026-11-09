@@ -1,13 +1,11 @@
 """Claude Code keeps a JSONL log per session under the repo's path, and one per sub-agent next to a .meta.json."""
-import calendar
 import glob
 import json
 import os
 import re
-import time
 from collections import Counter
 
-from harness.logs import MCP, REVIEW, SKILLS, Call
+from harness.logs import MCP, REVIEW, SKILLS, Call, entries, epoch
 
 # Anthropic's price ratios, in input tokens: a cache read costs a tenth, a cache write 1.25 (2 when kept an hour),
 # an output token 5.
@@ -150,21 +148,6 @@ def reply(message, seen):
         return False
     seen.add(message.get("id"))
     return True
-
-
-def entries(path):
-    """The entries of a log. A session still running may hold a half-written last line."""
-    with open(path, encoding="utf-8", errors="replace") as log:
-        for line in log:
-            try:
-                yield json.loads(line)
-            except json.JSONDecodeError:
-                pass
-
-
-def epoch(timestamp):
-    """The UTC timestamp to the second, its fraction dropped."""
-    return calendar.timegm(time.strptime(timestamp[:19], "%Y-%m-%dT%H:%M:%S"))
 
 
 def read_json(path):

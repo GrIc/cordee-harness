@@ -20,6 +20,10 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   [test_opencode_child_session_is_the_reviewer](/test/cockpit).
 - Kilo Code, built on opencode, reads like it from its own base, which its CLI and VS Code extension share:
   [test_kilo_code_reads_like_opencode](/test/cockpit).
+- Copilot, its CLI and VS Code's agent host: a log of events per session, which names its repo in any case and with
+  either slash; input without the cache, as Anthropic counts it. The session is the writer, a sub-agent whose
+  description names a review or a quiz is the reviewer:
+  [test_copilot_finds_its_repo_whatever_its_slashes_and_splits_roles](/test/cockpit).
 - Antigravity CLI, an index of the conversations by folder, the very repo's, and a transcript each: a session is the
   writer, at the model the dev picked last; a sub-agent takes its role and model from the call that created it, one or
   a list, several in a reply among other tools, the reviewer when its role names a review or a quiz, the session's
