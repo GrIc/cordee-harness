@@ -61,10 +61,11 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
 - `deploy <source> <tag>`, run from the kit's clone, writes the kit's own files (`cordee/bin/`, `cordee/guide/`,
   `cordee/WORKFLOW.md`, `cordee/GETTING-STARTED.md` and `cordee/REFERENCE.md`, deleting what `bin/` and `guide/` no
   longer have), copies the rest of the template that the repo lacks with the CI file of the forge `origin` names,
-  updates the block in `AGENTS.md` when its markers are there and `<source> <tag>` on the first line of
-  `cordee/README.md`, and installs the hooks. It lists the other files already in the repo, which the agent merges, and
-  stops, touching nothing, when the host of `origin` names neither GitHub nor GitLab and no `--forge` says which:
-  [test_deploy_copies_what_is_missing_and_lists_the_rest](/test/run),
+  never the bytecode a Python left in the kit's clone, updates the block in `AGENTS.md` when its markers are there and
+  `<source> <tag>` on the first line of `cordee/README.md`, and installs the hooks. It lists the other files already in
+  the repo, which the agent merges, and stops, touching nothing, when the host of `origin` names neither GitHub nor
+  GitLab and no `--forge` says which: [test_deploy_copies_what_is_missing_and_lists_the_rest](/test/run),
+  [test_deploy_leaves_out_python_bytecode](/test/run),
   [test_deploy_asks_the_forge_when_origin_names_none](/test/run). Run from a kit inside the repo, the repo's own
   `cordee/bin/` or the kit's `template/` in the kit, it stops before touching anything and says to run it from a clone
   elsewhere: [test_deploy_refuses_a_kit_inside_the_repo](/test/run).

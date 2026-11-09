@@ -240,6 +240,16 @@ test_deploy_asks_the_forge_when_origin_names_none() {
   [ -f .gitlab-ci.yml ] && [ ! -e .github ]
 }
 
+test_deploy_leaves_out_python_bytecode() {
+  cp -R "$kit/template" "$tmp/kit"
+  mkdir -p "$tmp/kit/cordee/bin/harness/__pycache__"
+  echo "$tmp/kit" > "$tmp/kit/cordee/bin/harness/__pycache__/git.cpython-312.pyc"
+  new_repo app
+  git remote add origin git@github.com:acme/app.git
+  succeeds bash "$tmp/kit/cordee/bin/cordee" deploy https://example.test/kit v9.9.9
+  [ -f cordee/bin/harness/git.py ] && [ ! -e cordee/bin/harness/__pycache__ ]
+}
+
 test_deploy_refuses_a_kit_inside_the_repo() {
   fails bash cordee/bin/cordee deploy https://example.test/kit v9.9.9 --forge github
   says "the kit's own clone"
@@ -693,10 +703,12 @@ test_audit_accepts_links_to_names_groups_and_files() {
   term](../../tests/test_search.py), [TestTagSearch](/tests/test_search.py#top),
   [test_search.py](/tests/test_search.py),
   [tests/test_search.py](../../tests/test_search.py), [the docs](https://example.com/docs), [workflow](../WORKFLOW.md),
-  [the search code](/src/search/), [the tests](/tests).'
+  [the search code](/src/search/), [the tests](/tests), [the vendored lib](/vendor/lib).'
   # Written on Windows: CRLF must not split the wrapped link.
   awk '{ printf "%s\r\n", $0 }' cordee/modules/search.md > crlf.md && mv crlf.md cordee/modules/search.md
   git add -A
+  # A submodule, whose commit this repo does not hold.
+  git update-index --add --cacheinfo 160000,1111111111111111111111111111111111111111,vendor/lib
   succeeds bash cordee/bin/cordee audit
   lacks 'DRIFT'
 }

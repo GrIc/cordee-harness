@@ -181,8 +181,9 @@ def links(tree, contract):
             found.append(f'DRIFT {contract}: links "{name}" to {target}, a file the commit does not have.')
         elif kind == "blob":
             if sha not in BLOBS:
-                load_blobs(objects.get(p, (None, None))[1] for other in contracts(tree)
-                           for _, _, p in contract_links(tree, other))
+                # Files only: a submodule's commit is not in this repo, git cat-file --batch says it is missing.
+                load_blobs(objects[p][1] for other in contracts(tree) for _, _, p in contract_links(tree, other)
+                           if objects.get(p, (None,))[0] == "blob")
             # The name as whole words, as grep -w finds it.
             if name not in (posixpath.basename(path), path) and not re.search(rf"(?<!\w){re.escape(name)}(?!\w)",
                                                                               BLOBS[sha]):

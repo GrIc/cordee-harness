@@ -6,3 +6,4 @@ Thumbs.db
 .vscode/
 .claude/
 .serena/
+__pycache__/

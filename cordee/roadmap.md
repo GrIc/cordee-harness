@@ -8,7 +8,6 @@
 - [A flag is lost when the quiz is rewritten for the same batch](issues/unclear-flag-lost-same-batch.md).
 - [The format guard does not see a renamed attachment](issues/attachment-format-guard.md).
 - [The cockpit's tests read only logs the kit wrote](issues/real-log-excerpts.md).
-- [A script that imports harness leaves __pycache__ in template/](issues/pycache-in-template.md).
 
 ## Then
 

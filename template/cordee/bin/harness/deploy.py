@@ -32,7 +32,9 @@ def deploy(source, tag, forge=None):
     for folder in ("cordee/bin", "cordee/guide"):
         shutil.rmtree(folder, ignore_errors=True)
     copied, present = [], []
-    for folder, _, names in os.walk(template):
+    for folder, folders, names in os.walk(template):
+        # A Python run without -B leaves its bytecode in the kit's clone, with the clone's path on that machine.
+        folders[:] = [name for name in folders if name != "__pycache__"]
         for name in names:
             path = os.path.relpath(os.path.join(folder, name), template).replace(os.sep, "/")
             if path in CI.values() and path != CI[forge]:
