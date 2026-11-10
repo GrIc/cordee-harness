@@ -4,8 +4,13 @@
 
 - [The ledger finds no opencode session on Windows](issues/opencode-windows-paths.md).
 - [Split test/run by module](issues/split-test-run.md).
+- [The proposed commit message file persists after commit](issues/clean-message-file.md).
+- [Trailing whitespace or inverted spans break the See line check](issues/quiz-see-whitespace.md).
+- [The tokens setting in config.yml is never validated](issues/tokens-config-validation.md).
+- [Claude Code log reader scans entire history on every commit](issues/claude-logs-mtime.md).
+- [The quiz key reveals answers in plain text](issues/hashed-quiz-key.md).
+- [Quiz answers follow predictable patterns](issues/random-quiz-answers.md).
 - [A wrong answer is fixed by ticking another box of the same question](issues/retry-same-question.md).
-- [A flag is lost when the quiz is rewritten for the same batch](issues/unclear-flag-lost-same-batch.md).
 - [The format guard does not see a renamed attachment](issues/attachment-format-guard.md).
 - [The cockpit's tests read only logs the kit wrote](issues/real-log-excerpts.md).
 
