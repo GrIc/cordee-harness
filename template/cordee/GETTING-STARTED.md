@@ -65,9 +65,9 @@ it states what the batch does and carries any `Spec-Unchanged(<module>): <reason
 
 ## Good to know
 
-- Amending an agent batch that changes files: `git commit --amend` compares the staged tree against the commit being
-  amended (`HEAD`) rather than its parent. Run `git reset --soft HEAD^`, adjust your files, and commit again. (Amending
-  only the commit message without changing files passes without a new quiz.)
+- Amending an agent batch: `git commit --amend` (keeping the `Quiz:` trailer in the message) checks drift and size
+  against `HEAD^` without asking a new quiz. To redo the batch with a fresh review and quiz, run `git reset --soft
+  HEAD^`.
 - Reasons after `Spec-Unchanged(<module>):`, `Large-Batch:`, and `Bypass-Quiz:` are mandatory and stay in `git log`.
 - Your own commits (without `Agent-Assisted: yes`, an agent `Co-Authored-By`, or a quiz key written for that staged
   tree) never ask a quiz, and drift or size findings only print warnings without blocking you.

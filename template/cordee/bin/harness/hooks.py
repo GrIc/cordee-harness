@@ -28,7 +28,9 @@ def hook(message_file):
         return
     committed()
     message = read_message(message_file)
-    batch = check(commit_or("HEAD", empty_tree()), git("write-tree"), message)
+    # An amend of a quizzed commit carries HEAD's Quiz trailer and no new QUIZ.md: judge the whole commit against HEAD^.
+    quizzed = bool(re.search(r"^Quiz:[^\S\n]*[0-9]+/[0-9]+", message, re.M)) and not os.path.isfile(quiz.QUIZ)
+    batch = check(commit_or("HEAD^" if quizzed else "HEAD", empty_tree()), git("write-tree"), message)
     # A quiz key written for this very batch says a reviewer quizzed it: an agent batch, whatever message the human
     # typed in their IDE. The trailer goes in, so that CI, the ledger and the history see it too.
     key = quiz.key_path()
@@ -38,8 +40,8 @@ def hook(message_file):
         print("NOTE a quiz was written for this batch: Agent-Assisted: yes is added to the message.", file=sys.stderr)
     if not report(batch, message):
         sys.exit(1)
-    # A reword or an amend that changes no file leaves nothing to quiz on.
-    asked = batch.changed and (batch.level != "none" or os.path.isfile(quiz.QUIZ))
+    # A reword, an amend of a quizzed commit, or an amend that changes no file leaves nothing to quiz on.
+    asked = not quizzed and batch.changed and (batch.level != "none" or os.path.isfile(quiz.QUIZ))
     if not is_agent(message, batch.emails) or not asked:
         return
     if re.search(r"^Bypass-Quiz:[^\S\n]*\S", message, re.M):
@@ -51,7 +53,7 @@ def hook(message_file):
     trailer = f"Quiz: {batch.count}/{batch.count}"
     if total:
         trailer += f", covers {covered}/{total}"
-    git("interpret-trailers", "--in-place", "--trailer", trailer, message_file)
+    git("interpret-trailers", "--in-place", "--if-exists", "replace", "--trailer", trailer, message_file)
 
 
 def read_message(message_file):

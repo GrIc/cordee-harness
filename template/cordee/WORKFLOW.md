@@ -198,6 +198,7 @@ or file) and SIZE (more than 5% over `batch-lines`, or a second module), which r
 the human's own; and NOTE, guidance that never refuses. CI replays drift and size on every pushed commit, never the
 quiz. Everything here can be bypassed: it is there to help, not to lock.
 
-The hook compares the batch with HEAD: to amend an agent batch that changes files, run `git reset --soft HEAD^` and
-commit again. It checks nothing when it finishes a merge or a cherry-pick. Merge pull requests with a merge commit or
-a rebase: a squash adds the batches up, so the size check fails on the default branch, or it drops their trailers.
+When amending a quizzed commit (`Quiz:` in the message and no `QUIZ.md`), the hook checks drift and size against
+`HEAD^` and asks no new quiz; to redo the batch with a new quiz, run `git reset --soft HEAD^`. It checks nothing when
+it finishes a merge or a cherry-pick. Merge pull requests with a merge commit or a rebase: a squash adds the batches
+up, so the size check fails on the default branch, or it drops their trailers.

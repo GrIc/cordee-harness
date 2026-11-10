@@ -847,3 +847,16 @@ and with either slash, and moves `entries()` and `epoch()` to `logs/__init__.py`
 extension (`workspaceStorage/<hash>/chatSessions/<id>.jsonl`) will be specified separately from a team's log.
 _Rejected:_ reading `~/.copilot/session-store.db` (misses VS Code's agent host sessions); adding `reasoningTokens` to
 `outputTokens` for every model (double-counts reasoning on Claude and GPT).
+
+## 88. Amending a quizzed commit checks drift and size against `HEAD^` and asks no new quiz (2026-11-09)
+
+Once an agent batch passes its quiz, `post-commit` deletes `QUIZ.md` and `HEAD`'s message carries `Quiz: <n>/<n>`.
+A human who then fixes a file and runs `git commit --amend` was blocked twice: the hook compared the staged tree with
+`HEAD` instead of `HEAD^` (reporting false drift when the contract had already changed in `HEAD`), and demanded
+`QUIZ.md` again. When the commit message already holds `Quiz: <n>/<n>` and no new `QUIZ.md` is on disk, `hooks.py` now
+checks drift and size against `HEAD^` (as CI will on the amended commit) and keeps the `Quiz:` trailer without asking a
+new quiz; if a new `QUIZ.md` is on disk, it grades it and replaces the trailer in place.
+_Rejected:_ an `--amend` flag on `audit` and `fingerprint` (the human's own fix after the quiz needs no new agent round
+trip, and `git reset --soft HEAD^` already covers redoing a batch with a fresh review); a `prepare-commit-msg` hook to
+detect `--amend` (one more hook file to install in every clone, when `HEAD`'s `Quiz:` trailer in `.git/COMMIT_EDITMSG`
+already tells a quizzed commit being amended).

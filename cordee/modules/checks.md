@@ -87,8 +87,10 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_range_ignores_commits_before_adoption](/test/run),
   [test_range_checks_the_commit_that_removes_the_harness](/test/run). On
   GitLab, those of each push, and for a new branch those the default branch lacks: checked by hand on a GitLab
-  project. The hook checks nothing when it finishes a merge or a cherry-pick, whose commits were checked
-  when first made: [test_a_cherry_pick_asks_no_new_quiz](/test/run).
+  project. The hook checks nothing when it finishes a merge or a cherry-pick, whose commits were checked when first
+  made: [test_a_cherry_pick_asks_no_new_quiz](/test/run); when amending a quizzed commit (`Quiz:` in the message and no
+  `QUIZ.md`), it checks drift and size against `HEAD^` and asks no new quiz:
+  [test_amending_a_quizzed_commit_checks_against_its_parent](/test/run).
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
   workflow, guides and block in `AGENTS.md` and the coding style's rows still to settle, and governs paths that match
   nothing: [test_audit_notes_the_markdown_ratio](/test/run), [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),

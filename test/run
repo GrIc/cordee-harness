@@ -1590,6 +1590,22 @@ test_rewording_an_agent_commit() {
   succeeds git commit -q --amend -m 'Change search, reworded' -m 'Agent-Assisted: yes'
 }
 
+test_amending_a_quizzed_commit_checks_against_its_parent() {
+  batch
+  write_quiz src/search/a.py 'A B C'
+  answer A B C
+  agent_commit 'Change search'
+  echo three >> src/search/a.py
+  git add -A
+  succeeds git commit -q --amend --no-edit
+  git log -1 --format=%B | grep -qx 'Quiz: 3/3, covers 1/1'
+  echo two >> src/import/a.py
+  git add -A
+  fails git commit -q --amend --no-edit
+  says 'DRIFT cordee/modules/import.md'
+  says 'SIZE the batch changes code of 2 modules.'
+}
+
 test_quoted_governs_paths() {
   printf -- '---\ngoverns: ["src/search/", '"'"'src/import'"'"']\n---\n# search\n' > cordee/modules/search.md
   git add -A
