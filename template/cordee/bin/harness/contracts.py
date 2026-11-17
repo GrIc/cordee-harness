@@ -231,6 +231,13 @@ def tree_objects(tree):
     return found
 
 
+def from_disk(tree, path):
+    """Reads path from the work tree as if tree had it: a contract written to learn a module, committed or not."""
+    with open(path, encoding="utf-8", errors="replace") as file:
+        BLOBS[f"disk:{path}"] = file.read().rstrip("\n")
+    tree_objects(tree)[path] = ("blob", f"disk:{path}")
+
+
 def load_blobs(shas):
     missing = [sha for sha in dict.fromkeys(shas) if sha and sha not in BLOBS]
     if not missing:

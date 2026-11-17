@@ -13,6 +13,7 @@
 - [A wrong answer is fixed by ticking another box of the same question](issues/retry-same-question.md).
 - [The format guard does not see a renamed attachment](issues/attachment-format-guard.md).
 - [The cockpit's tests read only logs the kit wrote](issues/real-log-excerpts.md).
+- [The MCP hint proposes a cut the dev already made](issues/mcp-hint-after-cut.md).
 
 ## Then
 

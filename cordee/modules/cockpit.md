@@ -16,6 +16,11 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   reviewer: [test_claude_code_splits_writer_and_reviewer_once_per_reply](/test/cockpit). A sub-agent revived in
   another session counts once, even after the repo or its log folder moved:
   [test_claude_code_reads_a_revived_sub_agent_once](/test/cockpit).
+- Codex: a log per thread, which opens on the thread's folder, the repo or a folder of it; input without the cache,
+  output with its reasoning; a count said again is no new reply, a half-written line and a count without figures
+  neither. A thread the dev opened is the writer, a sub-agent whose path or role names a review or a quiz is the
+  reviewer, and a log not written to since the window started is not read:
+  [test_codex_reads_a_thread_per_log_and_weighs_what_is_sent_along](/test/cockpit).
 - opencode, a SQLite base: a child session whose title names a review is the reviewer:
   [test_opencode_child_session_is_the_reviewer](/test/cockpit).
 - Kilo Code, built on opencode, reads like it from its own base, which its CLI and VS Code extension share:
@@ -31,12 +36,13 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
   written, is none:
   [test_antigravity_names_the_reviewer_from_the_call_that_spawned_it](/test/cockpit).
 - `report <repo> [<since> <until>]`, for the repo holding that folder (`$PWD` may be below its root or go through a
-  symlink), over the dev's last 10 agent batches by default, shows Claude Code's cost in input-equivalent tokens (its
-  provider's price ratios) by role and model, the context a session and a sub-agent start with, the longest context
-  and the share of cache reads: all exact. Then, estimated from their size, what is sent along with the calls (tool
-  results, skill listing, hooks, MCP instructions, memory files), each written once and read again with every later
-  call: [test_report_weighs_roles_and_what_is_sent_along](/test/cockpit),
-  [test_report_reads_the_last_ten_batches_by_default](/test/cockpit).
+  symlink), over the dev's last 10 agent batches by default, shows Claude Code's and Codex's cost in input-equivalent
+  tokens (each provider's price ratios) by role and model, the context a session and a sub-agent start with, the longest
+  context and the share of cache reads: all exact. Then, estimated from their size, what is sent along with the calls
+  (tool results, skill listing, hooks, MCP instructions, memory files), each written once and read again with every
+  later call: [test_report_weighs_roles_and_what_is_sent_along](/test/cockpit),
+  [test_report_reads_the_last_ten_batches_by_default](/test/cockpit). For Codex, what is sent along is the tool results,
+  the skill listing and `AGENTS.md`: [test_codex_reads_a_thread_per_log_and_weighs_what_is_sent_along](/test/cockpit).
 - `hints` prints what the dev's last 10 agent batches show to cut, by batch: MCP servers whose
   instructions are sent but whose tools were never called, plugins never called when the skill listing weighs 5% of
   the cost or more, anything else sent along at 5% or more, a context over 150k tokens:
@@ -57,6 +63,6 @@ gives away is `usage`, the sums the [ledger](ledger.md) asks for.
 Constraints: as [checks](checks.md); a new tool is one reader in `harness/logs/`, which `usage` finds by itself,
 and `report` and `hints` too when it weighs its calls. Only that reader knows the tool's logs, names and prices.
 Tested on Linux, macOS and Windows.
-Non-goals: a report for opencode and Kilo Code (only their sums for now), tools whose logs we have not read yet
-(Codex), telling apart two batches worked on at the same time, changing the dev's setup (the agent asks, the dev
-decides).
+Non-goals: a report for opencode and Kilo Code (only their sums for now), Codex's MCP servers and compactions (none in
+the logs read so far), telling apart two batches worked on at the same time, changing the dev's setup (the agent asks,
+the dev decides).

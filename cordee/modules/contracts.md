@@ -33,5 +33,7 @@ How the script reads a contract, written as the workflow's Contracts section say
   the kit denies commits: [test_the_kit_lists_what_steers_agents](/test/run). `agent-emails` and `not-code` in
   `cordee/config.yml` are written and checked the same way, each replacing a list of the kit's when set:
   [test_the_config_lists_the_agent_emails](/test/run), [test_the_config_lists_what_is_not_code](/test/run).
+- To learn a module, its contract is read from the file on disk as it stands, committed or not, with the links the
+  dev just added: [test_a_learn_quiz_cites_the_module_at_its_commit](/test/run).
 
 Constraints: as [checks](checks.md).

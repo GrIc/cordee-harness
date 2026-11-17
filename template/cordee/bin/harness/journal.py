@@ -1,7 +1,6 @@
 """The quiz journal: the questions a dev flagged or commented, kept on this machine and shared by the clone's
 worktrees. A line is v2, the time, the batch's modules, the causes, the title and the words, tab-separated; hints()
 reads it."""
-import hashlib
 import os
 import re
 import time
@@ -9,7 +8,7 @@ from collections import Counter
 
 from harness.drift import changes, touched
 from harness.git import agent_log, commit_or, empty_tree, git, lines, me, shared_path
-from harness.quiz import QUIZ, fingerprint, key_path, read_lines
+from harness.quiz import QUIZ, fingerprint, key_path, read_lines, state
 
 CAUSES = ["not-understood", "unclear", "not-wanted"]
 # The dev's last batches, whatever their pace: enough that "never called" means something, and a hint comes back
@@ -28,7 +27,7 @@ def committed():
     if commit is None:
         return
     if any(line.startswith("Quiz:") for line in git("log", "-1", "--format=%B", commit).split("\n")):
-        write(",".join(module for module, _ in touched(commit)))
+        write(",".join(module for module, _ in touched(commit)), QUIZ)
     os.remove(QUIZ)
     os.remove(key)
 
@@ -53,20 +52,18 @@ def reworked():
     journals its flags again, which flagged() counts once."""
     if not (os.path.isfile(QUIZ) and os.path.isfile(key_path())):
         return
-    with open(QUIZ, "rb") as file:
-        state = hashlib.sha1(file.read()).hexdigest()
     done = git("rev-parse", "--git-path", "cordee/quiz-journaled")
-    if os.path.isfile(done) and read_lines(done) == [state]:
+    if os.path.isfile(done) and read_lines(done) == [state()]:
         return
-    write(",".join(module for module, _ in changes(commit_or("HEAD", empty_tree()), git("write-tree"))))
+    write(",".join(module for module, _ in changes(commit_or("HEAD", empty_tree()), git("write-tree"))), QUIZ)
     with open(done, "w", encoding="utf-8") as file:
-        file.write(state + "\n")
+        file.write(state() + "\n")
 
 
-def write(modules):
-    """Appends a line per question of QUIZ.md the dev flagged or commented. It runs once the commit of a passed quiz
-    exists, or before a new quiz replaces this one, when the boxes are the dev's last word. The block's boxes are read
-    by their place, so in any language."""
+def write(modules, quiz):
+    """Appends a line per question of a quiz the dev flagged or commented. It runs once the commit of a passed quiz
+    exists, before a new quiz replaces this one, or once a quiz to learn a module passes, when the boxes are the dev's
+    last word. The block's boxes are read by their place, so in any language."""
     rows, title, causes, words, box = [], "", [], "", 0
 
     def close():
@@ -74,7 +71,7 @@ def write(modules):
             fields = ["v2", str(int(time.time())), modules or "-", ",".join(causes) or "-", title, words or "-"]
             rows.append("\t".join(field.replace("\t", " ") for field in fields) + "\n")
 
-    for line in read_lines(QUIZ):
+    for line in read_lines(quiz):
         if line.startswith("## "):
             close()
             title, causes, words, box = re.sub(r"^## ([0-9]+\. )?", "", line), [], "", 0

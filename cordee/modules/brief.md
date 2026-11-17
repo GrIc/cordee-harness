@@ -1,5 +1,5 @@
 ---
-governs: [template/cordee/bin/harness/brief.py]
+governs: [template/cordee/bin/harness/brief.py, template/cordee/bin/harness/discover.py]
 depends: [checks]
 ---
 # brief
@@ -25,5 +25,10 @@ batch, read from git rather than remembered.
   handoff. It lists the untracked files, which never block: [test_next_leads_a_batch_to_its_quiz](/test/run),
   [test_next_sends_size_to_step_5_and_skips_a_quiz_not_asked](/test/run). It names in one line the hooks that do not run
   a command of the kit, and sends to `doctor`: [test_next_points_to_doctor_for_hooks_out_of_date](/test/run).
+- `discover [<folder>]` sums the tracked files below a folder, the whole repo without one, by the folders it holds,
+  the 15 largest: files of code, those a contract governs with their modules, files of prose, and the three most
+  common kinds; then the prose in the folder itself. It is where an agent starts in a repo that lived before the
+  harness, as [guide/discover.md](../../template/cordee/guide/discover.md) says:
+  [test_discover_sums_the_code_by_folder_and_audit_names_code_in_no_module](/test/run).
 
 Constraints: as [checks](checks.md).

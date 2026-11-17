@@ -36,6 +36,11 @@ def audit_staged(message_file=None):
             status = 1
     if status == 0:
         print("OK: the staged batch passes the checks.")
+    loose = [path for path in batch.changed if path not in batch.governed and not batch.not_code(path)]
+    if loose:
+        print(f"NOTE {loose[0]}" + (f" and {len(loose) - 1} more" if len(loose) > 1 else "") + ": code in no module,"
+              " judged by the repo's settings. Write its contract first when its intent is not obvious"
+              " (cordee/guide/discover.md).")
     guidance(tree)
     return status
 

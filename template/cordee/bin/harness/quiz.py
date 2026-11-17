@@ -20,16 +20,22 @@ def grade(batch):
     if not os.path.isfile(QUIZ):
         sys.exit("No quiz for this agent-assisted batch: ask the fresh reviewer for QUIZ.md (see cordee/WORKFLOW.md).")
     form(batch)
+    answers(batch.questions, QUIZ, key_path(), "commit again")
+
+
+def answers(found, quiz, key, again):
+    """Exits unless each question found is right, once a block is written under each wrong one. again says what the dev
+    does once the answers are fixed."""
     wrong = {}
-    for question in batch.questions:
+    for question in found:
         if question.ticks != 1:
-            sys.exit(f"Tick exactly one box for question {question.number} in QUIZ.md, save, then commit again.")
+            sys.exit(f"Tick exactly one box for question {question.number} in {quiz}, save, then {again}.")
         if question.pick != question.right:
             wrong[question.number] = question.hint
-            print(f"Question {question.number} is wrong: a hint is in QUIZ.md.", file=sys.stderr)
+            print(f"Question {question.number} is wrong: a hint is in {quiz}.", file=sys.stderr)
     if wrong:
-        feedback(wrong, batch.count)
-        sys.exit(f"{batch.count - len(wrong)}/{batch.count}. Fix your answers in QUIZ.md, save, then commit again.")
+        feedback(wrong, len(found), quiz, key)
+        sys.exit(f"{len(found) - len(wrong)}/{len(found)}. Fix your answers in {quiz}, save, then {again}.")
 
 
 def form(batch):
@@ -37,37 +43,52 @@ def form(batch):
     order (ranks) and its coverage. Needs batch.changed and batch.level, set by the checks."""
     key = key_path()
     if not os.path.isfile(key):
-        sys.exit(f"QUIZ.md has no key: the reviewer writes it at {key} (see cordee/WORKFLOW.md).")
+        sys.exit("QUIZ.md has no key: the reviewer sends it to bash cordee/bin/cordee key (see cordee/WORKFLOW.md).")
     if read_lines(key)[:1] != [staged()]:
         print("NOTE The batch changed since the quiz was written. If your changes touch what it asks, ask for a new"
               " one.", file=sys.stderr)
-    batch.count = sum(line.startswith("## ") for line in read_lines(QUIZ))
+    batch.questions = questions(QUIZ, key)
+    batch.count = len(batch.questions)
     if batch.level == "high" and batch.count < 3:
         sys.exit('QUIZ.md needs 3 questions or more, each under a "## " heading.')
     if batch.level != "high" and not 1 <= batch.count <= 3:
         sys.exit('QUIZ.md needs 1 to 3 questions, each under a "## " heading.')
-    batch.questions, batch.ranks, cites = questions(), "", []
-    for question in batch.questions:
+    cites = shape(batch.questions, lambda file, first, last: file in batch.changed, "of this batch")
+    batch.ranks = "".join(question.right for question in batch.questions)
+    batch.coverage = cover(cites, batch.not_code, batch.hidden)
+
+
+def shape(found, fits, where):
+    """Each question's See line, boxes and right letter, as the workflow wants them. fits tells whether a place, file
+    first and last line, may be cited; where says which may. Returns the places cited."""
+    cites = []
+    for question in found:
         places = question.see.split(", ")
         too_many = sum(1 for place in places if place) > 3
         for place in places:
             file, _, span = place.rpartition(":")
-            if too_many or not re.fullmatch(r"[0-9]+(-[0-9]+)?", span) or file not in batch.changed:
-                sys.exit(f"Question {question.number} needs a See line citing one to three places of this batch, as"
-                         " 'See a.py:4, b.py:10-12'.")
             first, _, last = span.partition("-")
-            cites.append((file, int(first), int(last or first)))
+            cite = (file, int(first), int(last or first)) if re.fullmatch(r"[0-9]+(-[0-9]+)?", span) else None
+            if too_many or not cite or not fits(*cite):
+                sys.exit(f"Question {question.number} needs a See line citing one to three places {where}, as"
+                         " 'See a.py:4, b.py:10-12'.")
+            cites.append(cite)
         if not 2 <= question.boxes <= 4:
             sys.exit(f"Question {question.number} needs 2 to 4 boxes.")
         if question.right == "-":
             sys.exit(f"Question {question.number} has no right box in the key: line {question.number + 1} starts with"
                      " its letter, A for the first box.")
-        batch.ranks += question.right
-    batch.coverage = cover(cites, batch.not_code, batch.hidden)
+    return cites
 
 
 def key_path():
     return git("rev-parse", "--git-path", "cordee/quiz-key")
+
+
+def state():
+    """QUIZ.md as it stands, with the dev's boxes."""
+    with open(QUIZ, "rb") as file:
+        return hashlib.sha1(file.read()).hexdigest()
 
 
 def read_lines(path):
@@ -88,12 +109,12 @@ def fingerprint(tree, parent):
     return hashlib.sha1(b"blob %d\0" % len(text) + text).hexdigest()
 
 
-def questions():
-    """Each question of QUIZ.md: its number, boxes, ticked boxes, the ticked letter, what its See cites, the key's
+def questions(quiz, key_file):
+    """Each question of a quiz: its number, boxes, ticked boxes, the ticked letter, what its See cites, the key's
     letter for it (- when the key has none among the boxes) and the key's hint. The one reader of the key's answers."""
-    key = read_lines(key_path())
+    key = read_lines(key_file)
     found = []
-    for line in read_lines(QUIZ):
+    for line in read_lines(quiz):
         if line.startswith("## "):
             found.append(SimpleNamespace(number=len(found) + 1, boxes=0, ticks=0, pick="-", see="-"))
         elif found and line.startswith("See "):
@@ -148,15 +169,15 @@ def cover(cites, not_code, hidden):
     return covered, total, missed
 
 
-def feedback(wrong, count):
-    """Writes under each wrong question of QUIZ.md that has none yet a quoted block, which the parser skips: the key's
+def feedback(wrong, count, quiz, key_file):
+    """Writes under each wrong question of a quiz that has none yet a quoted block, which the parser skips: the key's
     hint, the call to type *quiz feedback*, and optional boxes for the dev to say why. A block already there stays as
     the dev left it. wrong maps a question's number to its hint. Its words are the eight lines the key may hold after
     its answers, in the dev's language."""
-    key = read_lines(key_path())
+    key = read_lines(key_file)
     words = key[count + 1: count + 9] if len(key) >= count + 9 else WORDS
     parts = [[]]
-    for line in read_lines(QUIZ):
+    for line in read_lines(quiz):
         if line.startswith("## "):
             parts.append([])
         parts[-1].append(line)
@@ -172,7 +193,7 @@ def feedback(wrong, count):
         rows += [f"> - [ ] {word}" for word in words[4:7]] + [f"> - {words[7]}"]
         if number < len(parts) - 1:
             rows.append("")
-    write_lines(QUIZ, rows)
+    write_lines(quiz, rows)
 
 
 def write_lines(path, rows):

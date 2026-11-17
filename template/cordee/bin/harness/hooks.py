@@ -65,14 +65,8 @@ def read_message(message_file):
 def install():
     """The quiz checks each commit; when tokens are on in cordee/config.yml, the token ledger notes each commit and is
     shared at each push."""
-    exclude = git("rev-parse", "--git-path", "info/exclude")
-    os.makedirs(os.path.dirname(exclude), exist_ok=True)
     os.makedirs(git("rev-parse", "--git-path", "cordee"), exist_ok=True)
-    if not os.path.isfile(exclude) or "/QUIZ.md" not in quiz.read_lines(exclude):
-        with open(exclude, "a+b") as file:
-            file.seek(0)
-            # A last line without its newline would end in /QUIZ.md.
-            file.write(b"\n/QUIZ.md\n" if file.read()[-1:] not in (b"", b"\n") else b"/QUIZ.md\n")
+    exclude("/QUIZ.md")
     done = [install_one(name, line) for name, line, _ in active_hooks()]
     if tokens_on():
         print("The token ledger notes what agents spend on each module, never who:"
@@ -82,6 +76,18 @@ def install():
         if try_git("config", "core.hooksPath") is None and os.path.isfile(pre_push) and ours(pre_push):
             os.remove(pre_push)
     return 0 if all(done) else 1
+
+
+def exclude(entry):
+    """Keeps a path out of git on this machine, in .git/info/exclude, on a line of its own."""
+    path = git("rev-parse", "--git-path", "info/exclude")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if os.path.isfile(path) and entry in quiz.read_lines(path):
+        return
+    with open(path, "a+b") as file:
+        file.seek(0)
+        # A last line without its newline would end in the entry.
+        file.write((b"\n" if file.read()[-1:] not in (b"", b"\n") else b"") + entry.encode() + b"\n")
 
 
 def active_hooks():

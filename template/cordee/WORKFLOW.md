@@ -7,8 +7,10 @@ How a change is made in this repo. This file, `GETTING-STARTED.md`, `REFERENCE.m
 Read a guide only when its case comes:
 
 - a new project, or existing code to adopt, as the first batch: [guide/start.md](guide/start.md);
+- a large repo to map, and code no contract governs yet: [guide/discover.md](guide/discover.md);
 - work of several batches: [guide/plan.md](guide/plan.md);
 - what agents spend, by module and for each dev: [guide/tokens.md](guide/tokens.md);
+- a module the dev did not write, to learn without a batch: [guide/learn.md](guide/learn.md);
 - upgrading or removing the kit: [guide/upgrade.md](guide/upgrade.md).
 
 ## Where things live
@@ -48,16 +50,18 @@ A file is created when first needed.
    Otherwise propose `Spec-Unchanged(<module>): <reason>`.
 4. Read the whole diff against the coding style and delete what does not earn its place. From here,
    `bash cordee/bin/cordee next` says which step is left, from the state of the batch in git.
-5. Stage the batch, write the proposed message with `Agent-Assisted: yes` to `.git/cordee/message`, and run
-   `bash cordee/bin/cordee audit --message .git/cordee/message`.
+5. Stage the batch and send the proposed message, with `Agent-Assisted: yes`, to
+   `bash cordee/bin/cordee audit --message -` on its standard input: it saves it at `.git/cordee/message`, where a
+   sandbox may not let you write, and audits it.
 6. Review: spawn a fresh reviewer, a new context that did not write the batch, and tell it the language the human writes
    to you in. It reads the staged diff, the contract and the coding style, and reports findings with their evidence. A
    finding that adds a check, an error path or a fallback names an input the code really receives and gets wrong;
    without one, you leave it out and list it in the handoff. Once you have fixed or listed the findings, it writes the
-   quiz, then runs the audit of step 5 again, which checks the quiz. It reports how many questions it wrote and what
-   the audit printed, never a right box or why it is right. Give it a smaller model than the writer's unless the batch
-   is large or touches security or data. After a fix, send the same reviewer the change: it checks that its quiz still
-   holds for a fraction of a fresh one.
+   quiz, then runs `bash cordee/bin/cordee audit --message .git/cordee/message`, which checks the quiz. It reports how
+   many questions it wrote and what the audit printed, never a right box or why it is right. Give it a smaller model
+   than the writer's unless the batch is large or touches security or data. Codex spawns it with `fork_turns: "none"`,
+   or it gets the writer's whole history. After a fix, send the same reviewer the change: it checks that its quiz
+   still holds for a fraction of a fresh one.
 7. Hand off: purpose, the decisions you took alone, evidence, limits and a short "understand this" for the human, and at
    high risk the advice to have a second human read the diff. It says how many questions the quiz has and gives away
    none of their answers. The human reads the diff, answers `QUIZ.md` and commits with `git commit -F
@@ -109,11 +113,12 @@ harness.
   - [ ] an error
   ```
 
-- the key, at the printed path: the fingerprint, then one line per question with the right letter (A for the first
-  box) and a hint for a wrong answer: where to look, never which box. No question asks for a computation nobody does
-  when reading code. For a human who does not write in English, eight more lines word the block the hook writes under
-  a wrong answer: wrong, hint, the call to type *quiz feedback*, the question why, the three reasons (code not
-  understood, question unclear, code not what they wanted) in that order, and other, ending with `:`.
+- the key, sent to `bash cordee/bin/cordee key` on its standard input, which writes it at the printed path: the
+  fingerprint, then one line per question with the right letter (A for the first box) and a hint for a wrong answer:
+  where to look, never which box. No question asks for a computation nobody does when reading code. For a human who
+  does not write in English, eight more lines word the block the hook writes under a wrong answer: wrong, hint, the
+  call to type *quiz feedback*, the question why, the three reasons (code not understood, question unclear, code not
+  what they wanted) in that order, and other, ending with `:`.
 
   ```
   3f2a9c...
@@ -173,7 +178,8 @@ contract's list adds to the repo's, for any file of a batch. `agent-emails`, the
 batch, and `not-code`, the files that count neither in the size nor in what a quiz covers besides Markdown and git's own
 files (lock files by default), are lists of `cordee/config.yml` written the same way, each replacing the kit's when set;
 a batch that changes one is judged by the stricter of its parent's and its own. A contract states a setting only where
-it differs from the repo's.
+it differs from the repo's. A file two contracts govern is the one's whose path holds it most closely: a module may
+sit inside the folder of another, with its own settings.
 
 ## Decisions
 

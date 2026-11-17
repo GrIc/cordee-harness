@@ -9,6 +9,8 @@
   calls).
 - Run `bash test/run`, `bash test/ledger` and `bash test/cockpit` before proposing a batch, each through
   `bash cordee/bin/cordee quiet`, which prints one line when it passes.
+- Keep shell output short: long commands through `bash cordee/bin/cordee quiet`, files read by range (`sed -n`, `head`,
+  `grep -n`), never a whole file or diff when a range will do.
 - `docs/feedback/` is local input from field use: read it, never commit it.
 - Decisions about the kit go to `docs/decisions.md`, with a `Rejected:` line.
 - Never commit, push or tag: the human does.

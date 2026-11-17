@@ -84,8 +84,8 @@ production breaks. A team that merges faster than it understands builds comprehe
   where supported, but preventing access to secrets or real data belongs to your environment.
 - Monitor or rank developers. No per-person token chart, velocity metric, or quiz score.
 - Read every agent's cost logs yet. Any agent that reads `AGENTS.md` gets the workflow, checks, quiz, and
-  quiz-flag hints; token accounting reads Claude Code, opencode, Kilo Code, Copilot (its CLI and VS Code's agent host)
-  and Antigravity CLI, and `cockpit report` / cost hints read Claude Code.
+  quiz-flag hints; token accounting reads Claude Code, Codex, opencode, Kilo Code, Copilot (its CLI and VS Code's
+  agent host) and Antigravity CLI, and `cockpit report` / cost hints read Claude Code and Codex.
 
 ## Getting started and daily use
 
@@ -194,7 +194,7 @@ former name: follow [the switch](template/cordee/guide/from-sdd-fabrik.md) inste
        (`commit-msg` grades it offline, `post-commit` journals any feedback flags locally), `cordee brief` / `next` /
        `quiet` / `doctor`, and CI replay of drift and size on push.
      - **Cockpit & Ledger** (`tokens: true`): adds two tools. The local **Cockpit** (`cordee/bin/cockpit`) reads local
-       Claude Code, opencode, Kilo Code, Copilot and Antigravity CLI logs on the developer's machine so
+       Claude Code, Codex, opencode, Kilo Code, Copilot and Antigravity CLI logs on the developer's machine so
        `cockpit report "$PWD"` breaks down where tokens go (writer vs. reviewer, models, context startup, cache reads,
        MCP servers, plugins, tool output) and `cockpit hints`, run by `cordee hints` at handoff, flags avoidable
        overhead at most once every 10 batches. The shared **Ledger** (`cordee/bin/ledger`) records anonymous monthly

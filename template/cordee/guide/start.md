@@ -17,3 +17,4 @@ Read the existing instructions, README, tests and entry points. Keep the behavio
 settled during deploy, ask the settings of `config.yml` as GENESIS does and write those that differ. Write the map, a
 coding style drawn from what the code already does, and contracts only where the intent is not obvious from code and
 tests, with `governs` paths checked by `git ls-files`. Changes you would like to make become issues, not contract text.
+In a repo too large to read whole, [discover.md](discover.md) says where to start and how the contracts catch up.

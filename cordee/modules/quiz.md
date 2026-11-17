@@ -1,5 +1,6 @@
 ---
-governs: [template/cordee/bin/harness/quiz.py, template/cordee/bin/harness/journal.py]
+governs: [template/cordee/bin/harness/quiz.py, template/cordee/bin/harness/journal.py,
+  template/cordee/bin/harness/learn.py]
 depends: [checks]
 ---
 # quiz
@@ -46,5 +47,13 @@ The questions that make the human understand an agent batch before it is committ
 - The trailer says how many hunks of code the quiz cites, outside what `not-code` lists:
   [test_the_trailer_says_how_much_the_quiz_covers](/test/run). Code that `.gitattributes` marks binary has its hunks
   too: [test_the_quiz_covers_code_marked_binary](/test/run).
+- To learn a module no batch changes, `cordee learn <module>` starts a quiz in `LEARN.md` and its own key, beside a
+  batch's quiz, and `cordee learn --grade` grades it without a commit, with the same hints and boxes. Once it passes,
+  its flags go to the journal on that module and the quiz goes:
+  [test_a_learn_quiz_is_graded_without_a_commit](/test/run), [test_a_learn_quiz_waits_beside_a_batch_quiz](/test/run).
+  Its key starts with `learn <module> <commit>`; `learn --audit` checks that each `See` line cites lines that exist at
+  that commit, in the files the module governs or the tests its contract links, read from the disk, and once HEAD
+  moves both only warn:
+  [test_a_learn_quiz_cites_the_module_at_its_commit](/test/run), [test_learn_needs_the_module_s_contract](/test/run).
 
 Constraints: as [checks](checks.md).

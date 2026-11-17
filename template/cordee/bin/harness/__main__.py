@@ -8,9 +8,10 @@ import sys
 # Run as a folder, Python puts the folder itself on the path: its parent holds the package.
 sys.path[0] = os.path.dirname(os.path.abspath(sys.path[0]))
 
-from harness import brief, checks, deploy, hooks, journal, quiz
+from harness import brief, checks, deploy, discover, hooks, journal, learn, quiz
 from harness.doctor import doctor
 from harness.drift import touched
+from harness.git import git
 
 
 def quiet(command):
@@ -32,6 +33,14 @@ def quiet(command):
     return status
 
 
+def save_input(path):
+    """Writes under .git/ what an agent sends on the standard input: a sandbox such as Codex's keeps .git/ read-only
+    but lets the agent run the harness."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as file:
+        file.write(sys.stdin.buffer.read())
+
+
 def misuse(text):
     print(text, file=sys.stderr)
     return 2
@@ -43,6 +52,10 @@ def cordee_command(args):
         hooks.hook(args[1])
     elif command == "committed":
         journal.committed()
+    elif args == ["audit", "--message", "-"]:
+        path = git("rev-parse", "--git-path", "cordee/message")
+        save_input(path)
+        return checks.audit_staged(path)
     elif command == "audit" and len(args) == 3 and args[1] == "--message":
         return checks.audit_staged(args[2])
     elif command == "audit" and len(args) == 3 and args[1] == "--range":
@@ -56,6 +69,16 @@ def cordee_command(args):
         print(f"fingerprint: {quiz.staged()}")
         print("quiz: QUIZ.md")
         print(f"key: {quiz.key_path()}")
+    elif args == ["key"]:
+        save_input(quiz.key_path())
+    elif args == ["learn", "--key"]:
+        save_input(learn.key_path())
+    elif args == ["learn", "--audit"]:
+        learn.audit()
+    elif args == ["learn", "--grade"]:
+        learn.grade()
+    elif command == "learn" and len(args) == 2:
+        learn.start(args[1])
     elif command == "install-hook":
         return hooks.install()
     elif command == "deploy" and len(args) == 3:
@@ -69,6 +92,8 @@ def cordee_command(args):
         brief.brief(args[1] if len(args) > 1 else "")
     elif command == "next":
         brief.next_step()
+    elif command == "discover" and len(args) <= 2:
+        discover.discover(args[1] if len(args) == 2 else "")
     elif args == ["hints"]:
         journal.hints()
         # A repo may remove the cockpit's files, as the hooks' lines allow, and keep tokens: true.
@@ -81,9 +106,11 @@ def cordee_command(args):
         doctor()
     else:
         return misuse("usage: bash cordee/bin/cordee hook <message-file>\n"
-                      "       bash cordee/bin/cordee audit [--message <file> | --range <base>..<tip>]\n"
-                      "       bash cordee/bin/cordee fingerprint | install-hook | touched [<commit>] | brief [<module>]\n"
-                      "       bash cordee/bin/cordee next | hints | quiet <command>... | doctor\n"
+                      "       bash cordee/bin/cordee audit [--message <file> | --message - | --range <base>..<tip>]\n"
+                      "       bash cordee/bin/cordee fingerprint | key | install-hook | touched [<commit>]\n"
+                      "       bash cordee/bin/cordee brief [<module>] | next | hints | quiet <command>... | doctor\n"
+                      "       bash cordee/bin/cordee discover [<folder>]\n"
+                      "       bash cordee/bin/cordee learn <module> | learn --key | learn --audit | learn --grade\n"
                       "       bash <kit>/template/cordee/bin/cordee deploy <source> <tag> [--forge github|gitlab]")
 
 

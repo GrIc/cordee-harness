@@ -860,3 +860,55 @@ _Rejected:_ an `--amend` flag on `audit` and `fingerprint` (the human's own fix 
 trip, and `git reset --soft HEAD^` already covers redoing a batch with a fresh review); a `prepare-commit-msg` hook to
 detect `--amend` (one more hook file to install in every clone, when `HEAD`'s `Quiz:` trailer in `.git/COMMIT_EDITMSG`
 already tells a quizzed commit being amended).
+
+## 89. A quiz to learn a module lives apart from a batch's, and cites the module at a commit (2026-11-15)
+
+A dev who joins a team learns a module no batch changes with a quiz on its code. It goes to `LEARN.md` and
+`.git/cordee/learn-key`, so the commit hook never sees it and a batch's quiz can wait beside it. Its key starts with
+`learn <module> <commit>`: once HEAD moves, grading only warns, as for a batch quiz older than its batch. Its `See`
+lines cite the files the module governs and the tests its contract links, at that commit, and `learn --audit` checks
+that each line exists; no hunk to cover. One to three questions, whatever the module's risk. The contract is read from
+the disk, so a module is learned before its contract is committed.
+_Rejected:_ the tree of the module's files as the fingerprint (a pull elsewhere leaves it valid, for more code); any
+tracked file in `See` (a question leaves the module); one `QUIZ.md` for both (the command refuses while a batch's quiz
+waits, and the hook must tell two keys apart); three questions or more at `risk: high` (no hunk to cover, nothing for
+the rule to hold).
+
+## 90. The cockpit reads Codex (2026-11-15)
+
+Codex 0.169 logs each thread in `~/.codex/sessions/<year>/<month>/<day>/rollout-*.jsonl` (`CODEX_HOME` moves it).
+Read on this machine: 2 logs, 61 replies. The first entry, `session_meta`, names the folder (`cwd`) and, for a
+sub-agent, `thread_source: subagent` and its `agent_path` (`/root/review_<task>`); a forked sub-agent's log
+holds its parent's `session_meta` second, and only its own counts (9, the first at ordinal 210, past
+`subagent_history_start_ordinal` 196). `turn_context` names the model. Each reply has an `event_msg` of type
+`token_count` whose `last_token_usage` sums to the log's last `total_token_usage` (writer: 2,761,180 input of which
+2,679,424 cached, 18,312 output); `total_tokens` is input plus output, so reasoning is within the output. `codex.py`
+counts a reply when `total_token_usage` changes, takes the cache out of the input, and weighs for `report` and
+`hints` the tool results, the skill listing and `AGENTS.md` of `world_state`. Its price ratios are GPT-5's (cached
+input a tenth, output 8): GPT-6's were not checked.
+_Rejected:_ `token_usage_record`, a second entry with the same figures (52 of each in the writer's log); matching
+the repo by `git.repository_url` (two clones would share their logs); weighing MCP servers and clearing at a
+compaction beyond the entry type `compacted` (neither is in the logs read).
+
+## 91. A file is its closest contract's (2026-11-15)
+
+A dev sets `batch-lines` and `risk` for a zone of a large repo with a contract that governs its folder, and for a
+module inside it with another. A file both governed counted for two modules: `SIZE the batch changes code of 2
+modules` on every batch of the inner one, and two drifts. `drift.closest` now gives each changed file to the contracts
+whose governing path is the longest: the inner module is judged alone, on its own settings, and a path two contracts
+both name stays in both, as before. For a pathspec with a wildcard, the length is that of its part before the first
+one. `test_a_module_inside_another_owns_its_folder`.
+_Rejected:_ settings by path in `cordee/config.yml` (a second home for a module's settings, and a nested list in a
+flat file); the strictest setting of every contract that governs the file (the inner module could never be looser
+than its zone).
+
+## 92. The contracts of a repo that lived before the harness catch up batch by batch (2026-11-15)
+
+Deployed in a large existing repo, the harness had ADOPT's four lines and no way to see what is mapped. `cordee
+discover [<folder>]` sums the tracked code by folder with what a contract governs and the prose beside it (0.07 s on
+a repo of 285 files), `audit` names the code a batch changes in no module, and `guide/discover.md` says what to write
+once (the map, the coding style from what the team enforces, the settings by zone) and what with each task (the
+contract of the code a batch is about to change).
+_Rejected:_ every contract written at deploy (tokens spent on code nobody touches, and notes that age unread); a
+refusal for code in no module (the harness helps, it never locks, and code whose tests say its intent needs none);
+a summary written by a model inside the script (no LLM in the harness).

@@ -18,18 +18,19 @@ def drift(batch, base, tree, message):
             batch.errors += f"ERROR Spec-Unchanged({name}): no such module. Modules: {modules(tree)}.\n"
         elif not reason.strip():
             batch.errors += f"ERROR Spec-Unchanged({name}): no reason. Say after the colon why the behavior holds.\n"
+    owners = closest(batch.changed, base, tree,
+                     {contract: governs(f"{tree}:{contract}") for contract in contracts(tree)})
     # The base's contracts too: a batch that deletes a contract is judged at its risk.
     for contract in dict.fromkeys(contracts(tree) + contracts(base)):
         name, path = module(contract), None
         if in_tree(tree, contract):
-            paths = governs(f"{tree}:{contract}")
-            if not paths:
+            if not governs(f"{tree}:{contract}"):
                 batch.errors += f"ERROR {contract}: governs is empty. List the paths this module owns.\n"
                 continue
             broken = links(tree, contract)
             if broken:
                 batch.findings += "\n".join(broken) + "\n      Fix the link, or the name of the test it points to.\n"
-            governed = governed_changes(batch.changed, base, tree, paths)
+            governed = [file for file in batch.changed if contract in owners.get(file, ())]
             batch.governed.update(governed)
             path = next(iter(governed), None)
         if path:
@@ -49,14 +50,26 @@ def drift(batch, base, tree, message):
                 f"      or add 'Spec-Unchanged({name}): <reason>' to the message if the behavior is unchanged.\n")
 
 
-def governed_changes(changed, base, tree, paths):
-    """The changed files from base to tree that paths govern."""
-    if not changed:
-        return []
-    if any(char in "".join(paths) for char in "*?[]:"):
-        return lines(git("diff", "--name-only", "--no-renames", base, tree, "--", *paths))
-    return [file for file in changed
-            if any(file == path or file.startswith(path.rstrip("/") + "/") for path in paths)]
+def closest(changed, base, tree, governed):
+    """For each changed file from base to tree that a contract governs, the contracts that govern it most closely, by
+    the length of the path that holds it: a module's folder inside another's is its own, a path two contracts both
+    name is in both. governed maps a contract to its paths."""
+    found = {}
+    for contract, paths in governed.items():
+        for path in paths if changed else []:
+            if any(char in path for char in "*?[]:"):
+                files = lines(git("diff", "--name-only", "--no-renames", base, tree, "--", path))
+                depth = len(re.split(r"[*?\[:]", path)[0])
+            else:
+                files = [file for file in changed if file == path or file.startswith(path.rstrip("/") + "/")]
+                depth = len(path.rstrip("/"))
+            for file in files:
+                best = found.setdefault(file, [depth, set()])
+                if depth > best[0]:
+                    best[:] = [depth, set()]
+                if depth == best[0]:
+                    best[1].add(contract)
+    return {file: contracts for file, (_, contracts) in found.items()}
 
 
 def touched(commit):

@@ -24,10 +24,11 @@
 
 Remove `cordee/bin/`, `cordee/guide/`, `cordee/WORKFLOW.md`, `cordee/GETTING-STARTED.md`, `cordee/REFERENCE.md`,
 `cordee/config.yml`, the `commit-msg`, `post-commit` and `pre-push` hooks that hold `# cordee` (or the `cordee/bin/`
-lines added to other hooks), the `cordee/bin/*` line of `.gitattributes`, the `/QUIZ.md` line of `.git/info/exclude`,
-the folders `$(git rev-parse --git-common-dir)/cordee/` and, in each worktree, `$(git rev-parse --git-path cordee)`
-(what the harness keeps on this machine, the quiz journal among it), the refs `refs/notes/cordee-ledger` and
-`refs/notes/cordee-ledger-remote` (and on the remote, with the human), the block between the markers in `AGENTS.md`,
-the `@AGENTS.md` line of `CLAUDE.md`, the `.github/workflows/cordee.yml` step or the `cordee-audit` job of
-`.gitlab-ci.yml`, and the deny rules added to your tool. Ask the human before removing the project's own knowledge:
-`cordee/README.md`, `coding-style.md`, `modules/`, `decisions.md` and the other topic files.
+lines added to other hooks), the `cordee/bin/*` line of `.gitattributes`, the `/QUIZ.md` and `/LEARN.md` lines of
+`.git/info/exclude`, the folders `$(git rev-parse --git-common-dir)/cordee/` and, in each worktree,
+`$(git rev-parse --git-path cordee)` (what the harness keeps on this machine, the quiz journal and a learn quiz's key
+among it), the refs `refs/notes/cordee-ledger` and `refs/notes/cordee-ledger-remote` (and on the remote, with the
+human), the block between the markers in `AGENTS.md`, the `@AGENTS.md` line of `CLAUDE.md`, the
+`.github/workflows/cordee.yml` step or the `cordee-audit` job of `.gitlab-ci.yml`, and the deny rules added to your
+tool. Ask the human before removing the project's own knowledge: `cordee/README.md`, `coding-style.md`, `modules/`,
+`decisions.md` and the other topic files.

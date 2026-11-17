@@ -105,8 +105,8 @@ Rules enforced by `cordee audit` and the commit hook:
 ### 5.2 Fresh review and `QUIZ.md`
 
 A fresh reviewer agent context inspects the staged diff against the contract and coding style, reports evidence-backed
-findings, and writes `QUIZ.md` at the repo root plus the answer key at the path printed by
-`bash cordee/bin/cordee fingerprint`.
+findings, and writes `QUIZ.md` at the repo root plus the answer key, sent to `bash cordee/bin/cordee key`, which writes
+it at the path printed by `bash cordee/bin/cordee fingerprint`.
 
 - Each question asks the human to predict behavior or intent from the lines cited on its `See` line (`file:line` or
   `file:line-line`, up to three places separated by `, `), without chasing a change across other files:
@@ -147,13 +147,14 @@ To enable the cockpit and token ledger for the repository, set `tokens: true` in
 
 ### 7.1 Local cockpit (`cordee/bin/cockpit`)
 
-Reads local agent logs on the developer's machine (Claude Code, opencode, Kilo Code, Copilot and Antigravity CLI)
-without sending anything over the network:
+Reads local agent logs on the developer's machine (Claude Code, Codex, opencode, Kilo Code, Copilot and Antigravity
+CLI) without sending anything over the network:
 
 - `bash cordee/bin/cockpit report "$PWD" [<since> <until>]`: over the developer's last 10 agent batches by default,
-  reports Claude Code's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`) and exact
-  model, median starting context for sessions and sub-agents, longest context reached, cache-read share, and estimated
-  cost of attachments sent along with calls (tool results, skill listings, hooks, MCP instructions, memory files).
+  reports Claude Code's and Codex's exact cost in input-equivalent tokens by role (`writer`, `reviewer`, `agent:<type>`)
+  and exact model, median starting context for sessions and sub-agents, longest context reached, cache-read share, and
+  estimated cost of attachments sent along with calls (tool results, skill listings, hooks, MCP instructions, memory
+  files).
 - `bash cordee/bin/cockpit hints`: run by `cordee hints` at handoff when `tokens: true`; prints a hint at most once
   per 10 agent batches when MCP servers or plugins go unused above the cost threshold, when context exceeds 150k
   tokens, or when a log format change prevents reading replies or token counts.
@@ -176,16 +177,19 @@ Tracks what each product module costs in tokens per month, never per developer:
 
 | Command | Description |
 |---|---|
-| `bash cordee/bin/cordee audit [--message <file> \| --range <base>..<tip>]` | Run drift, link, size, quiz form, and markdown ratio checks on the staged batch or a commit range. |
+| `bash cordee/bin/cordee audit [--message <file> \| --message - \| --range <base>..<tip>]` | Run drift, link, size, quiz form, and markdown ratio checks on the staged batch or a commit range; `-` saves the message read on standard input at `.git/cordee/message` first. |
 | `bash cordee/bin/cordee brief [<module>]` | Show waiting quizzes in other worktrees, teammate branches waiting for review, and first-time module info. |
 | `bash cordee/bin/cordee next` | Print the next step of `COMPILE` from git state, plus stale hooks and untracked files. |
+| `bash cordee/bin/cordee discover [<folder>]` | Sum the tracked code by folder, with how much a contract governs and the prose beside it, to map a repo that lived before the harness ([guide/discover.md](guide/discover.md)). |
 | `bash cordee/bin/cordee fingerprint` | Print the staged batch fingerprint and quiz/key paths, journaling any replaced quiz flags. |
+| `bash cordee/bin/cordee key` | Write the quiz key read on standard input at the path `fingerprint` prints, for a sandbox that keeps `.git/` read-only. |
+| `bash cordee/bin/cordee learn <module>` | Start a quiz on a module no batch changes, in `LEARN.md` and its own key; `learn --key` writes the key read on standard input, `learn --audit` checks the quiz, `learn --grade` grades it without a commit ([guide/learn.md](guide/learn.md)). |
 | `bash cordee/bin/cordee install-hook` | Install `QUIZ.md` in `.git/info/exclude` and write the active git hooks (`commit-msg`, `post-commit`, and `pre-push` when `tokens: true`). |
 | `bash cordee/bin/cordee quiet <command>...` | Run a command, printing one summary line on success or the last 30 lines on failure. |
 | `bash cordee/bin/cordee doctor` | Print version, environment, hook status, token/ledger status, and audit timing, with `NOTE` lines for anything to fix. |
 | `bash cordee/bin/cordee hints` | At handoff, name a module whose quiz answers were flagged *unclear* or *not-wanted* twice in the last 10 batches, then the cockpit's cost hints when `tokens: true` (each at most once every 10 batches). |
 | `bash cordee/bin/cordee touched [<commit>]` | List the modules changed by `<commit>` (`HEAD` by default) with their changed line counts. |
 | `bash <kit>/template/cordee/bin/cordee deploy <source> <tag> [--forge github\|gitlab]` | Deploy or upgrade Cordee from a kit clone into the current repository. |
-| `bash cordee/bin/cockpit report <repo> [<since> <until>]` | Show local Claude Code token breakdown and attachment overhead. |
+| `bash cordee/bin/cockpit report <repo> [<since> <until>]` | Show local Claude Code and Codex token breakdown and attachment overhead. |
 | `bash cordee/bin/cockpit hints` | Print actionable cost hints (at most once every 10 batches). |
 | `bash cordee/bin/ledger report` | Show monthly anonymous token spend per module, role, and model, plus batch coverage. |

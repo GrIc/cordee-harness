@@ -34,7 +34,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_spec_unchanged_spares_its_module_only](/test/run),
   [test_spec_unchanged_names_one_module_with_a_reason](/test/run),
   [test_a_spared_module_does_not_count_toward_the_module_limit](/test/run),
-  [test_errors_stop_even_a_human_commit](/test/run).
+  [test_errors_stop_even_a_human_commit](/test/run). A file two contracts govern is the one's whose path holds it
+  most closely, so a module inside the folder of another is judged alone, on its own settings; a path both name is in
+  both: [test_a_module_inside_another_owns_its_folder](/test/run).
 - Size: at most `batch-lines` changed lines of code and tests, and one module, unless `Large-Batch: <reason>`, which
   still notes what it lifts. `batch-lines` comes from `cordee/config.yml`, `MAX_LINES` without it. A batch that changes
   the value is judged on its own, and gets a note saying so; only its own value stops a commit when it is not a number:
@@ -82,6 +84,12 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
   [test_quiet_hides_a_green_output_and_shows_the_end_of_a_red_one](/test/run). A command missing an argument, or with
   one it does not know, prints the usage: [test_a_command_missing_an_argument_prints_the_usage](/test/run). `hints`
   prints the quiz journal's hints, then the cockpit's when `tokens: true`, as [quiz](quiz.md) says.
+- An agent whose sandbox keeps `.git/` read-only sends what the harness keeps there on the standard input:
+  `audit --message -` saves the message at `.git/cordee/message` and audits it, `key` writes the quiz's key and
+  `learn --key` the key of a module to learn: [test_audit_saves_a_message_read_on_its_input](/test/run),
+  [test_audit_checks_the_quiz_before_the_human](/test/run), [test_a_learn_quiz_is_graded_without_a_commit](/test/run).
+  With Codex in `workspace-write`, once `bash cordee/bin/cordee` and `git add -A` are approved for good, a batch asks
+  no other approval from the first read to the handoff: checked by hand, with Codex.
 - CI replays drift and size on each new commit, never the quiz: [test_range_checks_each_commit](/test/run). It skips
   the commits made before the harness came, not the one that removes it:
   [test_range_ignores_commits_before_adoption](/test/run),
@@ -94,7 +102,9 @@ batches small and asks the [quiz](quiz.md) of an agent batch. It helps, it never
 - Guidance starts with `NOTE` and never fails `audit` or a commit: the markdown ratio, which leaves out the kit's
   workflow, guides and block in `AGENTS.md` and the coding style's rows still to settle, and governs paths that match
   nothing: [test_audit_notes_the_markdown_ratio](/test/run), [test_markdown_ratio_leaves_out_the_kit_docs](/test/run),
-  [test_audit_points_out_governs_paths_that_match_nothing](/test/run).
+  [test_audit_points_out_governs_paths_that_match_nothing](/test/run). `audit` names the code a batch changes in no
+  module, for its contract to be written first where the intent is not obvious:
+  [test_discover_sums_the_code_by_folder_and_audit_names_code_in_no_module](/test/run).
 
 Constraints: Python 3.10, standard library only, behind a `sh` launcher, and git, on Linux, macOS and Windows (Git
 Bash). `audit` of one batch takes under 3 s in a repo of 40 contracts:
